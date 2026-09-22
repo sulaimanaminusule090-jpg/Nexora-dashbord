@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Nexora Dashboard</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f5f7fb;
+      color: #172033;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: #ffffff;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #e7eaf0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 21px;
+      font-weight: bold;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .connect {
+      border: none;
+      background: #111827;
+      color: white;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .welcome {
+      margin-bottom: 20px;
+    }
+
+    .welcome h1 {
+      font-size: 25px;
+      margin-bottom: 5px;
+    }
+
+    .welcome p {
+      color: #697386;
+    }
+
+    .balance-card {
+      background: #111827;
+      color: white;
+      border-radius: 20px;
+      padding: 25px;
+      margin-bottom: 20px;
+    }
+
+    .balance-label {
+      color: #b8c0cf;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .balance {
+      font-size: 34px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .usd {
+      color: #c5cad4;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 25px;
+    }
+
+    .action {
+      background: white;
+      border: 1px solid #e4e8ef;
+      border-radius: 15px;
+      padding: 18px;
+      text-align: center;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .action:hover {
+      background: #f0f2f6;
+    }
+
+    .action-icon {
+      font-size: 25px;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      margin-bottom: 12px;
+      font-size: 19px;
+    }
+
+    .asset {
+      background: white;
+      border-radius: 15px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      border: 1px solid #e4e8ef;
+    }
+
+    .asset-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .coin {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #111827;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    .asset-name {
+      font-weight: bold;
+    }
+
+    .asset-symbol {
+      color: #7a8495;
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .asset-value {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .transactions {
+      margin-top: 25px;
+    }
+
+    .transaction {
+      background: white;
+      padding: 16px;
+      border-radius: 15px;
+      margin-bottom: 10px;
+      border: 1px solid #e4e8ef;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .received {
+      color: #16834b;
+    }
+
+    .sent {
+      color: #c0392b;
+    }
+
+    .bottom-nav {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-top: 1px solid #e4e8ef;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 5px;
+      margin-top: 30px;
+    }
+
+    .nav-item {
+      text-align: center;
+      font-size: 13px;
+      color: #697386;
+    }
+
+    .nav-item.active {
+      color: #111827;
+      font-weight: bold;
+    }
+
+    @media (min-width: 700px) {
+      .actions {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+
+    <div class="brand">
+      <div class="logo">N</div>
+      <span>NEXORA</span>
+    </div>
+
+    <button class="connect" onclick="connectWallet()">
+      Connect Wallet
+    </button>
+
+  </header>
+
+
+  <main class="container">
+
+    <div class="welcome">
+      <h1>Welcome to Nexora</h1>
+      <p>Your Nexora Web3 dashboard</p>
+    </div>
+
+
+    <div class="balance-card">
+
+      <div class="balance-label">
+        Total NEXORA Balance
+      </div>
+
+      <div class="balance">
+        1,000 NEXORA
+      </div>
+
+      <div class="usd">
+        ≈ $1.00
+      </div>
+
+    </div>
+
+
+    <div class="actions">
+
+      <div class="action" onclick="sendToken()">
+        <div class="action-icon">📤</div>
+        Send
+      </div>
+
+      <div class="action" onclick="receiveToken()">
+        <div class="action-icon">📥</div>
+        Receive
+      </div>
+
+      <div class="action" onclick="showWallet()">
+        <div class="action-icon">👛</div>
+        Wallet
+      </div>
+
+      <div class="action" onclick="showServices()">
+        <div class="action-icon">⚡</div>
+        Services
+      </div>
+
+    </div>
+
+
+    <h2 class="section-title">
+      Assets
+    </h2>
+
+
+    <div class="asset">
+
+      <div class="asset-left">
+
+        <div class="coin">
+          N
+        </div>
+
+        <div>
+          <div class="asset-name">
+            Nexora
+          </div>
+
+          <div class="asset-symbol">
+            NEXORA
+          </div>
+        </div>
+
+      </div>
+
+      <div class="asset-value">
+        1,000
+      </div>
+
+    </div>
+
+
+    <div class="asset">
+
+      <div class="asset-left">
+
+        <div class="coin">
+          S
+        </div>
+
+        <div>
+          <div class="asset-name">
+            Solana
+          </div>
+
+          <div class="asset-symbol">
+            SOL
+          </div>
+        </div>
+
+      </div>
+
+      <div class="asset-value">
+        0.00
+      </div>
+
+    </div>
+
+
+    <div class="transactions">
+
+      <h2 class="section-title">
+        Recent Transactions
+      </h2>
+
+      <div class="transaction">
+
+        <div>
+          <strong>Received NEXORA</strong>
+          <br>
+          <small>Today</small>
+        </div>
+
+        <div class="received">
+          +100 NXR
+        </div>
+
+      </div>
+
+      <div class="transaction">
+
+        <div>
+          <strong>Sent NEXORA</strong>
+          <br>
+          <small>Yesterday</small>
+        </div>
+
+        <div class="sent">
+          -25 NXR
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <nav class="bottom-nav">
+
+    <div class="nav-item active">
+      🏠<br>
+      Home
+    </div>
+
+    <div class="nav-item">
+      👛<br>
+      Wallet
+    </div>
+
+    <div class="nav-item">
+      📜<br>
+      History
+    </div>
+
+    <div class="nav-item">
+      ⚙️<br>
+      Settings
+    </div>
+
+  </nav>
+
+
+  <script>
+async function connectWallet() {
+  try {
+    const provider = window.phantom?.solana;
+
+    if (!provider) {
+      alert(
+        
+  "Phantom wallet not detected.\n\n" +
+  "Please open Nexora Dashboard in the Phantom in-app browser."
+);
+      return;
+    }
+
+    const response = await provider.connect();
+
+    const address = response.publicKey.toString();
+
+    document.querySelector(".connect").textContent =
+      address.slice(0, 4) + "..." + address.slice(-4);
+
+    alert("Phantom connected successfully!\n\n" + address);
+
+  } catch (error) {
+    console.error(error);
+    alert("Failed to connect to Phantom wallet.");
+  }
+}
+
+function sendToken() {
+  alert("Send NEXORA will be available soon.");
+}
+
+function receiveToken() {
+  alert("Receive NEXORA will be available soon.");
+}
+
+function showWallet() {
+  alert("Wallet section will be available soon.");
+  
+}
+
+function showServices() {
+  alert("Nexora Services will be available soon.");
+}
+  </script>
+
+</body>
+</html>
