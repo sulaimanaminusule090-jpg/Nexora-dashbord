@@ -423,13 +423,12 @@ async function connectWallet() {
     const provider = window.phantom?.solana || window.solana;
 
     if (!provider) {
-      alert(
-        
-  "Phantom wallet not detected.\n\n" +
-  "Please open Nexora Dashboard in the Phantom in-app browser."
-);
-      return;
-    }
+      
+  window.location.href =
+    `https://phantom.app/ul/browse/${encodeURIComponent(window.location.href)}?ref=${encodeURIComponent(window.location.origin)}`;
+  return;
+      }
+    
 
     const response = await provider.connect();
 
