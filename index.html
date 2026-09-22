@@ -368,7 +368,7 @@
         </div>
 
         <div class="received">
-          +100 NXR
+          +100 NXRQ
         </div>
 
       </div>
@@ -382,7 +382,7 @@
         </div>
 
         <div class="sent">
-          -25 NXR
+          -25 NXRQ
         </div>
 
       </div>
@@ -420,7 +420,7 @@
   <script>
 async function connectWallet() {
   try {
-    const provider = window.phantom?.solana;
+    const provider = window.phantom?.solana || window.solana;
 
     if (!provider) {
       alert(
