@@ -454,8 +454,14 @@ function receiveToken() {
 }
 
 function showWallet() {
-  alert("Wallet section will be available soon.");
-  
+    const address = document.querySelector(".connect").textContent;
+
+    alert(
+        "NEXORA WALLET\n\n" +
+        "Connected: " + address + "\n\n" +
+        "NEXORA Balance: 1,000\n" +
+        "SOL Balance: 0.00"
+    );
 }
 
 function showServices() {
