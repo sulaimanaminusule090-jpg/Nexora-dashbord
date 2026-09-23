@@ -453,15 +453,83 @@ function receiveToken() {
   alert("Receive NEXORA will be available soon.");
 }
 
-function showWallet() {
-    const address = document.querySelector(".connect").textContent;
+async function showWallet() {
+    try {
+        const provider = window.phantom?.solana || window.solana;
 
-    alert(
-        "NEXORA WALLET\n\n" +
-        "Connected: " + address + "\n\n" +
-        "NEXORA Balance: 1,000\n" +
-        "SOL Balance: 0.00"
-    );
+        if (!provider || !provider.publicKey) {
+            alert("Please connect your Phantom wallet first.");
+            return;
+        }
+
+        const address = provider.publicKey.toString();
+
+        const RPC = "https://api.devnet.solana.com";
+        const NEXORA_MINT = "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+
+        // Get real SOL balance
+        const solResponse = await fetch(RPC, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "getBalance",
+                params: [address]
+            })
+        });
+
+        const solData = await solResponse.json();
+        const solBalance = (solData.result.value / 1000000000).toFixed(4);
+
+        // Get real NEXORA balance from standard SPL Token program
+        const tokenResponse = await fetch(RPC, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 2,
+                method: "getTokenAccountsByOwner",
+                params: [
+                    address,
+                    {
+                        mint: NEXORA_MINT
+                    },
+                    {
+                        encoding: "jsonParsed"
+                    }
+                ]
+            })
+        });
+
+        const tokenData = await tokenResponse.json();
+
+        let nexoraBalance = 0;
+
+        if (tokenData.result && tokenData.result.value) {
+            for (const account of tokenData.result.value) {
+                const amount =
+                    account.account.data.parsed.info.tokenAmount.uiAmount || 0;
+
+                nexoraBalance += amount;
+            }
+        }
+
+        alert(
+            "NEXORA WALLET\n\n" +
+            "Connected: " + address.slice(0, 4) + "..." + address.slice(-4) + "\n\n" +
+            "NEXORA Balance: " + nexoraBalance + "\n" +
+            "SOL Balance: " + solBalance
+        );
+
+    } catch (error) {
+        console.error(error);
+        alert("Unable to load wallet balance. Please try again.");
+    }
 }
 
 function showServices() {
