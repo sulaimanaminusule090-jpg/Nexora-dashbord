@@ -259,11 +259,11 @@
       </div>
 
       <div class="balance">
-        1,000 NEXORA
+        <span id="nexoraBalance">0</span> NEXORA
       </div>
 
       <div class="usd">
-        ≈ $1.00
+        <span id="nexoraUsd">Loading...</span>
       </div>
 
     </div>
@@ -320,7 +320,7 @@
       </div>
 
       <div class="asset-value">
-        1,000
+        <span id="nexoraAssetBalance">0</span>
       </div>
 
     </div>
@@ -518,8 +518,12 @@ async function showWallet() {
                 nexoraBalance += amount;
             }
         }
+document.getElementById("nexoraBalance").textContent = nexoraBalance;
+document.getElementById("nexoraAssetBalance").textContent = nexoraBalance;
+document.getElementById("nexoraUsd").textContent = "Price unavailable";
 
-        alert(
+alert(
+        
             "NEXORA WALLET\n\n" +
             "Connected: " + address.slice(0, 4) + "..." + address.slice(-4) + "\n\n" +
             "NEXORA Balance: " + nexoraBalance + "\n" +
