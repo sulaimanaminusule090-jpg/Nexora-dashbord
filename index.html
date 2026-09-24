@@ -639,7 +639,7 @@ async function sendToken() {
     transaction.lastValidBlockHeight =
       lastValidBlockHeight;
     transaction.feePayer = sender;
-
+alert("NEXORA: Sending transaction to Phantom...");
     const result =
       await provider.signAndSendTransaction(
         transaction
