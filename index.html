@@ -415,7 +415,86 @@
     </div>
 
   </nav>
+<div id="walletModal" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.55);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+">
+  <div style="
+    background:white;
+    width:100%;
+    max-width:420px;
+    border-radius:24px;
+    padding:24px;
+    box-sizing:border-box;
+  ">
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:20px;
+    ">
+      <h2 style="margin:0;">Nexora Wallet</h2>
 
+      <button onclick="closeWallet()" style="
+        border:0;
+        background:#111827;
+        color:white;
+        width:36px;
+        height:36px;
+        border-radius:50%;
+        font-size:20px;
+      ">×</button>
+    </div>
+
+    <div style="
+      background:#f3f4f6;
+      border-radius:14px;
+      padding:15px;
+      margin-bottom:12px;
+    ">
+      <div style="font-size:13px;color:#6b7280;">Wallet Address</div>
+      <div id="walletAddress" style="
+        margin-top:6px;
+        font-size:14px;
+        word-break:break-all;
+      ">Loading...</div>
+    </div>
+
+    <div style="
+      background:#f3f4f6;
+      border-radius:14px;
+      padding:15px;
+      margin-bottom:12px;
+    ">
+      <div style="font-size:13px;color:#6b7280;">NEXORA</div>
+      <div id="walletNexora" style="
+        margin-top:6px;
+        font-size:24px;
+        font-weight:bold;
+      ">0</div>
+    </div>
+
+    <div style="
+      background:#f3f4f6;
+      border-radius:14px;
+      padding:15px;
+    ">
+      <div style="font-size:13px;color:#6b7280;">SOL</div>
+      <div id="walletSol" style="
+        margin-top:6px;
+        font-size:24px;
+        font-weight:bold;
+      ">0.0000</div>
+    </div>
+
+  </div>
+</div>
 
   <script>
 async function connectWallet() {
@@ -520,21 +599,21 @@ async function showWallet() {
         }
 document.getElementById("nexoraBalance").textContent = nexoraBalance;
 document.getElementById("nexoraAssetBalance").textContent = nexoraBalance;
-document.getElementById("nexoraUsd").textContent = "Price unavailable";
-alert(
-  "Nexora Wallet\n\n" +
-  "Address: " + address + "\n" +
-  "SOL: " + solBalance + "\n" +
-  "NEXORA: " + nexoraBalance
-);
+document.getElementById("nexoraUsd").textContent = "Price unavailable"
+document.getElementById("walletAddress").textContent = address;
+document.getElementById("walletNexora").textContent = nexoraBalance;
+document.getElementById("walletSol").textContent = solBalance;
 
+document.getElementById("walletModal").style.display = "flex";
 
     } catch (error) {
         console.error(error);
         alert("Unable to load wallet balance. Please try again.");
     }
 }
-
+function closeWallet() {
+  document.getElementById("walletModal").style.display = "none";
+}
 function showServices() {
   alert("Nexora Services will be available soon.");
 }
