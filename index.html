@@ -521,7 +521,12 @@ async function showWallet() {
 document.getElementById("nexoraBalance").textContent = nexoraBalance;
 document.getElementById("nexoraAssetBalance").textContent = nexoraBalance;
 document.getElementById("nexoraUsd").textContent = "Price unavailable";
-
+alert(
+  "Nexora Wallet\n\n" +
+  "Address: " + address + "\n" +
+  "SOL: " + solBalance + "\n" +
+  "NEXORA: " + nexoraBalance
+);
 
 
     } catch (error) {
