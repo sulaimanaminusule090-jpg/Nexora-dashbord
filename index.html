@@ -347,7 +347,7 @@
       </div>
 
       <div class="asset-value">
-        0.00
+  <span id="solAssetBalance">0.00</span>
       </div>
 
     </div>
@@ -599,6 +599,7 @@ async function showWallet() {
         }
 document.getElementById("nexoraBalance").textContent = nexoraBalance;
 document.getElementById("nexoraAssetBalance").textContent = nexoraBalance;
+      document.getElementById("solAssetBalance").textContent = solBalance;
 document.getElementById("nexoraUsd").textContent = "Price unavailable"
 document.getElementById("walletAddress").textContent = address;
 document.getElementById("walletNexora").textContent = nexoraBalance;
