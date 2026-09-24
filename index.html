@@ -398,7 +398,7 @@
       🏠<br>
       Home
     </div>
-<div class="nav-item" onclick="showWallet()">
+<div class="nav-item" onclick="showWalletPage()">
     
       👛<br>
       Wallet
@@ -626,6 +626,264 @@ function closeWallet() {
 function showServices() {
   alert("Nexora Services will be available soon.");
 }
+   function showWalletPage() {
+  let page = document.getElementById("walletPage");
+
+  if (!page) {
+    page = document.createElement("div");
+    page.id = "walletPage";
+
+    page.style.cssText = `
+      position:fixed;
+      inset:0;
+      background:#f5f7fb;
+      z-index:9999;
+      overflow-y:auto;
+      padding-bottom:90px;
+      font-family:Arial,sans-serif;
+    `;
+
+    page.innerHTML = `
+      <div style="
+        background:#111827;
+        color:white;
+        padding:20px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        position:sticky;
+        top:0;
+        z-index:2;
+      ">
+        <div style="font-size:24px;font-weight:bold;">
+          Nexora Wallet
+        </div>
+
+        <button onclick="closeWalletPage()" style="
+          border:0;
+          background:#374151;
+          color:white;
+          width:40px;
+          height:40px;
+          border-radius:50%;
+          font-size:22px;
+        ">×</button>
+      </div>
+
+      <div style="padding:20px;">
+
+        <div style="
+          background:#111827;
+          color:white;
+          border-radius:20px;
+          padding:24px;
+          margin-bottom:20px;
+        ">
+          <div style="color:#cbd5e1;font-size:14px;">
+            Total NEXORA Balance
+          </div>
+
+          <div id="walletPageNexora" style="
+            font-size:32px;
+            font-weight:bold;
+            margin-top:8px;
+          ">
+            200 NEXORA
+          </div>
+
+          <div style="
+            color:#9ca3af;
+            margin-top:8px;
+          ">
+            Price unavailable
+          </div>
+        </div>
+
+        <div style="
+          background:white;
+          border-radius:18px;
+          padding:20px;
+          margin-bottom:15px;
+        ">
+          <div style="color:#6b7280;font-size:14px;">
+            Wallet Address
+          </div>
+
+          <div id="walletPageAddress" style="
+            margin-top:8px;
+            font-size:14px;
+            word-break:break-all;
+            font-weight:600;
+          ">
+            Loading...
+          </div>
+
+          <button onclick="copyWalletAddress()" style="
+            margin-top:15px;
+            width:100%;
+            padding:12px;
+            border:0;
+            border-radius:10px;
+            background:#111827;
+            color:white;
+            font-weight:bold;
+          ">
+            Copy Address
+          </button>
+        </div>
+
+        <div style="
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:15px;
+          margin-bottom:20px;
+        ">
+
+          <button onclick="sendToken()" style="
+            padding:20px;
+            border:0;
+            border-radius:18px;
+            background:white;
+            font-size:16px;
+            font-weight:bold;
+          ">
+            📤<br><br>Send
+          </button>
+
+          <button onclick="receiveToken()" style="
+            padding:20px;
+            border:0;
+            border-radius:18px;
+            background:white;
+            font-size:16px;
+            font-weight:bold;
+          ">
+            📥<br><br>Receive
+          </button>
+
+        </div>
+
+        <div style="
+          background:white;
+          border-radius:18px;
+          padding:20px;
+          margin-bottom:15px;
+        ">
+          <div style="
+            font-size:18px;
+            font-weight:bold;
+            margin-bottom:15px;
+          ">
+            Assets
+          </div>
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            padding:15px 0;
+            border-bottom:1px solid #e5e7eb;
+          ">
+            <div>
+              <strong>Nexora</strong>
+              <div style="color:#6b7280;font-size:13px;">
+                NEXORA
+              </div>
+            </div>
+
+            <strong id="walletPageAsset">
+              200
+            </strong>
+          </div>
+
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            padding:15px 0;
+          ">
+            <div>
+              <strong>Solana</strong>
+              <div style="color:#6b7280;font-size:13px;">
+                SOL
+              </div>
+            </div>
+
+            <strong id="walletPageSol">
+              1.0000
+            </strong>
+          </div>
+        </div>
+
+        <div style="
+          background:white;
+          border-radius:18px;
+          padding:20px;
+        ">
+          <div style="
+            font-size:18px;
+            font-weight:bold;
+            margin-bottom:15px;
+          ">
+            Wallet Status
+          </div>
+
+          <div style="color:#16834b;">
+            ● Wallet connected
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    document.body.appendChild(page);
+  }
+
+  const addressElement = document.getElementById("walletAddress");
+
+  if (addressElement) {
+    document.getElementById("walletPageAddress").textContent =
+      addressElement.textContent;
+  }
+
+  const nexoraElement = document.getElementById("nexoraBalance");
+
+  if (nexoraElement) {
+    const balance = nexoraElement.textContent;
+
+    document.getElementById("walletPageNexora").textContent =
+      balance + " NEXORA";
+
+    document.getElementById("walletPageAsset").textContent =
+      balance;
+  }
+
+  const solElement = document.getElementById("solAssetBalance");
+
+  if (solElement) {
+    document.getElementById("walletPageSol").textContent =
+      solElement.textContent;
+  }
+
+  page.style.display = "block";
+}
+
+
+function closeWalletPage() {
+  const page = document.getElementById("walletPage");
+
+  if (page) {
+    page.style.display = "none";
+  }
+}
+
+
+function copyWalletAddress() {
+  const address =
+    document.getElementById("walletPageAddress").textContent;
+
+  navigator.clipboard.writeText(address).then(() => {
+    alert("Wallet address copied!");
+  });
+} 
   </script>
 
 </body>
