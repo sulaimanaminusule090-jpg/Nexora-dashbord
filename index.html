@@ -536,7 +536,16 @@ async function showWallet() {
     try {
         const provider = window.phantom?.solana || window.solana;
 
-        if (!provider || !provider.publicKey) {
+        if (!provider) {
+            alert("Phantom wallet was not found. Please open Nexora in Phantom.");
+            return;
+        }
+
+        if (!provider.publicKey) {
+            await provider.connect();
+        }
+
+        if (!provider.publicKey) {
             alert("Please connect your Phantom wallet first.");
             return;
         }
@@ -546,7 +555,6 @@ async function showWallet() {
         const RPC = "https://api.devnet.solana.com";
         const NEXORA_MINT = "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
 
-        // Get real SOL balance
         const solResponse = await fetch(RPC, {
             method: "POST",
             headers: {
@@ -563,7 +571,6 @@ async function showWallet() {
         const solData = await solResponse.json();
         const solBalance = (solData.result.value / 1000000000).toFixed(4);
 
-        // Get real NEXORA balance from standard SPL Token program
         const tokenResponse = await fetch(RPC, {
             method: "POST",
             headers: {
@@ -597,15 +604,16 @@ async function showWallet() {
                 nexoraBalance += amount;
             }
         }
-document.getElementById("nexoraBalance").textContent = nexoraBalance;
-document.getElementById("nexoraAssetBalance").textContent = nexoraBalance;
-      document.getElementById("solAssetBalance").textContent = solBalance;
-document.getElementById("nexoraUsd").textContent = "Price unavailable"
-document.getElementById("walletAddress").textContent = address;
-document.getElementById("walletNexora").textContent = nexoraBalance;
-document.getElementById("walletSol").textContent = solBalance;
 
-document.getElementById("walletModal").style.display = "flex";
+        document.getElementById("nexoraBalance").textContent = nexoraBalance;
+        document.getElementById("nexoraAssetBalance").textContent = nexoraBalance;
+        document.getElementById("solAssetBalance").textContent = solBalance;
+        document.getElementById("nexoraUsd").textContent = "Price unavailable";
+        document.getElementById("walletAddress").textContent = address;
+        document.getElementById("walletNexora").textContent = nexoraBalance;
+        document.getElementById("walletSol").textContent = solBalance;
+
+        document.getElementById("walletModal").style.display = "flex";
 
     } catch (error) {
         console.error(error);
