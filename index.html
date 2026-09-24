@@ -524,8 +524,152 @@ async function connectWallet() {
   }
 }
 
-function sendToken() {
-  alert("Send NEXORA will be available soon.");
+async function sendToken() {
+  try {
+    const provider = window.phantom?.solana || window.solana;
+
+    if (!provider) {
+      alert("Phantom wallet was not found.");
+      return;
+    }
+
+    if (!provider.publicKey) {
+      await provider.connect();
+    }
+
+    const recipientAddress = prompt(
+      "Enter recipient Solana wallet address:"
+    );
+    if (!recipientAddress) return;
+
+    const amountInput = prompt(
+      "Enter NEXORA amount to send:"
+    );
+    if (!amountInput) return;
+
+    const amount = Number(amountInput);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      alert("Please enter a valid NEXORA amount.");
+      return;
+    }
+
+    const { Connection, PublicKey, Transaction } =
+      await import("https://esm.sh/@solana/web3.js@1.98.4");
+
+    const {
+      getAssociatedTokenAddress,
+      createAssociatedTokenAccountInstruction,
+      createTransferCheckedInstruction
+    } = await import("https://esm.sh/@solana/spl-token@0.4.15");
+
+    const RPC = "https://api.devnet.solana.com";
+    const NEXORA_MINT =
+      "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+    const DECIMALS = 9;
+
+    const connection = new Connection(RPC, "confirmed");
+
+    const sender = provider.publicKey;
+    const recipient = new PublicKey(recipientAddress);
+    const mint = new PublicKey(NEXORA_MINT);
+
+    const tokenAccounts =
+      await connection.getTokenAccountsByOwner(
+        sender,
+        { mint: mint },
+        "confirmed"
+      );
+
+    if (tokenAccounts.value.length === 0) {
+      alert("Your NEXORA token account was not found.");
+      return;
+    }
+
+    const senderTokenAccount =
+      tokenAccounts.value[0].pubkey;
+
+    const recipientTokenAccount =
+      await getAssociatedTokenAddress(
+        mint,
+        recipient
+      );
+
+    const transaction = new Transaction();
+
+    const recipientAccountInfo =
+      await connection.getAccountInfo(
+        recipientTokenAccount
+      );
+
+    if (!recipientAccountInfo) {
+      transaction.add(
+        createAssociatedTokenAccountInstruction(
+          sender,
+          recipientTokenAccount,
+          recipient,
+          mint
+        )
+      );
+    }
+
+    const rawAmount = BigInt(
+      Math.round(amount * 10 ** DECIMALS)
+    );
+
+    transaction.add(
+      createTransferCheckedInstruction(
+        senderTokenAccount,
+        mint,
+        recipientTokenAccount,
+        sender,
+        rawAmount,
+        DECIMALS
+      )
+    );
+
+    const {
+      blockhash,
+      lastValidBlockHeight
+    } = await connection.getLatestBlockhash(
+      "confirmed"
+    );
+
+    transaction.recentBlockhash = blockhash;
+    transaction.lastValidBlockHeight =
+      lastValidBlockHeight;
+    transaction.feePayer = sender;
+
+    const result =
+      await provider.signAndSendTransaction(
+        transaction
+      );
+
+    await connection.confirmTransaction(
+      {
+        signature: result.signature,
+        blockhash,
+        lastValidBlockHeight
+      },
+      "confirmed"
+    );
+
+    alert(
+      "NEXORA sent successfully!\n\nTransaction:\n" +
+      result.signature
+    );
+
+  } catch (error) {
+    console.error(
+      "Send NEXORA error:",
+      error
+    );
+
+    alert(
+      "NEXORA transfer failed.\n\n" +
+      (error?.message || error)
+    );
+  }
 }
 
 function receiveToken() {
