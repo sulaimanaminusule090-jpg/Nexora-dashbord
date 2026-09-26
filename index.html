@@ -673,15 +673,14 @@ alert("NEXORA: Sending transaction to Phantom...");
     );
 
   } catch (error) {
-    console.error(
-      "Send NEXORA error:",
-      error
-    );
+  console.error("Send NEXORA error:", error);
 
-    alert(
-      "NEXORA transfer failed.\n\n" +
-      (error?.message || error)
-    );
+  alert(
+    "NEXORA transfer failed.\n\n" +
+    "Name: " + (error?.name || "Unknown") + "\n" +
+    "Code: " + (error?.code ?? "None") + "\n" +
+    "Message: " + (error?.message || error)
+  );
   }
 }
 
