@@ -404,12 +404,12 @@
       Wallet
     </div>
 
-    <div class="nav-item">
-      📜<br>
-      History
+    <div class="nav-item" onclick="showHistory()">
+  📜<br>
+  History
     </div>
 
-    <div class="nav-item">
+    <div class="nav-item" onclick="showSettings()">
       ⚙️<br>
       Settings
     </div>
@@ -811,6 +811,12 @@ function closeWallet() {
 function showServices() {
   alert("Nexora Services will be available soon.");
 }
+    function showHistory() {
+  alert("Nexora Transaction History");
+    }
+    function showSettings() {
+  alert("Nexora Settings");
+    }
    function showWalletPage() {
   let page = document.getElementById("walletPage");
 
