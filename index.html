@@ -1058,7 +1058,9 @@ function showServices() {
 }
 
 function receiveToken() {
-  const address = document.getElementById("walletPageAddress")?.textContent?.trim();
+  const address =
+  document.getElementById("walletPageAddress")?.textContent?.trim() ||
+  document.getElementById("walletAddress")?.textContent?.trim();
 
   if (!address) {
     alert("Wallet address not available.");
