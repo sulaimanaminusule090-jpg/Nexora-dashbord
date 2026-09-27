@@ -658,14 +658,43 @@ alert("NEXORA: Sending transaction to Phantom...");
         transaction
       );
 
-    await connection.confirmTransaction(
-      {
-        signature: result.signature,
-        blockhash,
-        lastValidBlockHeight
-      },
-      "confirmed"
+    const signature = result.signature;
+
+let confirmed = false;
+
+for (let i = 0; i < 20; i++) {
+  const status = await connection.getSignatureStatuses(
+    [signature],
+    { searchTransactionHistory: true }
+  );
+
+  const txStatus = status.value[0];
+
+  if (txStatus?.err) {
+    throw new Error(
+      "NEXORA transaction failed on-chain: " +
+      JSON.stringify(txStatus.err)
     );
+  }
+
+  if (
+    txStatus &&
+    (txStatus.confirmationStatus === "confirmed" ||
+     txStatus.confirmationStatus === "finalized")
+  ) {
+    confirmed = true;
+    break;
+  }
+
+  await new Promise(resolve => setTimeout(resolve, 1000));
+}
+
+if (!confirmed) {
+  throw new Error(
+    "Transaction was sent but confirmation timed out. Signature: " +
+    signature
+  );
+}
 
     alert(
       "NEXORA sent successfully!\n\nTransaction:\n" +
