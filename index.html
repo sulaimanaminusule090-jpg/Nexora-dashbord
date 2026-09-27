@@ -1057,7 +1057,16 @@ function showServices() {
   page.style.display = "block";
 }
 
+function receiveToken() {
+  const address = document.getElementById("walletPageAddress")?.textContent?.trim();
 
+  if (!address) {
+    alert("Wallet address not available.");
+    return;
+  }
+
+  alert("Your Nexora receiving address:\n\n" + address);
+}
 function closeWalletPage() {
   const page = document.getElementById("walletPage");
 
