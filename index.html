@@ -368,7 +368,7 @@
 
   <nav class="bottom-nav">
 
-    <div class="nav-item active" onclick="document.getElementById('walletPage')?.remove()">
+    <div class="nav-item active" onclick="showHome()">
       🏠<br>
       Home
     </div>
@@ -1105,6 +1105,13 @@ function receiveToken() {
 
   alert("Your Nexora receiving address:\n\n" + address);
 }
+    function showWalletPage() {
+    const modal = document.getElementById("walletModal");
+
+    if (modal) {
+        modal.style.display = "flex";
+    }
+    }
 function closeWalletPage() {
   const page = document.getElementById("walletPage");
 
