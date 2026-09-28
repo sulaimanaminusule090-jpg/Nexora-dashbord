@@ -359,42 +359,16 @@
         Recent Transactions
       </h2>
 
-      <div class="transaction">
-
-        <div>
-          <strong>Received NEXORA</strong>
-          <br>
-          <small>Today</small>
-        </div>
-
-        <div class="received">
-          +100 NEXORA
-        </div>
-
+      <div id="recentTransactions">
+    <p>No recent transactions</p>
       </div>
-
-      <div class="transaction">
-
-        <div>
-          <strong>Sent NEXORA</strong>
-          <br>
-          <small>Yesterday</small>
-        </div>
-
-        <div class="sent">
-          -25 NEXORA
-        </div>
-
-      </div>
-
-    </div>
 
   </main>
 
 
   <nav class="bottom-nav">
 
-    <div class="nav-item active">
+    <div class="nav-item active" onclick="location.reload()">
       🏠<br>
       Home
     </div>
@@ -512,7 +486,7 @@ async function connectWallet() {
     const response = await provider.connect();
 
     const address = response.publicKey.toString();
-
+loadRecentTransactions();
     document.querySelector(".connect").textContent =
       address.slice(0, 4) + "..." + address.slice(-4);
 
@@ -1056,7 +1030,69 @@ function showServices() {
 
   page.style.display = "block";
 }
+async function loadRecentTransactions() {
+    try {
+        const provider = window.phantom?.solana || window.solana;
 
+        if (!provider || !provider.publicKey) {
+            return;
+        }
+
+        const RPC = "https://api.devnet.solana.com";
+
+        const NEXORA_MINT =
+            "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+
+        const wallet = provider.publicKey.toString();
+
+        const container =
+            document.getElementById("recentTransactions");
+
+        if (!container) return;
+
+        const response = await fetch(RPC, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                id: 1,
+                method: "getTokenAccountsByOwner",
+                params: [
+                    wallet,
+                    {
+                        mint: NEXORA_MINT
+                    },
+                    {
+                        encoding: "jsonParsed"
+                    }
+                ]
+            })
+        });
+
+        const data = await response.json();
+
+        if (
+            !data.result ||
+            !data.result.value ||
+            data.result.value.length === 0
+        ) {
+            container.innerHTML =
+                "<p>No recent transactions</p>";
+            return;
+        }
+
+        container.innerHTML =
+            "<p>NEXORA transaction history available</p>";
+
+    } catch (error) {
+        console.error(
+            "Recent transactions error:",
+            error
+        );
+    }
+}
 function receiveToken() {
   const address =
   document.getElementById("walletPageAddress")?.textContent?.trim() ||
