@@ -1154,9 +1154,14 @@ function receiveToken() {
 }
     function showWalletPage() {
   const modal = document.getElementById("walletModal");
+  const page = document.getElementById("walletPage");
 
   if (modal) {
-    modal.style.display = "flex";
+    modal.style.display = "none";
+  }
+
+  if (page) {
+    page.style.display = "block";
   }
 
   updateWalletSol();
