@@ -1184,11 +1184,24 @@ function copyWalletAddress() {
   const historyPage = document.getElementById("historyPage");
   const settingsPage = document.getElementById("settingsPage");
 
-  if (walletModal) walletModal.style.display = "none";
-  if (walletPage) walletPage.style.display = "none";
-  if (historyPage) historyPage.style.display = "none";
-  if (settingsPage) settingsPage.style.display = "none";
-}
+  if (walletModal) {
+    walletModal.style.display = "none";
+  }
+
+  if (walletPage) {
+    walletPage.style.display = "none";
+  }
+
+  if (historyPage) {
+    historyPage.style.display = "none";
+  }
+
+  if (settingsPage) {
+    settingsPage.style.display = "none";
+  }
+
+  window.scrollTo(0, 0);
+ }
     
   </script>
 
