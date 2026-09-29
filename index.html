@@ -368,7 +368,7 @@
 
   <nav class="bottom-nav">
 
-    <div class="nav-item active" onclick="document.getElementById('walletModal').style.display='none'">
+    <div class="nav-item active" onclick="showHome()">
       🏠<br>
       Home
     </div>
@@ -1128,7 +1128,19 @@ function copyWalletAddress() {
   navigator.clipboard.writeText(address).then(() => {
     alert("Wallet address copied!");
   });
-} 
+}
+ function showHome() {
+  const walletModal = document.getElementById("walletModal");
+  const walletPage = document.getElementById("walletPage");
+  const historyPage = document.getElementById("historyPage");
+  const settingsPage = document.getElementById("settingsPage");
+
+  if (walletModal) walletModal.style.display = "none";
+  if (walletPage) walletPage.style.display = "none";
+  if (historyPage) historyPage.style.display = "none";
+  if (settingsPage) settingsPage.style.display = "none";
+}
+    
   </script>
 
 </body>
