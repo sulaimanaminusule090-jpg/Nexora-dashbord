@@ -1153,18 +1153,11 @@ function receiveToken() {
   alert("Your Nexora receiving address:\n\n" + address);
 }
     function showWalletPage() {
-  const modal = document.getElementById("walletModal");
   const page = document.getElementById("walletPage");
-
-  if (modal) {
-    modal.style.display = "none";
-  }
 
   if (page) {
     page.style.display = "block";
   }
-
-  updateWalletSol();
     }
 function closeWalletPage() {
   const page = document.getElementById("walletPage");
