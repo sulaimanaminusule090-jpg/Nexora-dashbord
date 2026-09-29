@@ -956,7 +956,7 @@ function showServices() {
             </div>
 
             <strong id="walletPageAsset">
-              200
+              0
             </strong>
           </div>
 
@@ -973,7 +973,7 @@ function showServices() {
             </div>
 
             <strong id="walletPageSol">
-              1.0000
+              0.0000
             </strong>
           </div>
         </div>
@@ -1021,12 +1021,59 @@ function showServices() {
       balance;
   }
 
-  const solElement = document.getElementById("solAssetBalance");
+async function updateWalletSol() {
+  try {
+    const provider = window.phantom?.solana || window.solana;
 
-  if (solElement) {
-    document.getElementById("walletPageSol").textContent =
-      solElement.textContent;
+    if (!provider || !provider.publicKey) {
+      return;
+    }
+
+    const response = await fetch(
+      "https://api.devnet.solana.com",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getBalance",
+          params: [
+            provider.publicKey.toString()
+          ]
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (
+      !data.result ||
+      typeof data.result.value !== "number"
+    ) {
+      return;
+    }
+
+    const sol =
+      data.result.value / 1000000000;
+
+    const solElement =
+      document.getElementById("walletPageSol");
+
+    if (solElement) {
+      solElement.textContent =
+        sol.toFixed(4);
+    }
+
+  } catch (error) {
+    console.error(
+      "SOL balance error:",
+      error
+    );
   }
+}
 
   page.style.display = "block";
 }
@@ -1106,11 +1153,13 @@ function receiveToken() {
   alert("Your Nexora receiving address:\n\n" + address);
 }
     function showWalletPage() {
-    const modal = document.getElementById("walletModal");
+  const modal = document.getElementById("walletModal");
 
-    if (modal) {
-        modal.style.display = "flex";
-    }
+  if (modal) {
+    modal.style.display = "flex";
+  }
+
+  updateWalletSol();
     }
 function closeWalletPage() {
   const page = document.getElementById("walletPage");
