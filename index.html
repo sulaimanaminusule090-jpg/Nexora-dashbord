@@ -391,6 +391,38 @@
   </nav>
 
   </nav>
+  <div id="historyPage" style="
+  display:none;
+  padding:20px;
+  padding-bottom:100px;
+  min-height:100vh;
+  background:#f5f7fb;
+">
+
+  <div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+  ">
+    <h2 style="margin:0;">Transaction History</h2>
+
+    <button onclick="showHome()" style="
+      border:0;
+      background:#111827;
+      color:white;
+      width:36px;
+      height:36px;
+      border-radius:50%;
+      font-size:20px;
+    ">×</button>
+  </div>
+
+  <div id="historyTransactions">
+    <p>Loading transactions...</p>
+  </div>
+
+  </div>
 <div id="walletModal" style="
   display:none;
   position:fixed;
@@ -787,8 +819,182 @@ function closeWallet() {
 function showServices() {
   alert("Nexora Services will be available soon.");
 }
-    function showHistory() {
-  alert("Nexora Transaction History");
+    async function showHistory() {
+  const walletModal = document.getElementById("walletModal");
+  const walletPage = document.getElementById("walletPage");
+  const historyPage = document.getElementById("historyPage");
+  const settingsPage = document.getElementById("settingsPage");
+  const historyTransactions = document.getElementById("historyTransactions");
+
+  if (walletModal) walletModal.style.display = "none";
+  if (walletPage) walletPage.style.display = "none";
+  if (settingsPage) settingsPage.style.display = "none";
+
+  if (!historyPage) {
+    alert("History page not found.");
+    return;
+  }
+
+  historyPage.style.display = "block";
+  window.scrollTo(0, 0);
+
+  if (!historyTransactions) return;
+
+  historyTransactions.innerHTML = "<p>Loading transactions...</p>";
+
+  try {
+    const provider = window.phantom?.solana || window.solana;
+
+    if (!provider || !provider.publicKey) {
+      historyTransactions.innerHTML =
+        "<p>Please connect your wallet first.</p>";
+      return;
+    }
+
+    const walletAddress = provider.publicKey.toString();
+
+    const connection = new solanaWeb3.Connection(
+      "https://api.devnet.solana.com",
+      "confirmed"
+    );
+
+    const mintAddress = new solanaWeb3.PublicKey(
+      "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o"
+    );
+
+    const tokenAccounts = await connection.getTokenAccountsByOwner(
+      provider.publicKey,
+      { mint: mintAddress }
+    );
+
+    if (tokenAccounts.value.length === 0) {
+      historyTransactions.innerHTML =
+        "<p>No NEXORA transactions found.</p>";
+      return;
+    }
+
+    const allTransactions = [];
+
+    for (const account of tokenAccounts.value) {
+      const signatures = await connection.getSignaturesForAddress(
+        account.pubkey,
+        { limit: 50 }
+      );
+
+      for (const sigInfo of signatures) {
+        if (!sigInfo.signature) continue;
+
+        const tx = await connection.getTransaction(
+          sigInfo.signature,
+          {
+            maxSupportedTransactionVersion: 0
+          }
+        );
+
+        if (!tx || !tx.meta) continue;
+
+        let preAmount = 0;
+        let postAmount = 0;
+
+        for (const item of tx.meta.preTokenBalances || []) {
+          if (
+            item.mint === mintAddress.toString() &&
+            item.owner === walletAddress
+          ) {
+            preAmount += Number(item.uiTokenAmount.uiAmount || 0);
+          }
+        }
+
+        for (const item of tx.meta.postTokenBalances || []) {
+          if (
+            item.mint === mintAddress.toString() &&
+            item.owner === walletAddress
+          ) {
+            postAmount += Number(item.uiTokenAmount.uiAmount || 0);
+          }
+        }
+
+        const change = postAmount - preAmount;
+
+        if (change === 0) continue;
+
+        allTransactions.push({
+          signature: sigInfo.signature,
+          change: change,
+          blockTime: tx.blockTime || sigInfo.blockTime || 0
+        });
+      }
+    }
+
+    const uniqueTransactions = Array.from(
+      new Map(
+        allTransactions.map(tx => [tx.signature, tx])
+      ).values()
+    );
+
+    uniqueTransactions.sort(
+      (a, b) => b.blockTime - a.blockTime
+    );
+
+    if (uniqueTransactions.length === 0) {
+      historyTransactions.innerHTML =
+        "<p>No NEXORA transactions found.</p>";
+      return;
+    }
+
+    historyTransactions.innerHTML = "";
+
+    uniqueTransactions.forEach(tx => {
+      const type = tx.change > 0 ? "Received" : "Sent";
+      const amount = Math.abs(tx.change);
+
+      const date = tx.blockTime
+        ? new Date(tx.blockTime * 1000).toLocaleString()
+        : "Unknown date";
+
+      const item = document.createElement("div");
+
+      item.style.cssText = `
+        background:white;
+        border-radius:14px;
+        padding:16px;
+        margin-bottom:12px;
+        box-shadow:0 2px 8px rgba(0,0,0,0.06);
+      `;
+
+      item.innerHTML = `
+        <div style="font-weight:bold;font-size:16px;">
+          ${type} ${amount} NEXORA
+        </div>
+
+        <div style="font-size:13px;color:#6b7280;margin-top:6px;">
+          ${date}
+        </div>
+
+        <a
+          href="https://explorer.solana.com/tx/${tx.signature}?cluster=devnet"
+          target="_blank"
+          style="
+            display:inline-block;
+            margin-top:10px;
+            color:#2563eb;
+            text-decoration:none;
+            font-size:13px;
+          "
+        >
+          View transaction
+        </a>
+      `;
+
+      historyTransactions.appendChild(item);
+    });
+
+  } catch (error) {
+    console.error("History error:", error);
+
+    historyTransactions.innerHTML =
+      "<p>Unable to load transaction history.</p>";
+  }
     }
     function showSettings() {
   alert("Nexora Settings");
