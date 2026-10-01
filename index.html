@@ -840,10 +840,12 @@ function showServices() {
 
   if (!historyTransactions) return;
 
-  historyTransactions.innerHTML = "<p>Loading transactions...</p>";
+  historyTransactions.innerHTML =
+    "<p>Loading transactions...</p>";
 
   try {
-    const provider = window.phantom?.solana || window.solana;
+    const provider =
+      window.phantom?.solana || window.solana;
 
     if (!provider || !provider.publicKey) {
       historyTransactions.innerHTML =
@@ -851,21 +853,55 @@ function showServices() {
       return;
     }
 
-    const connection = new solanaWeb3.Connection(
-      "https://api.devnet.solana.com",
-      "confirmed"
+    const walletAddress =
+      provider.publicKey.toString();
+
+    const RPC =
+      "https://api.devnet.solana.com";
+
+    const MINT =
+      "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+
+    const rpcCall = async (method, params) => {
+      const response = await fetch(RPC, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: method,
+          params: params
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+
+      return data.result;
+    };
+
+    const tokenAccounts = await rpcCall(
+      "getTokenAccountsByOwner",
+      [
+        walletAddress,
+        {
+          mint: MINT
+        },
+        {
+          encoding: "jsonParsed"
+        }
+      ]
     );
 
-    const mintAddress = new solanaWeb3.PublicKey(
-      "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o"
-    );
-
-    const tokenAccounts = await connection.getTokenAccountsByOwner(
-      provider.publicKey,
-      { mint: mintAddress }
-    );
-
-    if (tokenAccounts.value.length === 0) {
+    if (
+      !tokenAccounts ||
+      tokenAccounts.value.length === 0
+    ) {
       historyTransactions.innerHTML =
         "<p>No NEXORA transactions found.</p>";
       return;
@@ -874,73 +910,99 @@ function showServices() {
     const allTransactions = [];
 
     for (const account of tokenAccounts.value) {
-      const signatures = await connection.getSignaturesForAddress(
-        account.pubkey,
-        { limit: 20 }
+      const tokenAccount =
+        account.pubkey;
+
+      const signatures = await rpcCall(
+        "getSignaturesForAddress",
+        [
+          tokenAccount,
+          {
+            limit: 20
+          }
+        ]
       );
 
-      const signatureList = signatures
-        .map(item => item.signature)
-        .filter(Boolean);
+      for (const sigInfo of signatures) {
+        if (!sigInfo.signature) continue;
 
-      if (signatureList.length === 0) continue;
+        const tx = await rpcCall(
+          "getTransaction",
+          [
+            sigInfo.signature,
+            {
+              encoding: "jsonParsed",
+              maxSupportedTransactionVersion: 0
+            }
+          ]
+        );
 
-      const transactions = await connection.getParsedTransactions(
-        signatureList,
-        {
-          maxSupportedTransactionVersion: 0
-        }
-      );
-
-      transactions.forEach((tx, index) => {
-        if (!tx || !tx.meta) return;
+        if (!tx || !tx.meta) continue;
 
         let preAmount = 0;
         let postAmount = 0;
 
-        for (const item of tx.meta.preTokenBalances || []) {
-          if (item.mint === mintAddress.toString()) {
-            if (item.owner === provider.publicKey.toString()) {
-              preAmount += Number(
-                item.uiTokenAmount?.uiAmount || 0
-              );
-            }
+        for (
+          const item of
+          (tx.meta.preTokenBalances || [])
+        ) {
+          if (
+            item.mint === MINT &&
+            item.owner === walletAddress
+          ) {
+            preAmount += Number(
+              item.uiTokenAmount?.uiAmount || 0
+            );
           }
         }
 
-        for (const item of tx.meta.postTokenBalances || []) {
-          if (item.mint === mintAddress.toString()) {
-            if (item.owner === provider.publicKey.toString()) {
-              postAmount += Number(
-                item.uiTokenAmount?.uiAmount || 0
-              );
-            }
+        for (
+          const item of
+          (tx.meta.postTokenBalances || [])
+        ) {
+          if (
+            item.mint === MINT &&
+            item.owner === walletAddress
+          ) {
+            postAmount += Number(
+              item.uiTokenAmount?.uiAmount || 0
+            );
           }
         }
 
-        const change = postAmount - preAmount;
+        const change =
+          postAmount - preAmount;
 
-        if (change === 0) return;
+        if (change === 0) continue;
 
         allTransactions.push({
-          signature: signatureList[index],
+          signature: sigInfo.signature,
           change: change,
-          blockTime: tx.blockTime || signatures[index].blockTime || 0
+          blockTime:
+            tx.blockTime ||
+            sigInfo.blockTime ||
+            0
         });
-      });
+      }
     }
 
-    const uniqueTransactions = Array.from(
-      new Map(
-        allTransactions.map(tx => [tx.signature, tx])
-      ).values()
-    );
+    const uniqueTransactions =
+      Array.from(
+        new Map(
+          allTransactions.map(
+            tx => [tx.signature, tx]
+          )
+        ).values()
+      );
 
     uniqueTransactions.sort(
-      (a, b) => b.blockTime - a.blockTime
+      (a, b) =>
+        b.blockTime - a.blockTime
     );
 
-    if (uniqueTransactions.length === 0) {
+    if (
+      uniqueTransactions.length === 0
+    ) {
       historyTransactions.innerHTML =
         "<p>No NEXORA transactions found.</p>";
       return;
@@ -949,14 +1011,23 @@ function showServices() {
     historyTransactions.innerHTML = "";
 
     uniqueTransactions.forEach(tx => {
-      const type = tx.change > 0 ? "Received" : "Sent";
-      const amount = Math.abs(tx.change);
+      const type =
+        tx.change > 0
+          ? "Received"
+          : "Sent";
 
-      const date = tx.blockTime
-        ? new Date(tx.blockTime * 1000).toLocaleString()
-        : "Unknown date";
+      const amount =
+        Math.abs(tx.change);
 
-      const item = document.createElement("div");
+      const date =
+        tx.blockTime
+          ? new Date(
+              tx.blockTime * 1000
+            ).toLocaleString()
+          : "Unknown date";
+
+      const item =
+        document.createElement("div");
 
       item.style.cssText = `
         background:white;
@@ -994,14 +1065,18 @@ function showServices() {
     });
 
   } catch (error) {
-  console.error("History error:", error);
+    console.error(
+      "History error:",
+      error
+    );
 
-  historyTransactions.innerHTML =
-    "<p>History error: " +
-    (error?.message || error) +
-    "</p>";
+    historyTransactions.innerHTML =
+      "<p>History error: " +
+      (error?.message || error) +
+      "</p>";
   }
-            }
+    }
+            
     function showSettings() {
   alert("Nexora Settings");
     }
