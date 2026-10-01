@@ -851,8 +851,6 @@ function showServices() {
       return;
     }
 
-    const walletAddress = provider.publicKey.toString();
-
     const connection = new solanaWeb3.Connection(
       "https://api.devnet.solana.com",
       "confirmed"
@@ -878,52 +876,58 @@ function showServices() {
     for (const account of tokenAccounts.value) {
       const signatures = await connection.getSignaturesForAddress(
         account.pubkey,
-        { limit: 50 }
+        { limit: 20 }
       );
 
-      for (const sigInfo of signatures) {
-        if (!sigInfo.signature) continue;
+      const signatureList = signatures
+        .map(item => item.signature)
+        .filter(Boolean);
 
-        const tx = await connection.getTransaction(
-          sigInfo.signature,
-          {
-            maxSupportedTransactionVersion: 0
-          }
-        );
+      if (signatureList.length === 0) continue;
 
-        if (!tx || !tx.meta) continue;
+      const transactions = await connection.getParsedTransactions(
+        signatureList,
+        {
+          maxSupportedTransactionVersion: 0
+        }
+      );
+
+      transactions.forEach((tx, index) => {
+        if (!tx || !tx.meta) return;
 
         let preAmount = 0;
         let postAmount = 0;
 
         for (const item of tx.meta.preTokenBalances || []) {
-          if (
-            item.mint === mintAddress.toString() &&
-            item.owner === walletAddress
-          ) {
-            preAmount += Number(item.uiTokenAmount.uiAmount || 0);
+          if (item.mint === mintAddress.toString()) {
+            if (item.owner === provider.publicKey.toString()) {
+              preAmount += Number(
+                item.uiTokenAmount?.uiAmount || 0
+              );
+            }
           }
         }
 
         for (const item of tx.meta.postTokenBalances || []) {
-          if (
-            item.mint === mintAddress.toString() &&
-            item.owner === walletAddress
-          ) {
-            postAmount += Number(item.uiTokenAmount.uiAmount || 0);
+          if (item.mint === mintAddress.toString()) {
+            if (item.owner === provider.publicKey.toString()) {
+              postAmount += Number(
+                item.uiTokenAmount?.uiAmount || 0
+              );
+            }
           }
         }
 
         const change = postAmount - preAmount;
 
-        if (change === 0) continue;
+        if (change === 0) return;
 
         allTransactions.push({
-          signature: sigInfo.signature,
+          signature: signatureList[index],
           change: change,
-          blockTime: tx.blockTime || sigInfo.blockTime || 0
+          blockTime: tx.blockTime || signatures[index].blockTime || 0
         });
-      }
+      });
     }
 
     const uniqueTransactions = Array.from(
@@ -995,7 +999,7 @@ function showServices() {
     historyTransactions.innerHTML =
       "<p>Unable to load transaction history.</p>";
   }
-    }
+            }
     function showSettings() {
   alert("Nexora Settings");
     }
