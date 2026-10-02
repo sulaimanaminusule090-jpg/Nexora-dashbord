@@ -1153,23 +1153,50 @@ function showServices() {
         </div>
 
         <div style="
-          background:white;
-          border-radius:18px;
-          padding:20px;
-          margin-bottom:15px;
-        ">
-          <div style="font-size:14px;color:#6b7280;">
-            Mint Address
-          </div>
-          <div style="
-            font-size:14px;
-            font-weight:600;
-            margin-top:8px;
-            word-break:break-all;
-          ">
-            mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o
-          </div>
-        </div>
+  background:white;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:15px;
+">
+  <div style="font-size:14px;color:#6b7280;">
+    Mint Address
+  </div>
+
+  <div style="
+    font-size:14px;
+    font-weight:600;
+    margin-top:8px;
+    word-break:break-all;
+  ">
+    mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o
+  </div>
+
+  <button onclick="copyNexoraMint()" style="
+    margin-top:15px;
+    width:100%;
+    padding:12px;
+    border:0;
+    border-radius:10px;
+    background:#111827;
+    color:white;
+    font-weight:bold;
+  ">
+    Copy Mint Address
+  </button>
+
+  <button onclick="openNexoraExplorer()" style="
+    margin-top:10px;
+    width:100%;
+    padding:12px;
+    border:0;
+    border-radius:10px;
+    background:#e5e7eb;
+    color:#111827;
+    font-weight:bold;
+  ">
+    View on Solana Explorer
+  </button>
+</div>
 
         <div style="
           background:white;
@@ -1206,6 +1233,22 @@ function closeSettingsPage() {
   }
 
   showHome();
+}
+    function copyNexoraMint() {
+  const mint = "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+
+  navigator.clipboard.writeText(mint).then(() => {
+    alert("NEXORA Mint Address copied");
+  });
+}
+
+function openNexoraExplorer() {
+  const mint = "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+
+  window.open(
+    "https://explorer.solana.com/address/" + mint + "?cluster=devnet",
+    "_blank"
+  );
 }
    function showWalletPage() {
   let page = document.getElementById("walletPage");
