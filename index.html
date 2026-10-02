@@ -1079,8 +1079,134 @@ function showServices() {
     }
             
     function showSettings() {
-  alert("Nexora Settings");
-    }
+  let page = document.getElementById("settingsPage");
+
+  if (!page) {
+    page = document.createElement("div");
+    page.id = "settingsPage";
+
+    page.style.cssText = `
+      position:fixed;
+      inset:0;
+      background:#f5f7fb;
+      z-index:9999;
+      overflow-y:auto;
+      padding-bottom:90px;
+      font-family:Arial,sans-serif;
+    `;
+
+    page.innerHTML = `
+      <div style="
+        background:#111827;
+        color:white;
+        padding:20px;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        position:sticky;
+        top:0;
+        z-index:2;
+      ">
+        <div style="font-size:24px;font-weight:bold;">
+          Nexora Settings
+        </div>
+
+        <button onclick="closeSettingsPage()" style="
+          border:0;
+          background:#374151;
+          color:white;
+          width:40px;
+          height:40px;
+          border-radius:50%;
+          font-size:22px;
+        ">×</button>
+      </div>
+
+      <div style="padding:20px;">
+
+        <div style="
+          background:white;
+          border-radius:18px;
+          padding:20px;
+          margin-bottom:15px;
+        ">
+          <div style="font-size:14px;color:#6b7280;">
+            Network
+          </div>
+          <div style="font-size:18px;font-weight:bold;margin-top:8px;">
+            Solana Devnet
+          </div>
+        </div>
+
+        <div style="
+          background:white;
+          border-radius:18px;
+          padding:20px;
+          margin-bottom:15px;
+        ">
+          <div style="font-size:14px;color:#6b7280;">
+            Token
+          </div>
+          <div style="font-size:18px;font-weight:bold;margin-top:8px;">
+            NEXORA
+          </div>
+        </div>
+
+        <div style="
+          background:white;
+          border-radius:18px;
+          padding:20px;
+          margin-bottom:15px;
+        ">
+          <div style="font-size:14px;color:#6b7280;">
+            Mint Address
+          </div>
+          <div style="
+            font-size:14px;
+            font-weight:600;
+            margin-top:8px;
+            word-break:break-all;
+          ">
+            mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o
+          </div>
+        </div>
+
+        <div style="
+          background:white;
+          border-radius:18px;
+          padding:20px;
+          margin-bottom:15px;
+        ">
+          <div style="font-size:14px;color:#6b7280;">
+            About Nexora
+          </div>
+          <div style="font-size:16px;font-weight:600;margin-top:8px;">
+            Nexora Web3 Dashboard
+          </div>
+          <div style="color:#6b7280;margin-top:6px;">
+            Manage your NEXORA assets and wallet activity.
+          </div>
+        </div>
+
+      </div>
+    `;
+
+    document.body.appendChild(page);
+  }
+
+  page.style.display = "block";
+  window.scrollTo(0, 0);
+}
+
+function closeSettingsPage() {
+  const page = document.getElementById("settingsPage");
+
+  if (page) {
+    page.style.display = "none";
+  }
+
+  showHome();
+}
    function showWalletPage() {
   let page = document.getElementById("walletPage");
 
