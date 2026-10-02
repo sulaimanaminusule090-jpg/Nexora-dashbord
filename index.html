@@ -1835,6 +1835,30 @@ function copyWalletAddress() {
     alert("Wallet address copied!");
   });
 }
+    function showSettings() {
+  const walletModal = document.getElementById("walletModal");
+  const walletPage = document.getElementById("walletPage");
+  const historyPage = document.getElementById("historyPage");
+  const settingsPage = document.getElementById("settingsPage");
+
+  if (walletModal) {
+    walletModal.style.display = "none";
+  }
+
+  if (walletPage) {
+    walletPage.style.display = "none";
+  }
+
+  if (historyPage) {
+    historyPage.style.display = "none";
+  }
+
+  if (settingsPage) {
+    settingsPage.style.display = "block";
+  }
+
+  window.scrollTo(0, 0);
+    }
  function showHome() {
   const walletModal = document.getElementById("walletModal");
   const walletPage = document.getElementById("walletPage");
