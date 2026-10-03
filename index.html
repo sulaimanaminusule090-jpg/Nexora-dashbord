@@ -1362,191 +1362,173 @@ function openNexoraExplorer() {
     "_blank"
   );
 }
-   function showWalletPage() {
+  async function showWalletPage() {
+  const provider = window.phantom?.solana;
+
+  if (!provider) {
+    alert("Phantom wallet was not found.");
+    return;
+  }
+
+  if (!provider.publicKey) {
+    await provider.connect();
+  }
+
+  if (!provider.publicKey) {
+    alert("Please connect your Phantom wallet.");
+    return;
+  }
+
+  const address = provider.publicKey.toString();
+
+  const RPC = "https://api.devnet.solana.com";
+  const NEXORA_MINT = "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+
+  const connection = new solanaWeb3.Connection(
+    RPC,
+    "confirmed"
+  );
+
+  // Hide other pages
+  const mainPage = document.querySelector("main");
+  const walletModal = document.getElementById("walletModal");
+  const historyPage = document.getElementById("historyPage");
+  const settingsPage = document.getElementById("settingsPage");
+
+  if (mainPage) mainPage.style.display = "none";
+  if (walletModal) walletModal.style.display = "none";
+  if (historyPage) historyPage.style.display = "none";
+  if (settingsPage) settingsPage.style.display = "none";
+
+  // Remove duplicate wallet pages if any exist
+  const walletPages = document.querySelectorAll("#walletPage");
+  walletPages.forEach((page, index) => {
+    if (index > 0) page.remove();
+  });
+
   let page = document.getElementById("walletPage");
 
   if (!page) {
     page = document.createElement("div");
     page.id = "walletPage";
+    document.body.appendChild(page);
+  }
 
-    page.style.cssText = `
-      position:fixed;
-      inset:0;
-      background:#f5f7fb;
-      z-index:9999;
-      overflow-y:auto;
-      padding-bottom:90px;
-      font-family:Arial,sans-serif;
-    `;
+  page.style.cssText = `
+    position:fixed;
+    inset:0;
+    background:#f5f7fb;
+    z-index:9999;
+    overflow-y:auto;
+    padding-bottom:90px;
+    font-family:Arial,sans-serif;
+  `;
 
-    page.innerHTML = `
+  page.innerHTML = `
+    <div style="
+      background:#111827;
+      color:white;
+      padding:20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      position:sticky;
+      top:0;
+      z-index:2;
+    ">
+      <div style="font-size:24px;font-weight:bold;">
+        Nexora Wallet
+      </div>
+
+      <button onclick="closeWalletPage()" style="
+        border:0;
+        background:#374151;
+        color:white;
+        width:40px;
+        height:40px;
+        border-radius:50%;
+        font-size:22px;
+      ">×</button>
+    </div>
+
+    <div style="padding:20px;">
+
       <div style="
         background:#111827;
         color:white;
-        padding:20px;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        position:sticky;
-        top:0;
-        z-index:2;
+        border-radius:20px;
+        padding:24px;
+        margin-bottom:20px;
       ">
-        <div style="font-size:24px;font-weight:bold;">
-          Nexora Wallet
+        <div style="color:#cbd5e1;font-size:14px;">
+          Total NEXORA Balance
         </div>
 
-        <button onclick="closeWalletPage()" style="
-          border:0;
-          background:#374151;
-          color:white;
-          width:40px;
-          height:40px;
-          border-radius:50%;
-          font-size:22px;
-        ">×</button>
+        <div id="walletPageNexora" style="
+          font-size:32px;
+          font-weight:bold;
+          margin-top:8px;
+        ">
+          Loading...
+        </div>
       </div>
 
-      <div style="padding:20px;">
+      <div style="
+        background:white;
+        border-radius:18px;
+        padding:20px;
+        margin-bottom:15px;
+      ">
+        <div style="color:#6b7280;font-size:14px;">
+          Wallet Address
+        </div>
 
-        <div style="
+        <div id="walletPageAddress" style="
+          margin-top:8px;
+          font-size:14px;
+          word-break:break-all;
+          font-weight:600;
+        ">
+          ${address}
+        </div>
+
+        <button onclick="copyWalletAddress()" style="
+          margin-top:15px;
+          width:100%;
+          padding:12px;
+          border:0;
+          border-radius:10px;
           background:#111827;
           color:white;
-          border-radius:20px;
-          padding:24px;
-          margin-bottom:20px;
+          font-weight:bold;
         ">
-          <div style="color:#cbd5e1;font-size:14px;">
-            Total NEXORA Balance
-          </div>
+          Copy Address
+        </button>
+      </div>
 
-          <div id="walletPageNexora" style="
-            font-size:32px;
-            font-weight:bold;
-            margin-top:8px;
-          ">
-            0 NEXORA
-          </div>
-
-          <div style="
-            color:#9ca3af;
-            margin-top:8px;
-          ">
-            Price unavailable
-          </div>
-        </div>
+      <div style="
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:15px;
+        margin-bottom:20px;
+      ">
 
         <div style="
           background:white;
           border-radius:18px;
           padding:20px;
-          margin-bottom:15px;
         ">
           <div style="color:#6b7280;font-size:14px;">
-            Wallet Address
+            NEXORA
           </div>
 
-          <div id="walletPageAddress" style="
+          <div id="walletNexoraAsset" style="
+            font-size:24px;
+            font-weight:bold;
             margin-top:8px;
-            font-size:14px;
-            word-break:break-all;
-            font-weight:600;
           ">
             Loading...
           </div>
-
-          <button onclick="copyWalletAddress()" style="
-            margin-top:15px;
-            width:100%;
-            padding:12px;
-            border:0;
-            border-radius:10px;
-            background:#111827;
-            color:white;
-            font-weight:bold;
-          ">
-            Copy Address
-          </button>
-        </div>
-
-        <div style="
-          display:grid;
-          grid-template-columns:1fr 1fr;
-          gap:15px;
-          margin-bottom:20px;
-        ">
-
-          <button onclick="sendToken()" style="
-            padding:20px;
-            border:0;
-            border-radius:18px;
-            background:white;
-            font-size:16px;
-            font-weight:bold;
-          ">
-            📤<br><br>Send
-          </button>
-
-          <button onclick="receiveToken()" style="
-            padding:20px;
-            border:0;
-            border-radius:18px;
-            background:white;
-            font-size:16px;
-            font-weight:bold;
-          ">
-            📥<br><br>Receive
-          </button>
-
-        </div>
-
-        <div style="
-          background:white;
-          border-radius:18px;
-          padding:20px;
-          margin-bottom:15px;
-        ">
-          <div style="
-            font-size:18px;
-            font-weight:bold;
-            margin-bottom:15px;
-          ">
-            Assets
-          </div>
-
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            padding:15px 0;
-            border-bottom:1px solid #e5e7eb;
-          ">
-            <div>
-              <strong>Nexora</strong>
-              <div style="color:#6b7280;font-size:13px;">
-                NEXORA
-              </div>
-            </div>
-
-            <strong id="walletPageAsset">
-              0
-            </strong>
-          </div>
-
-          <div style="
-            display:flex;
-            justify-content:space-between;
-            padding:15px 0;
-          ">
-            <div>
-              <strong>Solana</strong>
-              <div style="color:#6b7280;font-size:13px;">
-                SOL
-              </div>
-            </div>
-
-            <strong id="walletPageSol">
-              0.0000
-            </strong>
-          </div>
         </div>
 
         <div style="
@@ -1554,24 +1536,138 @@ function openNexoraExplorer() {
           border-radius:18px;
           padding:20px;
         ">
-          <div style="
-            font-size:18px;
-            font-weight:bold;
-            margin-bottom:15px;
-          ">
-            Wallet Status
+          <div style="color:#6b7280;font-size:14px;">
+            SOL
           </div>
 
-          <div style="color:#16834b;">
-            ● Wallet connected
+          <div id="walletSolAsset" style="
+            font-size:24px;
+            font-weight:bold;
+            margin-top:8px;
+          ">
+            Loading...
           </div>
         </div>
 
       </div>
-    `;
 
-    document.body.appendChild(page);
+      <button onclick="receiveToken()" style="
+        width:100%;
+        padding:15px;
+        border:0;
+        border-radius:12px;
+        background:#111827;
+        color:white;
+        font-size:16px;
+        font-weight:bold;
+      ">
+        Receive NEXORA
+      </button>
+
+    </div>
+  `;
+
+  page.style.display = "block";
+
+  try {
+    // Get SOL balance
+    const solLamports = await connection.getBalance(
+      provider.publicKey
+    );
+
+    const solBalance = solLamports / 1000000000;
+
+    const solElement = document.getElementById("walletSolAsset");
+
+    if (solElement) {
+      solElement.textContent = solBalance.toFixed(4) + " SOL";
+    }
+
+    // Get NEXORA balance
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+      provider.publicKey,
+      {
+        mint: new solanaWeb3.PublicKey(NEXORA_MINT)
+      }
+    );
+
+    let nexoraBalance = 0;
+
+    for (const account of tokenAccounts.value) {
+      const amount =
+        account.account.data.parsed.info.tokenAmount.uiAmount;
+
+      nexoraBalance += Number(amount || 0);
+    }
+
+    const nexoraElement =
+      document.getElementById("walletPageNexora");
+
+    const assetElement =
+      document.getElementById("walletNexoraAsset");
+
+    if (nexoraElement) {
+      nexoraElement.textContent =
+        nexoraBalance.toLocaleString() + " NEXORA";
+    }
+
+    if (assetElement) {
+      assetElement.textContent =
+        nexoraBalance.toLocaleString();
+    }
+
+  } catch (error) {
+    console.error("Wallet balance error:", error);
+
+    const nexoraElement =
+      document.getElementById("walletPageNexora");
+
+    const assetElement =
+      document.getElementById("walletNexoraAsset");
+
+    const solElement =
+      document.getElementById("walletSolAsset");
+
+    if (nexoraElement) {
+      nexoraElement.textContent = "0 NEXORA";
+    }
+
+    if (assetElement) {
+      assetElement.textContent = "0";
+    }
+
+    if (solElement) {
+      solElement.textContent = "0 SOL";
+    }
   }
+
+  window.scrollTo(0, 0);
+}
+
+
+function copyWalletAddress() {
+  const provider = window.phantom?.solana;
+
+  if (!provider?.publicKey) {
+    alert("Please connect your Phantom wallet.");
+    return;
+  }
+
+  const address = provider.publicKey.toString();
+
+  navigator.clipboard.writeText(address)
+    .then(() => {
+      alert("Wallet address copied!");
+    })
+    .catch(() => {
+      alert(address);
+    });
+}
+
+
+function receiveToken() {
+  showWalletPage();
+  } 
 
   const addressElement = document.getElementById("walletAddress");
 
