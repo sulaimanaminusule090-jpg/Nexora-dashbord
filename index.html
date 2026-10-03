@@ -820,7 +820,8 @@ if (!confirmed) {
       "NEXORA sent successfully!\n\nTransaction:\n" +
       result.signature
     );
-
+await loadHomeBalances();
+await loadRecentTransactions();
   } catch (error) {
   console.error("Send NEXORA error:", error);
 
