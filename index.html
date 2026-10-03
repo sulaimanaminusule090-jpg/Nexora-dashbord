@@ -1825,7 +1825,30 @@ function closeWalletPage() {
     page.style.display = "none";
   }
 }
+function showHistory() {
+  const walletModal = document.getElementById("walletModal");
+  const walletPage = document.getElementById("walletPage");
+  const historyPage = document.getElementById("historyPage");
+  const settingsPage = document.getElementById("settingsPage");
 
+  if (walletModal) {
+    walletModal.style.display = "none";
+  }
+
+  if (walletPage) {
+    walletPage.style.display = "none";
+  }
+
+  if (historyPage) {
+    historyPage.style.display = "block";
+  }
+
+  if (settingsPage) {
+    settingsPage.style.display = "none";
+  }
+
+  window.scrollTo(0, 0);
+}
 
 function copyWalletAddress() {
   const address =
