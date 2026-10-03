@@ -1669,24 +1669,7 @@ function receiveToken() {
   showWalletPage();
   } 
 
-  const addressElement = document.getElementById("walletAddress");
-
-  if (addressElement) {
-    document.getElementById("walletPageAddress").textContent =
-      addressElement.textContent;
-  }
-
-  const nexoraElement = document.getElementById("nexoraBalance");
-
-  if (nexoraElement) {
-    const balance = nexoraElement.textContent;
-
-    document.getElementById("walletPageNexora").textContent =
-      balance + " NEXORA";
-
-    document.getElementById("walletPageAsset").textContent =
-      balance;
-  }
+  
 
 async function updateWalletSol() {
   try {
@@ -1742,8 +1725,7 @@ async function updateWalletSol() {
   }
 }
 
-  page.style.display = "none";
-}
+  
 async function loadRecentTransactions() {
   try {
     const provider = window.phantom?.solana || window.solana;
