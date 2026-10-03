@@ -1994,6 +1994,33 @@ function copyWalletAddress() {
 window.scrollTo(0, 0);
   
  }
+    function copyMintAddress() {
+  const mintAddress = "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+
+  navigator.clipboard.writeText(mintAddress)
+    .then(() => {
+      alert("Mint address copied!");
+    })
+    .catch(() => {
+      const textArea = document.createElement("textarea");
+      textArea.value = mintAddress;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      textArea.remove();
+      alert("Mint address copied!");
+    });
+}
+
+function viewMintExplorer() {
+  const mintAddress = "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+  const explorerUrl =
+    "https://explorer.solana.com/address/" +
+    mintAddress +
+    "?cluster=devnet";
+
+  window.open(explorerUrl, "_blank");
+}
     showHome();
   </script>
 
