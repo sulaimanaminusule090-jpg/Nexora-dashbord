@@ -632,7 +632,9 @@ async function connectWallet() {
     const response = await provider.connect();
 
     const address = response.publicKey.toString();
-loadRecentTransactions();
+    await loadHomeBalances();
+await loadRecentTransactions();
+
     document.querySelector(".connect").textContent =
       address.slice(0, 4) + "..." + address.slice(-4);
 
