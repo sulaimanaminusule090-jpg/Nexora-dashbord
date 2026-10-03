@@ -1384,10 +1384,15 @@ function openNexoraExplorer() {
   const RPC = "https://api.devnet.solana.com";
   const NEXORA_MINT = "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
 
-  const connection = new solanaWeb3.Connection(
-    RPC,
-    "confirmed"
-  );
+  const {
+  Connection,
+  PublicKey
+} = await import("https://esm.sh/@solana/web3.js@1.98.4");
+
+const connection = new Connection(
+  RPC,
+  "confirmed"
+);
 
   // Hide other pages
   const mainPage = document.querySelector("main");
@@ -1587,7 +1592,7 @@ function openNexoraExplorer() {
     const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
       provider.publicKey,
       {
-        mint: new solanaWeb3.PublicKey(NEXORA_MINT)
+        mint: new PublicKey(NEXORA_MINT)
       }
     );
 
@@ -2067,6 +2072,7 @@ const mainPage = document.querySelector("main");
    if (mainPage) {
     mainPage.style.display = "block";
    }
+   loadRecentTransactions();
 window.scrollTo(0, 0);
   
  }
