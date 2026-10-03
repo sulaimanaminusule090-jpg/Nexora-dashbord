@@ -939,13 +939,15 @@ function showServices() {
   const walletPage = document.getElementById("walletPage");
   const historyPage = document.getElementById("historyPage");
   const settingsPage = document.getElementById("settingsPage");
-      const mainPage = document.querySelector("main");
-  const historyTransactions = document.getElementById("historyTransactions");
+  const mainPage = document.querySelector("main");
+  const historyTransactions =
+    document.getElementById("historyTransactions");
 
   if (walletModal) walletModal.style.display = "none";
   if (walletPage) walletPage.style.display = "none";
   if (settingsPage) settingsPage.style.display = "none";
-if (mainPage) mainPage.style.display = "none";
+  if (mainPage) mainPage.style.display = "none";
+
   if (!historyPage) {
     alert("History page not found.");
     return;
@@ -976,7 +978,7 @@ if (mainPage) mainPage.style.display = "none";
       "https://api.devnet.solana.com";
 
     const MINT =
-      "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+      "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLKq8o";
 
     const rpcCall = async (method, params) => {
       const response = await fetch(RPC, {
@@ -986,7 +988,7 @@ if (mainPage) mainPage.style.display = "none";
         },
         body: JSON.stringify({
           jsonrpc: "2.0",
-          id: 1,
+          id: Date.now(),
           method: method,
           params: params
         })
@@ -1023,37 +1025,67 @@ if (mainPage) mainPage.style.display = "none";
       return;
     }
 
-    const allTransactions = [];
-
-    for (const account of tokenAccounts.value) {
-      const tokenAccount =
-        account.pubkey;
-
-      const signatures = await rpcCall(
-        "getSignaturesForAddress",
-        [
-          tokenAccount,
-          {
-            limit: 20
-          }
-        ]
+    const signatureResults =
+      await Promise.all(
+        tokenAccounts.value.map(account =>
+          rpcCall(
+            "getSignaturesForAddress",
+            [
+              account.pubkey,
+              {
+                limit: 20
+              }
+            ]
+          )
+        )
       );
 
-      for (const sigInfo of signatures) {
-        if (!sigInfo.signature) continue;
+    const signatureList = [];
 
-        const tx = await rpcCall(
-          "getTransaction",
-          [
-            sigInfo.signature,
-            {
-              encoding: "jsonParsed",
-              maxSupportedTransactionVersion: 0
-            }
-          ]
-        );
+    signatureResults.forEach(signatures => {
+      signatures.forEach(sigInfo => {
+        if (sigInfo.signature) {
+          signatureList.push(sigInfo);
+        }
+      });
+    });
 
-        if (!tx || !tx.meta) continue;
+    const uniqueSignatures =
+      Array.from(
+        new Map(
+          signatureList.map(sig => [
+            sig.signature,
+            sig
+          ])
+        ).values()
+      );
+
+    const transactionResults =
+      await Promise.all(
+        uniqueSignatures.map(async sigInfo => {
+          const tx = await rpcCall(
+            "getTransaction",
+            [
+              sigInfo.signature,
+              {
+                encoding: "jsonParsed",
+                maxSupportedTransactionVersion: 0
+              }
+            ]
+          );
+
+          return {
+            sigInfo,
+            tx
+          };
+        })
+      );
+
+    const allTransactions = [];
+
+    transactionResults.forEach(
+      ({ sigInfo, tx }) => {
+        if (!tx || !tx.meta) return;
 
         let preAmount = 0;
         let postAmount = 0;
@@ -1089,7 +1121,7 @@ if (mainPage) mainPage.style.display = "none";
         const change =
           postAmount - preAmount;
 
-        if (change === 0) continue;
+        if (change === 0) return;
 
         allTransactions.push({
           signature: sigInfo.signature,
@@ -1100,25 +1132,14 @@ if (mainPage) mainPage.style.display = "none";
             0
         });
       }
-    }
+    );
 
-    const uniqueTransactions =
-      Array.from(
-        new Map(
-          allTransactions.map(
-            tx => [tx.signature, tx]
-          )
-        ).values()
-      );
-
-    uniqueTransactions.sort(
+    allTransactions.sort(
       (a, b) =>
         b.blockTime - a.blockTime
     );
 
-    if (
-      uniqueTransactions.length === 0
-    ) {
+    if (allTransactions.length === 0) {
       historyTransactions.innerHTML =
         "<p>No NEXORA transactions found.</p>";
       return;
@@ -1126,7 +1147,7 @@ if (mainPage) mainPage.style.display = "none";
 
     historyTransactions.innerHTML = "";
 
-    uniqueTransactions.forEach(tx => {
+    allTransactions.forEach(tx => {
       const type =
         tx.change > 0
           ? "Received"
@@ -1736,18 +1757,21 @@ async function updateWalletSol() {
   
 async function loadRecentTransactions() {
   try {
-    const provider = window.phantom?.solana || window.solana;
+    const provider =
+      window.phantom?.solana || window.solana;
 
     if (!provider || !provider.publicKey) {
       return;
     }
 
-    const RPC = "https://api.devnet.solana.com";
+    const RPC =
+      "https://api.devnet.solana.com";
 
     const NEXORA_MINT =
-      "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLK8o";
+      "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLKq8o";
 
-    const wallet = provider.publicKey.toString();
+    const wallet =
+      provider.publicKey.toString();
 
     const container =
       document.getElementById("recentTransactions");
@@ -1758,15 +1782,31 @@ async function loadRecentTransactions() {
       "Content-Type": "application/json"
     };
 
-    // Get the wallet's NEXORA token accounts
-    const accountsResponse = await fetch(RPC, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "getTokenAccountsByOwner",
-        params: [
+    const rpcCall = async (method, params) => {
+      const response = await fetch(RPC, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: Date.now() + Math.random(),
+          method: method,
+          params: params
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+
+      return data.result;
+    };
+
+    const tokenAccounts =
+      await rpcCall(
+        "getTokenAccountsByOwner",
+        [
           wallet,
           {
             mint: NEXORA_MINT
@@ -1775,168 +1815,160 @@ async function loadRecentTransactions() {
             encoding: "jsonParsed"
           }
         ]
-      })
-    });
-
-    const accountsData = await accountsResponse.json();
-
-    const tokenAccounts =
-      accountsData?.result?.value || [];
+      );
 
     const addresses = [
       wallet,
-      ...tokenAccounts.map(
+      ...(tokenAccounts?.value || []).map(
         account => account.pubkey
       )
     ];
 
-    // Get recent signatures from the wallet and its token accounts
+    const signatureResults =
+      await Promise.all(
+        addresses.map(address =>
+          rpcCall(
+            "getSignaturesForAddress",
+            [
+              address,
+              {
+                limit: 10
+              }
+            ]
+          )
+        )
+      );
+
     const signatureMap = new Map();
 
-    for (const address of addresses) {
-      const signatureResponse = await fetch(RPC, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "getSignaturesForAddress",
-          params: [
-            address,
-            {
-              limit: 10
-            }
-          ]
-        })
-      });
-
-      const signatureData =
-        await signatureResponse.json();
-
-      const signatures =
-        signatureData?.result || [];
-
-      for (const item of signatures) {
-        if (!item.err) {
+    signatureResults.forEach(signatures => {
+      (signatures || []).forEach(item => {
+        if (!item.err && item.signature) {
           signatureMap.set(
             item.signature,
             item
           );
         }
-      }
-    }
+      });
+    });
+
+    const signatureEntries =
+      Array.from(
+        signatureMap.values()
+      ).slice(0, 10);
+
+    const transactionResults =
+      await Promise.all(
+        signatureEntries.map(async item => {
+          const tx =
+            await rpcCall(
+              "getTransaction",
+              [
+                item.signature,
+                {
+                  encoding: "jsonParsed",
+                  commitment: "confirmed",
+                  maxSupportedTransactionVersion: 0
+                }
+              ]
+            );
+
+          return {
+            item,
+            tx
+          };
+        })
+      );
 
     const transactions = [];
 
-    for (const item of signatureMap.values()) {
-      const transactionResponse = await fetch(RPC, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: 1,
-          method: "getTransaction",
-          params: [
-            item.signature,
-            {
-              encoding: "jsonParsed",
-              commitment: "confirmed",
-              maxSupportedTransactionVersion: 0
-            }
-          ]
-        })
-      });
+    transactionResults.forEach(
+      ({ item, tx }) => {
+        if (!tx?.meta) return;
 
-      const transactionData =
-        await transactionResponse.json();
+        const preBalances =
+          tx.meta.preTokenBalances || [];
 
-      const tx = transactionData?.result;
+        const postBalances =
+          tx.meta.postTokenBalances || [];
 
-      if (!tx?.meta) {
-        continue;
-      }
+        const accountIndexes = new Set();
 
-      const preBalances =
-        tx.meta.preTokenBalances || [];
+        preBalances.forEach(balance => {
+          if (
+            balance.mint === NEXORA_MINT &&
+            balance.owner === wallet
+          ) {
+            accountIndexes.add(
+              balance.accountIndex
+            );
+          }
+        });
 
-      const postBalances =
-        tx.meta.postTokenBalances || [];
+        postBalances.forEach(balance => {
+          if (
+            balance.mint === NEXORA_MINT &&
+            balance.owner === wallet
+          ) {
+            accountIndexes.add(
+              balance.accountIndex
+            );
+          }
+        });
 
-      const accountIndexes = new Set();
-
-      for (const balance of preBalances) {
-        if (
-          balance.mint === NEXORA_MINT &&
-          balance.owner === wallet
-        ) {
-          accountIndexes.add(
-            balance.accountIndex
-          );
+        if (accountIndexes.size === 0) {
+          return;
         }
+
+        let walletDelta = 0;
+
+        accountIndexes.forEach(index => {
+          const pre =
+            preBalances.find(
+              balance =>
+                balance.accountIndex === index &&
+                balance.mint === NEXORA_MINT &&
+                balance.owner === wallet
+            );
+
+          const post =
+            postBalances.find(
+              balance =>
+                balance.accountIndex === index &&
+                balance.mint === NEXORA_MINT &&
+                balance.owner === wallet
+            );
+
+          const preAmount =
+            Number(
+              pre?.uiTokenAmount?.uiAmount || 0
+            );
+
+          const postAmount =
+            Number(
+              post?.uiTokenAmount?.uiAmount || 0
+            );
+
+          walletDelta +=
+            postAmount - preAmount;
+        });
+
+        if (walletDelta === 0) return;
+
+        transactions.push({
+          signature: item.signature,
+          amount: Math.abs(walletDelta),
+          type:
+            walletDelta < 0
+              ? "Sent"
+              : "Received",
+          blockTime:
+            tx.blockTime ||
+            item.blockTime ||
+            0
+        });
       }
-
-      for (const balance of postBalances) {
-        if (
-          balance.mint === NEXORA_MINT &&
-          balance.owner === wallet
-        ) {
-          accountIndexes.add(
-            balance.accountIndex
-          );
-        }
-      }
-
-      if (accountIndexes.size === 0) {
-        continue;
-      }
-
-      let walletDelta = 0;
-
-      for (const index of accountIndexes) {
-        const pre =
-          preBalances.find(
-            balance =>
-              balance.accountIndex === index &&
-              balance.mint === NEXORA_MINT &&
-              balance.owner === wallet
-          );
-
-        const post =
-          postBalances.find(
-            balance =>
-              balance.accountIndex === index &&
-              balance.mint === NEXORA_MINT &&
-              balance.owner === wallet
-          );
-
-        const preAmount =
-          Number(
-            pre?.uiTokenAmount?.uiAmount || 0
-          );
-
-        const postAmount =
-          Number(
-            post?.uiTokenAmount?.uiAmount || 0
-          );
-
-        walletDelta +=
-          postAmount - preAmount;
-      }
-
-      if (walletDelta === 0) {
-        continue;
-      }
-
-      transactions.push({
-        signature: item.signature,
-        amount: Math.abs(walletDelta),
-        type:
-          walletDelta < 0
-            ? "Sent"
-            : "Received",
-        blockTime: tx.blockTime
-      });
-    }
+    );
 
     transactions.sort(
       (a, b) =>
@@ -1954,11 +1986,12 @@ async function loadRecentTransactions() {
       transactions
         .slice(0, 5)
         .map(tx => {
-          const date = tx.blockTime
-            ? new Date(
-                tx.blockTime * 1000
-              ).toLocaleString()
-            : "Confirmed";
+          const date =
+            tx.blockTime
+              ? new Date(
+                  tx.blockTime * 1000
+                ).toLocaleString()
+              : "Confirmed";
 
           const explorerUrl =
             "https://explorer.solana.com/tx/" +
@@ -1996,7 +2029,7 @@ async function loadRecentTransactions() {
       error
     );
   }
-              }
+}
 function receiveToken() {
   const address =
   document.getElementById("walletPageAddress")?.textContent?.trim() ||
