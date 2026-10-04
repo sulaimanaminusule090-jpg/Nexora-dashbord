@@ -1159,56 +1159,87 @@ for (const address of uniqueAddresses) {
 
     const allTransactions = [];
 
-    transactionResults.forEach(
-      ({ sigInfo, tx }) => {
-        if (!tx || !tx.meta) return;
+const tokenAccountAddresses =
+  tokenAccounts.value.map(
+    account => account.pubkey
+  );
 
-        let preAmount = 0;
-        let postAmount = 0;
+transactionResults.forEach(
+  ({ sigInfo, tx }) => {
 
-        for (
-          const item of
-          (tx.meta.preTokenBalances || [])
-        ) {
-          if (
-            item.mint === MINT &&
-            item.owner === walletAddress
-          ) {
-            preAmount += Number(
-              item.uiTokenAmount?.uiAmount || 0
-            );
-          }
-        }
+    if (!tx || !tx.meta) return;
 
-        for (
-          const item of
-          (tx.meta.postTokenBalances || [])
-        ) {
-          if (
-            item.mint === MINT &&
-            item.owner === walletAddress
-          ) {
-            postAmount += Number(
-              item.uiTokenAmount?.uiAmount || 0
-            );
-          }
-        }
+    const accountKeys =
+      tx.transaction?.message?.accountKeys || [];
 
-        const change =
-          postAmount - preAmount;
+    const getAccountAddress = index => {
+      const key = accountKeys[index];
 
-        if (change === 0) return;
+      if (!key) return null;
 
-        allTransactions.push({
-          signature: sigInfo.signature,
-          change: change,
-          blockTime:
-            tx.blockTime ||
-            sigInfo.blockTime ||
-            0
-        });
+      return typeof key === "string"
+        ? key
+        : key.pubkey || null;
+    };
+
+    let preAmount = 0;
+    let postAmount = 0;
+
+    for (
+      const item of
+      (tx.meta.preTokenBalances || [])
+    ) {
+      const address =
+        getAccountAddress(item.accountIndex);
+
+      if (
+        item.mint === MINT &&
+        (
+          item.owner === walletAddress ||
+          tokenAccountAddresses.includes(address)
+        )
+      ) {
+        preAmount += Number(
+          item.uiTokenAmount?.uiAmount || 0
+        );
       }
-    );
+    }
+
+    for (
+      const item of
+      (tx.meta.postTokenBalances || [])
+    ) {
+      const address =
+        getAccountAddress(item.accountIndex);
+
+      if (
+        item.mint === MINT &&
+        (
+          item.owner === walletAddress ||
+          tokenAccountAddresses.includes(address)
+        )
+      ) {
+        postAmount += Number(
+          item.uiTokenAmount?.uiAmount || 0
+        );
+      }
+    }
+
+    const change =
+      postAmount - preAmount;
+
+    if (change === 0) return;
+
+    allTransactions.push({
+      signature: sigInfo.signature,
+      change: change,
+      blockTime:
+        tx.blockTime ||
+        sigInfo.blockTime ||
+        0
+    });
+  }
+);
 
     allTransactions.sort(
       (a, b) =>
