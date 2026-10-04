@@ -956,23 +956,23 @@ function showServices() {
   alert("Nexora Services will be available soon.");
 }
    async function showHistory() {
+  const historyPage =
+    document.getElementById("historyPage");
+
+  const historyTransactions =
+    document.getElementById("historyTransactions");
+
   const walletModal =
     document.getElementById("walletModal");
 
   const walletPage =
     document.getElementById("walletPage");
 
-  const historyPage =
-    document.getElementById("historyPage");
-
   const settingsPage =
     document.getElementById("settingsPage");
 
   const mainPage =
     document.querySelector("main");
-
-  const historyTransactions =
-    document.getElementById("historyTransactions");
 
   if (walletModal) {
     walletModal.style.display = "none";
@@ -1086,82 +1086,101 @@ function showServices() {
           continue;
         }
 
-        const preBalances =
-          tx.meta.preTokenBalances || [];
+        const instructions = [
+          ...(tx.transaction?.message?.instructions || [])
+        ];
 
-        const postBalances =
-          tx.meta.postTokenBalances || [];
-
-        let preAmount = 0;
-        let postAmount = 0;
-
-        for (const balance of preBalances) {
-          const accountKey =
-            tx.transaction?.message?.accountKeys?.[
-              balance.accountIndex
-            ];
-
-          const tokenAccount =
-            typeof accountKey === "string"
-              ? accountKey
-              : accountKey?.pubkey;
-
-          if (
-            balance.mint === MINT &&
-            tokenAccount === TOKEN_ACCOUNT
-          ) {
-            preAmount =
-              Number(
-                balance.uiTokenAmount?.amount || 0
-              ) / 1000000000;
+        (
+          tx.meta.innerInstructions || []
+        ).forEach(group => {
+          if (group?.instructions) {
+            instructions.push(
+              ...group.instructions
+            );
           }
-        }
-
-        for (const balance of postBalances) {
-          const accountKey =
-            tx.transaction?.message?.accountKeys?.[
-              balance.accountIndex
-            ];
-
-          const tokenAccount =
-            typeof accountKey === "string"
-              ? accountKey
-              : accountKey?.pubkey;
-
-          if (
-            balance.mint === MINT &&
-            tokenAccount === TOKEN_ACCOUNT
-          ) {
-            postAmount =
-              Number(
-                balance.uiTokenAmount?.amount || 0
-              ) / 1000000000;
-          }
-        }
-
-        const change =
-          postAmount - preAmount;
-
-        if (change === 0) {
-          continue;
-        }
-
-        allTransactions.push({
-          signature: sigInfo.signature,
-          blockTime:
-            tx.blockTime ||
-            sigInfo.blockTime ||
-            0,
-          amount: Math.abs(change),
-          type:
-            change > 0
-              ? "Received"
-              : "Sent"
         });
+
+        for (const instruction of instructions) {
+          const parsed =
+            instruction?.parsed;
+
+          if (
+            !parsed ||
+            (
+              parsed.type !== "transfer" &&
+              parsed.type !== "transferChecked"
+            ) ||
+            instruction.program !== "spl-token"
+          ) {
+            continue;
+          }
+
+          const info =
+            parsed.info;
+
+          if (!info) {
+            continue;
+          }
+
+          if (
+            parsed.type === "transferChecked" &&
+            info.mint &&
+            info.mint !== MINT
+          ) {
+            continue;
+          }
+
+          const amount =
+            info.tokenAmount?.uiAmountString
+              ? Number(
+                  info.tokenAmount.uiAmountString
+                )
+              : info.tokenAmount?.uiAmount
+                ? Number(
+                    info.tokenAmount.uiAmount
+                  )
+                : info.amount
+                  ? Number(info.amount) / 1e9
+                  : 0;
+
+          if (!amount) {
+            continue;
+          }
+
+          if (
+            info.source === TOKEN_ACCOUNT
+          ) {
+            allTransactions.push({
+              signature:
+                sigInfo.signature,
+              amount: amount,
+              type: "Sent",
+              blockTime:
+                tx.blockTime ||
+                sigInfo.blockTime ||
+                0
+            });
+          }
+
+          if (
+            info.destination === TOKEN_ACCOUNT
+          ) {
+            allTransactions.push({
+              signature:
+                sigInfo.signature,
+              amount: amount,
+              type: "Received",
+              blockTime:
+                tx.blockTime ||
+                sigInfo.blockTime ||
+                0
+            });
+          }
+        }
 
       } catch (error) {
         console.error(
-          "History transaction failed:",
+          "Transaction lookup failed:",
           sigInfo.signature,
           error
         );
@@ -1238,7 +1257,7 @@ function showServices() {
       (error?.message || error) +
       "</p>";
   }
-                }
+      }
             
     function showSettings() {
   let page = document.getElementById("settingsPage");
