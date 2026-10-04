@@ -1047,18 +1047,72 @@ function showServices() {
       return data.result;
     };
 
-    const signatures =
-      await rpcCall(
-        "getSignaturesForAddress",
-        [
-          TOKEN_ACCOUNT,
-          {
-            limit: 50
-          }
-        ]
-      );
+    const walletAddress =
+  provider.publicKey.toString();
 
-    const allTransactions = [];
+const tokenAccountsResult =
+  await rpcCall(
+    "getTokenAccountsByOwner",
+    [
+      walletAddress,
+      {
+        mint: MINT
+      },
+      {
+        encoding: "jsonParsed"
+      }
+    ]
+  );
+
+const tokenAccounts = new Set([
+  TOKEN_ACCOUNT
+]);
+
+for (
+  const account of tokenAccountsResult?.value || []
+) {
+  if (account?.pubkey) {
+    tokenAccounts.add(account.pubkey);
+  }
+}
+
+const signatureMap = new Map();
+
+for (const tokenAccount of tokenAccounts) {
+  const accountSignatures =
+    await rpcCall(
+      "getSignaturesForAddress",
+      [
+        tokenAccount,
+        {
+          limit: 50
+        }
+      ]
+    );
+
+  for (const sigInfo of accountSignatures || []) {
+    if (
+      sigInfo?.signature &&
+      !sigInfo.err
+    ) {
+      signatureMap.set(
+        sigInfo.signature,
+        sigInfo
+      );
+    }
+  }
+}
+
+const signatures =
+  Array.from(signatureMap.values())
+    .sort(
+      (a, b) =>
+        (b.blockTime || 0) -
+        (a.blockTime || 0)
+    )
+    .slice(0, 100);
+
+const allTransactions = [];
 
     for (const sigInfo of signatures || []) {
       if (
@@ -1148,8 +1202,8 @@ function showServices() {
           }
 
           if (
-            info.source === TOKEN_ACCOUNT
-          ) {
+  tokenAccounts.has(info.source)
+)
             allTransactions.push({
               signature:
                 sigInfo.signature,
@@ -1163,8 +1217,8 @@ function showServices() {
           }
 
           if (
-            info.destination === TOKEN_ACCOUNT
-          ) {
+  tokenAccounts.has(info.destination)
+)
             allTransactions.push({
               signature:
                 sigInfo.signature,
