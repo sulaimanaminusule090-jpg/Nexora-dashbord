@@ -619,31 +619,51 @@ Manage your NEXORA assets and wallet activity.
   <script>
 async function connectWallet() {
   try {
-    const provider = window.phantom?.solana || window.solana;
+    const provider =
+      window.phantom?.solana || window.solana;
 
     if (!provider) {
-      alert(
-        "Phantom wallet was not found.\n\n" +
-        "Please open Nexora inside the Phantom browser and try again."
-      );
+      const currentUrl = window.location.href;
+
+      const phantomUrl =
+        "https://phantom.app/ul/browse/" +
+        encodeURIComponent(currentUrl) +
+        "?ref=" +
+        encodeURIComponent(window.location.origin);
+
+      window.location.href = phantomUrl;
       return;
     }
 
-    const response = await provider.connect();
+    const response =
+      await provider.connect();
 
-    const address = response.publicKey.toString();
+    const address =
+      response.publicKey.toString();
 
     document.querySelector(".connect").textContent =
-      address.slice(0, 4) + "..." + address.slice(-4);
+      address.slice(0, 4) +
+      "..." +
+      address.slice(-4);
 
     await loadHomeBalances();
     await loadRecentTransactions();
 
-    alert("Phantom connected successfully!\n\n" + address);
+    alert(
+      "Phantom connected successfully!\n\n" +
+      address
+    );
 
   } catch (error) {
-    console.error("Wallet connection failed:", error);
-    alert("Failed to connect to Phantom wallet.");
+    console.error(
+      "Wallet connection failed:",
+      error
+    );
+
+    alert(
+      "Failed to connect to Phantom wallet.\n\n" +
+      (error?.message || error)
+    );
   }
 }
 
