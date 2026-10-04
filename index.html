@@ -1104,49 +1104,47 @@ if (tokenAccounts.value.length === 0) {
      */
     const signatureMap = new Map();
 
-    for (const account of accounts) {
-      const tokenAccount =
-        account?.pubkey;
+const signatureAddresses = [
+  walletAddress,
+  ...accounts
+    .map(account => account?.pubkey)
+    .filter(Boolean)
+];
 
-      if (
-        !tokenAccount ||
-        typeof tokenAccount !== "string"
-      ) {
-        continue;
-      }
-
-      try {
-        const signatures =
-          await rpcCall(
-            "getSignaturesForAddress",
-            [
-              tokenAccount,
-              {
-                limit: 30
-              }
-            ]
-          );
-
-        for (const item of signatures || []) {
-          if (
-            item &&
-            item.signature &&
-            !item.err
-          ) {
-            signatureMap.set(
-              item.signature,
-              item
-            );
+for (const address of signatureAddresses) {
+  try {
+    const signatures =
+      await rpcCall(
+        "getSignaturesForAddress",
+        [
+          address,
+          {
+            limit: 30
           }
-        }
-      } catch (error) {
-        console.error(
-          "Signature lookup failed:",
-          tokenAccount,
-          error
+        ]
+      );
+
+    for (const item of signatures || []) {
+      if (
+        item &&
+        item.signature &&
+        !item.err
+      ) {
+        signatureMap.set(
+          item.signature,
+          item
         );
       }
     }
+
+  } catch (error) {
+    console.error(
+      "Signature lookup failed:",
+      address,
+      error
+    );
+  }
+}
 
     const signatureList =
       Array.from(
