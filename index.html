@@ -1011,183 +1011,104 @@ function showServices() {
         },
         body: JSON.stringify({
           jsonrpc: "2.0",
-          id: Date.now() + Math.random(),
-          method,
-          params
+          id: Date.now(),
+          method: method,
+          params: params
         })
       });
 
       const data = await response.json();
 
       if (data.error) {
-        throw new Error(
-          data.error.message || "RPC error"
-        );
+        throw new Error(data.error.message);
       }
 
       return data.result;
     };
 
-    /*
-     * Get NEXORA token accounts owned by the wallet.
-     */
-    let tokenAccounts = {
-  value: []
-};
-
-const TOKEN_PROGRAM_ID =
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-
-const TOKEN_2022_PROGRAM_ID =
-  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
-
-const programIds = [
-  TOKEN_PROGRAM_ID,
-  TOKEN_2022_PROGRAM_ID
-];
-
-for (const programId of programIds) {
-  try {
-    const result = await rpcCall(
+    const tokenAccounts = await rpcCall(
       "getTokenAccountsByOwner",
       [
         walletAddress,
         {
-          programId: programId
+          mint: MINT
         },
         {
-          encoding: "jsonParsed",
-          commitment: "confirmed"
+          encoding: "jsonParsed"
         }
       ]
     );
 
-    const matchingAccounts =
-      (result?.value || []).filter(account => {
-        const mint =
-          account?.account?.data?.parsed?.info?.mint;
-
-        return mint === MINT;
-      });
-
-    tokenAccounts.value.push(
-      ...matchingAccounts
-    );
-
-  } catch (error) {
-    console.error(
-      "Token program lookup failed:",
-      programId,
-      error
-    );
-  }
-}
-
-if (tokenAccounts.value.length === 0) {
-  historyTransactions.innerHTML =
-    "<p>No NEXORA transactions found.</p>";
-  return;
-    }
-
-    const accounts =
-      tokenAccounts?.value || [];
-
-    if (accounts.length === 0) {
+    if (
+      !tokenAccounts ||
+      tokenAccounts.value.length === 0
+    ) {
       historyTransactions.innerHTML =
         "<p>No NEXORA transactions found.</p>";
       return;
     }
 
-    /*
-     * Collect signatures from every NEXORA
-     * token account one at a time.
-     */
-    const signatureMap = new Map();
-
-const signatureAddresses = [
-  walletAddress,
-  ...accounts
-    .map(account => account?.pubkey)
-    .filter(Boolean)
-];
-
-for (const address of signatureAddresses) {
-  try {
-    const signatures =
-      await rpcCall(
-        "getSignaturesForAddress",
-        [
-          address,
-          {
-            limit: 30
-          }
-        ]
+    const signatureResults =
+      await Promise.all(
+        tokenAccounts.value.map(account =>
+          rpcCall(
+            "getSignaturesForAddress",
+            [
+              account.pubkey,
+              {
+                limit: 20
+              }
+            ]
+          )
+        )
       );
 
-    for (const item of signatures || []) {
-      if (
-        item &&
-        item.signature &&
-        !item.err
-      ) {
-        signatureMap.set(
-          item.signature,
-          item
-        );
-      }
-    }
+    const signatureList = [];
 
-  } catch (error) {
-    console.error(
-      "Signature lookup failed:",
-      address,
-      error
-    );
-  }
-}
+    signatureResults.forEach(signatures => {
+      signatures.forEach(sigInfo => {
+        if (sigInfo.signature) {
+          signatureList.push(sigInfo);
+        }
+      });
+    });
 
-    const signatureList =
+    const uniqueSignatures =
       Array.from(
-        signatureMap.values()
-      )
-      .sort(
-        (a, b) =>
-          (b.blockTime || 0) -
-          (a.blockTime || 0)
-      )
-      .slice(0, 20);
+        new Map(
+          signatureList.map(sig => [
+            sig.signature,
+            sig
+          ])
+        ).values()
+      );
 
-    if (signatureList.length === 0) {
-      historyTransactions.innerHTML =
-        "<p>No NEXORA transactions found.</p>";
-      return;
-    }
-
-    const allTransactions = [];
-
-    /*
-     * Load transactions one at a time.
-     * One failed RPC request will not break
-     * the entire History page.
-     */
-    for (const sigInfo of signatureList) {
-      try {
-        const tx =
-          await rpcCall(
+    const transactionResults =
+      await Promise.all(
+        uniqueSignatures.map(async sigInfo => {
+          const tx = await rpcCall(
             "getTransaction",
             [
               sigInfo.signature,
               {
                 encoding: "jsonParsed",
-                commitment: "confirmed",
                 maxSupportedTransactionVersion: 0
               }
             ]
           );
 
-        if (!tx || !tx.meta) {
-          continue;
-        }
+          return {
+            sigInfo,
+            tx
+          };
+        })
+      );
+
+    const allTransactions = [];
+
+    transactionResults.forEach(
+      ({ sigInfo, tx }) => {
+        if (!tx || !tx.meta) return;
 
         let preAmount = 0;
         let postAmount = 0;
@@ -1223,9 +1144,7 @@ for (const address of signatureAddresses) {
         const change =
           postAmount - preAmount;
 
-        if (change === 0) {
-          continue;
-        }
+        if (change === 0) return;
 
         allTransactions.push({
           signature: sigInfo.signature,
@@ -1235,20 +1154,12 @@ for (const address of signatureAddresses) {
             sigInfo.blockTime ||
             0
         });
-
-      } catch (error) {
-        console.error(
-          "Transaction lookup failed:",
-          sigInfo.signature,
-          error
-        );
       }
-    }
+    );
 
     allTransactions.sort(
       (a, b) =>
-        (b.blockTime || 0) -
-        (a.blockTime || 0)
+        b.blockTime - a.blockTime
     );
 
     if (allTransactions.length === 0) {
@@ -1298,7 +1209,6 @@ for (const address of signatureAddresses) {
         <a
           href="https://explorer.solana.com/tx/${tx.signature}?cluster=devnet"
           target="_blank"
-          rel="noopener noreferrer"
           style="
             display:inline-block;
             margin-top:10px;
@@ -1322,10 +1232,10 @@ for (const address of signatureAddresses) {
 
     historyTransactions.innerHTML =
       "<p>History error: " +
-      (error.message || error) +
+      (error?.message || error) +
       "</p>";
   }
-   } 
+   }
             
     function showSettings() {
   let page = document.getElementById("settingsPage");
