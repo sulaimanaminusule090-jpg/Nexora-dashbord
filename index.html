@@ -1173,8 +1173,8 @@ const allTransactions = [];
             continue;
           }
 
-          if (
-  tokenAccounts.has(info.source)
+        if (
+  info.source === TOKEN_ACCOUNT
 ) {
   allTransactions.push({
     signature:
@@ -1189,7 +1189,7 @@ const allTransactions = [];
 }
 
 if (
-  tokenAccounts.has(info.destination)
+  info.destination === TOKEN_ACCOUNT
 ) {
   allTransactions.push({
     signature:
