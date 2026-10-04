@@ -1026,27 +1026,57 @@ function showServices() {
       return data.result;
     };
 
-    const tokenAccounts = await rpcCall(
-      "getTokenAccountsByOwner",
-      [
-        walletAddress,
-        {
-          mint: MINT
-        },
-        {
-          encoding: "jsonParsed"
-        }
-      ]
-    );
+    let tokenAccounts = {
+  value: []
+};
 
-    if (
-      !tokenAccounts ||
-      tokenAccounts.value.length === 0
-    ) {
-      historyTransactions.innerHTML =
-        "<p>No NEXORA transactions found.</p>";
-      return;
-    }
+const TOKEN_PROGRAM_ID =
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
+
+try {
+  const result = await rpcCall(
+    "getTokenAccountsByOwner",
+    [
+      walletAddress,
+      {
+        programId: TOKEN_PROGRAM_ID
+      },
+      {
+        encoding: "jsonParsed",
+        commitment: "confirmed"
+      }
+    ]
+  );
+
+  const matchingAccounts =
+    (result?.value || []).filter(account => {
+      const mint =
+        account?.account?.data?.parsed?.info?.mint;
+
+      return mint === MINT;
+    });
+
+  tokenAccounts.value.push(
+    ...matchingAccounts
+  );
+
+} catch (error) {
+  console.error(
+    "Token account lookup failed:",
+    error
+  );
+
+  historyTransactions.innerHTML =
+    "<p>Unable to load NEXORA token account.</p>";
+
+  return;
+}
+
+if (tokenAccounts.value.length === 0) {
+  historyTransactions.innerHTML =
+    "<p>No NEXORA transactions found.</p>";
+  return;
+}
 
     const signatureResults =
       await Promise.all(
