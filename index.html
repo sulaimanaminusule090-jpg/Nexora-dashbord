@@ -1199,11 +1199,14 @@ for (
         instruction?.parsed;
 
       if (
-        !parsed ||
-        parsed.type !== "transferChecked" ||
-        instruction.program !== "spl-token"
-      ) {
-        continue;
+  !parsed ||
+  (
+    parsed.type !== "transfer" &&
+    parsed.type !== "transferChecked"
+  ) ||
+  instruction.program !== "spl-token"
+) {
+  continue;
       }
 
       const info = parsed.info;
