@@ -1078,20 +1078,43 @@ if (tokenAccounts.value.length === 0) {
   return;
 }
 
-    const signatureResults =
-      await Promise.all(
-        tokenAccounts.value.map(account =>
-          rpcCall(
-            "getSignaturesForAddress",
-            [
-              account.pubkey,
-              {
-                limit: 20
-              }
-            ]
-          )
-        )
+    const addresses = [
+  walletAddress,
+  ...tokenAccounts.value.map(
+    account => account.pubkey
+  )
+];
+
+const uniqueAddresses =
+  [...new Set(addresses)];
+
+const signatureResults = [];
+
+for (const address of uniqueAddresses) {
+  try {
+    const signatures =
+      await rpcCall(
+        "getSignaturesForAddress",
+        [
+          address,
+          {
+            limit: 20
+          }
+        ]
       );
+
+    signatureResults.push(
+      ...(signatures || [])
+    );
+
+  } catch (error) {
+    console.error(
+      "Signature lookup failed:",
+      address,
+      error
+    );
+  }
+}
 
     const signatureList = [];
 
