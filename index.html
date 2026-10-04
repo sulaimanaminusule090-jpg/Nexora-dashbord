@@ -1142,7 +1142,8 @@ const allTransactions = [];
               parsed.type !== "transfer" &&
               parsed.type !== "transferChecked"
             ) ||
-            instruction.program !== "spl-token"
+            instruction.program !== "spl-token" &&
+instruction.program !== "spl-token-2022"
           ) {
             continue;
           }
