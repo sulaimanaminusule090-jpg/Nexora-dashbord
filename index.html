@@ -1076,7 +1076,7 @@ if (tokenAccounts.value.length === 0) {
 
 const tokenAccountAddresses =
   tokenAccounts.value.map(
-    account => account.pubkey
+    account => account.pubkey.toString()
   );
 
 const signatureMap = new Map();
