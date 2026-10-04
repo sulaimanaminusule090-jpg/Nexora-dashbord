@@ -1132,77 +1132,79 @@ const allTransactions = [];
           }
         });
 
-        for (const instruction of instructions) {
-          const parsed =
-            instruction?.parsed;
+        const preBalances =
+  tx.meta.preTokenBalances || [];
 
-          if (
-            !parsed ||
-            (
-              parsed.type !== "transfer" &&
-              parsed.type !== "transferChecked"
-            ) ||
-            instruction.program !== "spl-token" &&
-instruction.program !== "spl-token-2022"
-          ) {
-            continue;
-          }
+const postBalances =
+  tx.meta.postTokenBalances || [];
 
-          const info =
-            parsed.info;
+const accountKeys =
+  tx.transaction?.message?.accountKeys || [];
 
-          if (!info) {
-            continue;
-          }
+const tokenAccountIndex =
+  accountKeys.findIndex(
+    key =>
+      (typeof key === "string"
+        ? key
+        : key?.pubkey) === TOKEN_ACCOUNT
+  );
 
-      
-
-          const amount =
-            info.tokenAmount?.uiAmountString
-              ? Number(
-                  info.tokenAmount.uiAmountString
-                )
-              : info.tokenAmount?.uiAmount
-                ? Number(
-                    info.tokenAmount.uiAmount
-                  )
-                : info.amount
-                  ? Number(info.amount) / 1e9
-                  : 0;
-
-          if (!amount) {
-            continue;
-          }
-
-        if (
-  info.source === TOKEN_ACCOUNT
-) {
-  allTransactions.push({
-    signature:
-      sigInfo.signature,
-    amount: amount,
-    type: "Sent",
-    blockTime:
-      tx.blockTime ||
-      sigInfo.blockTime ||
-      0
-  });
+if (tokenAccountIndex === -1) {
+  continue;
 }
 
-if (
-  info.destination === TOKEN_ACCOUNT
-) {
-  allTransactions.push({
-    signature:
-      sigInfo.signature,
-    amount: amount,
-    type: "Received",
-    blockTime:
-      tx.blockTime ||
-      sigInfo.blockTime ||
-      0
-  });
+const pre =
+  preBalances.find(
+    b =>
+      b.accountIndex === tokenAccountIndex
+  );
+
+const post =
+  postBalances.find(
+    b =>
+      b.accountIndex === tokenAccountIndex
+  );
+
+const preAmount = BigInt(
+  pre?.uiTokenAmount?.amount || "0"
+);
+
+const postAmount = BigInt(
+  post?.uiTokenAmount?.amount || "0"
+);
+
+const difference =
+  postAmount - preAmount;
+
+if (difference === 0n) {
+  continue;
 }
+
+const decimals =
+  post?.uiTokenAmount?.decimals ??
+  pre?.uiTokenAmount?.decimals ??
+  9;
+
+const amount =
+  Number(
+    difference < 0n
+      ? -difference
+      : difference
+  ) / Math.pow(10, decimals);
+
+allTransactions.push({
+  signature:
+    sigInfo.signature,
+  amount: amount,
+  type:
+    difference < 0n
+      ? "Sent"
+      : "Received",
+  blockTime:
+    tx.blockTime ||
+    sigInfo.blockTime ||
+    0
+});
         }
       } catch (error) {
         console.error(
