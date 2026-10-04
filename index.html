@@ -1154,13 +1154,7 @@ const allTransactions = [];
             continue;
           }
 
-          if (
-            parsed.type === "transferChecked" &&
-            info.mint &&
-            info.mint !== MINT
-          ) {
-            continue;
-          }
+      
 
           const amount =
             info.tokenAmount?.uiAmountString
