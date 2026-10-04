@@ -622,27 +622,27 @@ async function connectWallet() {
     const provider = window.phantom?.solana || window.solana;
 
     if (!provider) {
-  alert(
-    "Phantom wallet was not found.\n\n" +
-    "Please open Nexora inside the Phantom browser and try again."
-  );
-  return;
+      alert(
+        "Phantom wallet was not found.\n\n" +
+        "Please open Nexora inside the Phantom browser and try again."
+      );
+      return;
     }
-    
 
     const response = await provider.connect();
 
     const address = response.publicKey.toString();
-    await loadHomeBalances();
-await loadRecentTransactions();
 
     document.querySelector(".connect").textContent =
       address.slice(0, 4) + "..." + address.slice(-4);
 
+    await loadHomeBalances();
+    await loadRecentTransactions();
+
     alert("Phantom connected successfully!\n\n" + address);
 
   } catch (error) {
-    console.error(error);
+    console.error("Wallet connection failed:", error);
     alert("Failed to connect to Phantom wallet.");
   }
 }
