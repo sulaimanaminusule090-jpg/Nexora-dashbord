@@ -1026,12 +1026,9 @@ function showServices() {
       return data.result;
     };
 
-    let tokenAccounts = {
+   let tokenAccounts = {
   value: []
 };
-
-const TOKEN_PROGRAM_ID =
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
 try {
   const result = await rpcCall(
@@ -1039,7 +1036,7 @@ try {
     [
       walletAddress,
       {
-        programId: TOKEN_PROGRAM_ID
+        mint: MINT
       },
       {
         encoding: "jsonParsed",
@@ -1048,21 +1045,12 @@ try {
     ]
   );
 
-  const matchingAccounts =
-    (result?.value || []).filter(account => {
-      const mint =
-        account?.account?.data?.parsed?.info?.mint;
-
-      return mint === MINT;
-    });
-
-  tokenAccounts.value.push(
-    ...matchingAccounts
-  );
+  tokenAccounts.value =
+    result?.value || [];
 
 } catch (error) {
   console.error(
-    "Token account lookup failed:",
+    "NEXORA token account lookup failed:",
     error
   );
 
@@ -1074,21 +1062,24 @@ try {
 
 if (tokenAccounts.value.length === 0) {
   historyTransactions.innerHTML =
-    "<p>No NEXORA transactions found.</p>";
+    "<p>No NEXORA token account found.</p>";
   return;
 }
 
-    const addresses = [
-  walletAddress,
-  ...tokenAccounts.value.map(
+const tokenAccountAddresses =
+  tokenAccounts.value.map(
     account => account.pubkey
-  )
+  );
+
+const addresses = [
+  walletAddress,
+  ...tokenAccountAddresses
 ];
 
 const uniqueAddresses =
   [...new Set(addresses)];
 
-const signatureResults = [];
+const signatureMap = new Map();
 
 for (const address of uniqueAddresses) {
   try {
@@ -1098,14 +1089,23 @@ for (const address of uniqueAddresses) {
         [
           address,
           {
-            limit: 20
+            limit: 50
           }
         ]
       );
 
-    signatureResults.push(
-      ...(signatures || [])
-    );
+    (signatures || []).forEach(sigInfo => {
+      if (
+        sigInfo &&
+        sigInfo.signature &&
+        !sigInfo.err
+      ) {
+        signatureMap.set(
+          sigInfo.signature,
+          sigInfo
+        );
+      }
+    });
 
   } catch (error) {
     console.error(
@@ -1116,127 +1116,143 @@ for (const address of uniqueAddresses) {
   }
 }
 
-    const signatureList =
-  signatureResults.filter(
-    sigInfo =>
-      sigInfo &&
-      sigInfo.signature
-  );
+const uniqueSignatures =
+  Array.from(
+    signatureMap.values()
+  )
+  .sort(
+    (a, b) =>
+      (b.blockTime || 0) -
+      (a.blockTime || 0)
+  )
+  .slice(0, 50);
 
-    const uniqueSignatures =
-      Array.from(
-        new Map(
-          signatureList.map(sig => [
-            sig.signature,
-            sig
-          ])
-        ).values()
+const allTransactions = [];
+
+for (const sigInfo of uniqueSignatures) {
+  try {
+    const tx =
+      await rpcCall(
+        "getTransaction",
+        [
+          sigInfo.signature,
+          {
+            encoding: "jsonParsed",
+            commitment: "confirmed",
+            maxSupportedTransactionVersion: 0
+          }
+        ]
       );
 
-    const transactionResults =
-      await Promise.all(
-        uniqueSignatures.map(async sigInfo => {
-          const tx = await rpcCall(
-            "getTransaction",
-            [
-              sigInfo.signature,
-              {
-                encoding: "jsonParsed",
-                maxSupportedTransactionVersion: 0
-              }
-            ]
-          );
-
-          return {
-            sigInfo,
-            tx
-          };
-        })
-      );
-
-    const allTransactions = [];
-
-const tokenAccountAddresses =
-  tokenAccounts.value.map(
-    account => account.pubkey
-  );
-
-transactionResults.forEach(
-  ({ sigInfo, tx }) => {
-
-    if (!tx || !tx.meta) return;
-
-    const accountKeys =
-      tx.transaction?.message?.accountKeys || [];
-
-    const getAccountAddress = index => {
-      const key = accountKeys[index];
-
-      if (!key) return null;
-
-      return typeof key === "string"
-        ? key
-        : key.pubkey || null;
-    };
-
-    let preAmount = 0;
-    let postAmount = 0;
-
-    for (
-      const item of
-      (tx.meta.preTokenBalances || [])
-    ) {
-      const address =
-        getAccountAddress(item.accountIndex);
-
-      if (
-        item.mint === MINT &&
-        (
-          item.owner === walletAddress ||
-          tokenAccountAddresses.includes(address)
-        )
-      ) {
-        preAmount += Number(
-          item.uiTokenAmount?.uiAmount || 0
-        );
-      }
+    if (!tx || !tx.meta) {
+      continue;
     }
 
-    for (
-      const item of
-      (tx.meta.postTokenBalances || [])
-    ) {
-      const address =
-        getAccountAddress(item.accountIndex);
+    const instructions = [];
 
-      if (
-        item.mint === MINT &&
-        (
-          item.owner === walletAddress ||
-          tokenAccountAddresses.includes(address)
-        )
-      ) {
-        postAmount += Number(
-          item.uiTokenAmount?.uiAmount || 0
+    const mainInstructions =
+      tx.transaction?.message?.instructions || [];
+
+    instructions.push(
+      ...mainInstructions
+    );
+
+    const innerInstructions =
+      tx.meta.innerInstructions || [];
+
+    innerInstructions.forEach(group => {
+      if (group?.instructions) {
+        instructions.push(
+          ...group.instructions
         );
       }
-    }
-
-    const change =
-      postAmount - preAmount;
-
-    if (change === 0) return;
-
-    allTransactions.push({
-      signature: sigInfo.signature,
-      change: change,
-      blockTime:
-        tx.blockTime ||
-        sigInfo.blockTime ||
-        0
     });
+
+    let foundTransfer = false;
+
+    for (const instruction of instructions) {
+      const parsed =
+        instruction?.parsed;
+
+      if (
+        !parsed ||
+        parsed.type !== "transferChecked" ||
+        instruction.program !== "spl-token"
+      ) {
+        continue;
+      }
+
+      const info = parsed.info;
+
+      if (
+        !info ||
+        info.mint !== MINT
+      ) {
+        continue;
+      }
+
+      const source =
+        info.source;
+
+      const destination =
+        info.destination;
+
+      const amount =
+        Number(
+          info.tokenAmount?.uiAmountString ||
+          info.tokenAmount?.uiAmount ||
+          0
+        );
+
+      if (!amount) {
+        continue;
+      }
+
+      if (
+        tokenAccountAddresses.includes(source)
+      ) {
+        allTransactions.push({
+          signature:
+            sigInfo.signature,
+          change: -amount,
+          blockTime:
+            tx.blockTime ||
+            sigInfo.blockTime ||
+            0
+        });
+
+        foundTransfer = true;
+      }
+
+      if (
+        tokenAccountAddresses.includes(destination)
+      ) {
+        allTransactions.push({
+          signature:
+            sigInfo.signature,
+          change: amount,
+          blockTime:
+            tx.blockTime ||
+            sigInfo.blockTime ||
+            0
+        });
+
+        foundTransfer = true;
+      }
+    }
+
+    if (!foundTransfer) {
+      continue;
+    }
+
+  } catch (error) {
+    console.error(
+      "Transaction lookup failed:",
+      sigInfo.signature,
+      error
+    );
   }
-);
+} 
 
     allTransactions.sort(
       (a, b) =>
