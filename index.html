@@ -1026,27 +1026,58 @@ function showServices() {
       return data.result;
     };
 
-   const tokenAccounts = {
+  const tokenAccounts = {
   value: []
 };
 
 try {
-  const result = await rpcCall(
-    "getTokenAccountsByOwner",
-    [
-      walletAddress,
-      {
-        mint: MINT
-      },
-      {
-        encoding: "jsonParsed",
-        commitment: "confirmed"
-      }
-    ]
-  );
+  let result = null;
+
+  try {
+    result = await rpcCall(
+      "getTokenAccountsByOwner",
+      [
+        walletAddress,
+        {
+          mint: MINT
+        },
+        {
+          encoding: "jsonParsed",
+          commitment: "confirmed"
+        }
+      ]
+    );
+  } catch (error) {
+    console.warn(
+      "Mint-filtered lookup failed. Trying program lookup...",
+      error
+    );
+  }
+
+  if (!result) {
+    result = await rpcCall(
+      "getTokenAccountsByOwner",
+      [
+        walletAddress,
+        {
+          programId:
+            "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          encoding: "jsonParsed",
+          commitment: "confirmed"
+        }
+      ]
+    );
+  }
 
   tokenAccounts.value =
-    result?.value || [];
+    (result?.value || []).filter(account => {
+      const mint =
+        account?.account?.data?.parsed?.info?.mint;
+
+      return mint === MINT;
+    });
 
 } catch (error) {
   console.error(
