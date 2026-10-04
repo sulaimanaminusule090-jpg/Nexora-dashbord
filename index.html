@@ -1027,19 +1027,18 @@ function showServices() {
     };
 
   const tokenAccounts =
-  await rpcCall(
-    "getTokenAccountsByOwner",
-    [
-      walletAddress,
-      {
-        mint: MINT
-      },
-      {
-        encoding: "jsonParsed",
-        commitment: "confirmed"
-      }
-    ]
-  );
+await rpcCall(
+  "getTokenAccountsByOwner",
+  [
+    walletAddress,
+    {
+      mint: MINT
+    },
+    {
+      encoding: "jsonParsed"
+    }
+  ]
+);
 
 if (
   !tokenAccounts ||
