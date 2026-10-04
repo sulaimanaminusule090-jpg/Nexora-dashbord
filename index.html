@@ -1116,15 +1116,12 @@ for (const address of uniqueAddresses) {
   }
 }
 
-    const signatureList = [];
-
-    signatureResults.forEach(signatures => {
-      signatures.forEach(sigInfo => {
-        if (sigInfo.signature) {
-          signatureList.push(sigInfo);
-        }
-      });
-    });
+    const signatureList =
+  signatureResults.filter(
+    sigInfo =>
+      sigInfo &&
+      sigInfo.signature
+  );
 
     const uniqueSignatures =
       Array.from(
