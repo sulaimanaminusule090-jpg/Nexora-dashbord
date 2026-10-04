@@ -1201,13 +1201,9 @@ if (
     historyTransactions.innerHTML = "";
 
     allTransactions.forEach(tx => {
-      const type =
-        tx.change > 0
-          ? "Received"
-          : "Sent";
+      const type = tx.type;
 
-      const amount =
-        Math.abs(tx.change);
+const amount = tx.amount;
 
       const date =
         tx.blockTime
