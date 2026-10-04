@@ -1138,12 +1138,17 @@ for (
 
       const info = parsed.info;
 
-      if (
-        !info ||
-        info.mint !== MINT
-      ) {
-        continue;
-      }
+if (!info) {
+  continue;
+}
+
+if (
+  parsed.type === "transferChecked" &&
+  info.mint &&
+  info.mint !== MINT
+) {
+  continue;
+}
 
       const amount =
         Number(
