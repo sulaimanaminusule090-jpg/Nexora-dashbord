@@ -622,11 +622,12 @@ async function connectWallet() {
     const provider = window.phantom?.solana || window.solana;
 
     if (!provider) {
-      
-  window.location.href =
-    `https://phantom.app/ul/browse/${encodeURIComponent(window.location.href)}?ref=${encodeURIComponent(window.location.origin)}`;
+  alert(
+    "Phantom wallet was not found.\n\n" +
+    "Please open Nexora inside the Phantom browser and try again."
+  );
   return;
-      }
+    }
     
 
     const response = await provider.connect();
