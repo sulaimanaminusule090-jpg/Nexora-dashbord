@@ -1203,35 +1203,34 @@ const allTransactions = [];
 
           if (
   tokenAccounts.has(info.source)
-)
-            allTransactions.push({
-              signature:
-                sigInfo.signature,
-              amount: amount,
-              type: "Sent",
-              blockTime:
-                tx.blockTime ||
-                sigInfo.blockTime ||
-                0
-            });
-          }
+) {
+  allTransactions.push({
+    signature:
+      sigInfo.signature,
+    amount: amount,
+    type: "Sent",
+    blockTime:
+      tx.blockTime ||
+      sigInfo.blockTime ||
+      0
+  });
+}
 
-          if (
+if (
   tokenAccounts.has(info.destination)
-)
-            allTransactions.push({
-              signature:
-                sigInfo.signature,
-              amount: amount,
-              type: "Received",
-              blockTime:
-                tx.blockTime ||
-                sigInfo.blockTime ||
-                0
-            });
-          }
+) {
+  allTransactions.push({
+    signature:
+      sigInfo.signature,
+    amount: amount,
+    type: "Received",
+    blockTime:
+      tx.blockTime ||
+      sigInfo.blockTime ||
+      0
+  });
+}
         }
-
       } catch (error) {
         console.error(
           "Transaction lookup failed:",
@@ -1311,7 +1310,7 @@ const allTransactions = [];
       (error?.message || error) +
       "</p>";
   }
-      }
+      
             
     function showSettings() {
   let page = document.getElementById("settingsPage");
