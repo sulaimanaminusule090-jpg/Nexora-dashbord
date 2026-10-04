@@ -1050,31 +1050,9 @@ function showServices() {
     const walletAddress =
   provider.publicKey.toString();
 
-const tokenAccountsResult =
-  await rpcCall(
-    "getTokenAccountsByOwner",
-    [
-      walletAddress,
-      {
-        mint: MINT
-      },
-      {
-        encoding: "jsonParsed"
-      }
-    ]
-  );
-
 const tokenAccounts = new Set([
   TOKEN_ACCOUNT
 ]);
-
-for (
-  const account of tokenAccountsResult?.value || []
-) {
-  if (account?.pubkey) {
-    tokenAccounts.add(account.pubkey);
-  }
-}
 
 const signatureMap = new Map();
 
