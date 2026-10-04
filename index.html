@@ -1085,126 +1085,79 @@ const uniqueSignatures =
 
 const allTransactions = [];
 
-for (
-  const sigInfo of uniqueSignatures
-) {
+for (const sigInfo of uniqueSignatures) {
   try {
-    const tx =
-      await rpcCall(
-        "getTransaction",
-        [
-          sigInfo.signature,
-          {
-            encoding: "jsonParsed",
-            commitment: "confirmed",
-            maxSupportedTransactionVersion: 0
-          }
-        ]
-      );
+    const tx = await rpcCall(
+      "getTransaction",
+      [
+        sigInfo.signature,
+        {
+          encoding: "jsonParsed",
+          commitment: "confirmed",
+          maxSupportedTransactionVersion: 0
+        }
+      ]
+    );
 
     if (!tx || !tx.meta) {
       continue;
     }
 
-    const instructions = [
-      ...(tx.transaction?.message?.instructions || [])
-    ];
+    const preBalances =
+      tx.meta.preTokenBalances || [];
 
-    (
-      tx.meta.innerInstructions || []
-    ).forEach(group => {
-      if (group?.instructions) {
-        instructions.push(
-          ...group.instructions
-        );
-      }
-    });
+    const postBalances =
+      tx.meta.postTokenBalances || [];
 
-    for (
-      const instruction of instructions
-    ) {
-      const parsed =
-        instruction?.parsed;
+    let preAmount = 0;
+    let postAmount = 0;
 
+    for (const balance of preBalances) {
       if (
-  !parsed ||
-  (
-    parsed.type !== "transfer" &&
-    parsed.type !== "transferChecked"
-  ) ||
-  instruction.program !== "spl-token"
-) {
-  continue;
-      }
-
-      const info = parsed.info;
-
-if (!info) {
-  continue;
-}
-
-if (
-  parsed.type === "transferChecked" &&
-  info.mint &&
-  info.mint !== MINT
-) {
-  continue;
-}
-
-      const amount =
-  info.tokenAmount?.uiAmountString
-    ? Number(info.tokenAmount.uiAmountString)
-    : info.tokenAmount?.uiAmount
-      ? Number(info.tokenAmount.uiAmount)
-      : info.amount
-        ? Number(info.amount) / 1e9
-        : 0;
-
-if (!amount) {
-  continue;
-}
-
-      if (
-        tokenAccountAddresses.includes(
-          info.source
-        )
+        balance.mint === MINT &&
+        balance.owner === walletAddress
       ) {
-        allTransactions.push({
-          signature:
-            sigInfo.signature,
-          change: -amount,
-          blockTime:
-            tx.blockTime ||
-            sigInfo.blockTime ||
-            0
-        });
-      }
-
-      if (
-        tokenAccountAddresses.includes(
-          info.destination
-        )
-      ) {
-        allTransactions.push({
-          signature:
-            sigInfo.signature,
-          change: amount,
-          blockTime:
-            tx.blockTime ||
-            sigInfo.blockTime ||
-            0
-        });
+        preAmount += Number(
+          balance.uiTokenAmount?.amount || 0
+        ) / 1e9;
       }
     }
 
+    for (const balance of postBalances) {
+      if (
+        balance.mint === MINT &&
+        balance.owner === walletAddress
+      ) {
+        postAmount += Number(
+          balance.uiTokenAmount?.amount || 0
+        ) / 1e9;
+      }
+    }
+
+    const change = postAmount - preAmount;
+
+    if (change === 0) {
+      continue;
+    }
+
+    allTransactions.push({
+      signature: sigInfo.signature,
+      blockTime:
+        tx.blockTime ||
+        sigInfo.blockTime ||
+        0,
+      amount: Math.abs(change),
+      type: change > 0 ? "Received" : "Sent"
+    });
+
   } catch (error) {
     console.error(
-      "Transaction lookup failed:",
+      "History transaction failed:",
       sigInfo.signature,
       error
     );
   }
-      }
+}
 
     allTransactions.sort(
       (a, b) =>
