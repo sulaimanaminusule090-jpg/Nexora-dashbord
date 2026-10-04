@@ -995,14 +995,14 @@ function showServices() {
       return;
     }
 
-    const walletAddress =
-      provider.publicKey.toString();
-
     const RPC =
       "https://api.devnet.solana.com";
 
     const MINT =
       "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLKq8o";
+
+    const TOKEN_ACCOUNT =
+      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV";
 
     const rpcCall = async (method, params) => {
       const response = await fetch(RPC, {
@@ -1013,8 +1013,8 @@ function showServices() {
         body: JSON.stringify({
           jsonrpc: "2.0",
           id: Date.now(),
-          method: method,
-          params: params
+          method,
+          params
         })
       });
 
@@ -1027,165 +1027,126 @@ function showServices() {
       return data.result;
     };
 
-  const tokenAccountAddresses = [
-  walletAddress,
-  "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-];
-
-const signatureMap = new Map();
-
-for (
-  const address of tokenAccountAddresses
-) {
-  try {
     const signatures =
       await rpcCall(
         "getSignaturesForAddress",
         [
-          address,
+          TOKEN_ACCOUNT,
           {
             limit: 50
           }
         ]
       );
 
-    (signatures || []).forEach(
-      sigInfo => {
-        if (
-          sigInfo &&
-          sigInfo.signature &&
-          !sigInfo.err
-        ) {
-          signatureMap.set(
-            sigInfo.signature,
-            sigInfo
-          );
-        }
+    const allTransactions = [];
+
+    for (const sigInfo of signatures || []) {
+      if (
+        !sigInfo?.signature ||
+        sigInfo.err
+      ) {
+        continue;
       }
-    );
 
-  } catch (error) {
-    console.error(
-      "Signature lookup failed:",
-      address,
-      error
-    );
-  }
-}
+      try {
+        const tx =
+          await rpcCall(
+            "getTransaction",
+            [
+              sigInfo.signature,
+              {
+                encoding: "jsonParsed",
+                commitment: "confirmed",
+                maxSupportedTransactionVersion: 0
+              }
+            ]
+          );
 
-const uniqueSignatures =
-  Array.from(
-    signatureMap.values()
-  )
-  .sort(
-    (a, b) =>
-      (b.blockTime || 0) -
-      (a.blockTime || 0)
-  )
-  .slice(0, 50);
-
-const allTransactions = [];
-
-for (const sigInfo of uniqueSignatures) {
-  try {
-    const tx = await rpcCall(
-      "getTransaction",
-      [
-        sigInfo.signature,
-        {
-          encoding: "jsonParsed",
-          commitment: "confirmed",
-          maxSupportedTransactionVersion: 0
+        if (!tx?.meta) {
+          continue;
         }
-      ]
-    );
 
-    if (!tx || !tx.meta) {
-      continue;
+        const preBalances =
+          tx.meta.preTokenBalances || [];
+
+        const postBalances =
+          tx.meta.postTokenBalances || [];
+
+        let preAmount = 0;
+        let postAmount = 0;
+
+        for (const balance of preBalances) {
+          const accountKey =
+            tx.transaction?.message?.accountKeys?.[
+              balance.accountIndex
+            ];
+
+          const tokenAccount =
+            typeof accountKey === "string"
+              ? accountKey
+              : accountKey?.pubkey;
+
+          if (
+            balance.mint === MINT &&
+            tokenAccount === TOKEN_ACCOUNT
+          ) {
+            preAmount =
+              Number(
+                balance.uiTokenAmount?.amount || 0
+              ) / 1000000000;
+          }
+        }
+
+        for (const balance of postBalances) {
+          const accountKey =
+            tx.transaction?.message?.accountKeys?.[
+              balance.accountIndex
+            ];
+
+          const tokenAccount =
+            typeof accountKey === "string"
+              ? accountKey
+              : accountKey?.pubkey;
+
+          if (
+            balance.mint === MINT &&
+            tokenAccount === TOKEN_ACCOUNT
+          ) {
+            postAmount =
+              Number(
+                balance.uiTokenAmount?.amount || 0
+              ) / 1000000000;
+          }
+        }
+
+        const change =
+          postAmount - preAmount;
+
+        if (change === 0) {
+          continue;
+        }
+
+        allTransactions.push({
+          signature: sigInfo.signature,
+          blockTime:
+            tx.blockTime ||
+            sigInfo.blockTime ||
+            0,
+          amount: Math.abs(change),
+          type:
+            change > 0
+              ? "Received"
+              : "Sent"
+        });
+
+      } catch (error) {
+        console.error(
+          "History transaction failed:",
+          sigInfo.signature,
+          error
+        );
+      }
     }
-
-    const preBalances =
-      tx.meta.preTokenBalances || [];
-
-    const postBalances =
-      tx.meta.postTokenBalances || [];
-
-    let preAmount = 0;
-    let postAmount = 0;
-
-    for (const balance of preBalances) {
-      const accountKey =
-  tx.transaction?.message?.accountKeys?.[
-    balance.accountIndex
-  ];
-
-const tokenAccount =
-  typeof accountKey === "string"
-    ? accountKey
-    : accountKey?.pubkey;
-
-if (
-  balance.mint === MINT &&
-  (
-    balance.owner === walletAddress ||
-    tokenAccount ===
-      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-  )
-) {
-  preAmount += Number(
-    balance.uiTokenAmount?.amount || 0
-  ) / 1e9;
-}
-    }
-    for (const balance of postBalances) {
-const accountKey =
-  tx.transaction?.message?.accountKeys?.[
-    balance.accountIndex
-  ];
-
-const tokenAccount =
-  typeof accountKey === "string"
-    ? accountKey
-    : accountKey?.pubkey;
-
-if (
-  balance.mint === MINT &&
-  (
-    balance.owner === walletAddress ||
-    tokenAccount ===
-      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-  )
-) {
-  postAmount += Number(
-    balance.uiTokenAmount?.amount || 0
-  ) / 1e9;
-}
-    }
-
-    const change = postAmount - preAmount;
-
-    if (change === 0) {
-      continue;
-    }
-
-    allTransactions.push({
-      signature: sigInfo.signature,
-      blockTime:
-        tx.blockTime ||
-        sigInfo.blockTime ||
-        0,
-      amount: Math.abs(change),
-      type: change > 0 ? "Received" : "Sent"
-    });
-
-  } catch (error) {
-    console.error(
-      "History transaction failed:",
-      sigInfo.signature,
-      error
-    );
-  }
-}
 
     allTransactions.sort(
       (a, b) =>
@@ -1201,10 +1162,6 @@ if (
     historyTransactions.innerHTML = "";
 
     allTransactions.forEach(tx => {
-      const type = tx.type;
-
-const amount = tx.amount;
-
       const date =
         tx.blockTime
           ? new Date(
@@ -1225,7 +1182,7 @@ const amount = tx.amount;
 
       item.innerHTML = `
         <div style="font-weight:bold;font-size:16px;">
-          ${type} ${amount} NEXORA
+          ${tx.type} ${tx.amount} NEXORA
         </div>
 
         <div style="font-size:13px;color:#6b7280;margin-top:6px;">
@@ -1261,7 +1218,7 @@ const amount = tx.amount;
       (error?.message || error) +
       "</p>";
   }
-   }
+                }
             
     function showSettings() {
   let page = document.getElementById("settingsPage");
