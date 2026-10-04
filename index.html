@@ -934,19 +934,40 @@ function closeWallet() {
 function showServices() {
   alert("Nexora Services will be available soon.");
 }
-    async function showHistory() {
-  const walletModal = document.getElementById("walletModal");
-  const walletPage = document.getElementById("walletPage");
-  const historyPage = document.getElementById("historyPage");
-  const settingsPage = document.getElementById("settingsPage");
-  const mainPage = document.querySelector("main");
+   async function showHistory() {
+  const walletModal =
+    document.getElementById("walletModal");
+
+  const walletPage =
+    document.getElementById("walletPage");
+
+  const historyPage =
+    document.getElementById("historyPage");
+
+  const settingsPage =
+    document.getElementById("settingsPage");
+
+  const mainPage =
+    document.querySelector("main");
+
   const historyTransactions =
     document.getElementById("historyTransactions");
 
-  if (walletModal) walletModal.style.display = "none";
-  if (walletPage) walletPage.style.display = "none";
-  if (settingsPage) settingsPage.style.display = "none";
-  if (mainPage) mainPage.style.display = "none";
+  if (walletModal) {
+    walletModal.style.display = "none";
+  }
+
+  if (walletPage) {
+    walletPage.style.display = "none";
+  }
+
+  if (settingsPage) {
+    settingsPage.style.display = "none";
+  }
+
+  if (mainPage) {
+    mainPage.style.display = "none";
+  }
 
   if (!historyPage) {
     alert("History page not found.");
@@ -956,7 +977,9 @@ function showServices() {
   historyPage.style.display = "block";
   window.scrollTo(0, 0);
 
-  if (!historyTransactions) return;
+  if (!historyTransactions) {
+    return;
+  }
 
   historyTransactions.innerHTML =
     "<p>Loading transactions...</p>";
@@ -988,104 +1011,154 @@ function showServices() {
         },
         body: JSON.stringify({
           jsonrpc: "2.0",
-          id: Date.now(),
-          method: method,
-          params: params
+          id: Date.now() + Math.random(),
+          method,
+          params
         })
       });
 
       const data = await response.json();
 
       if (data.error) {
-        throw new Error(data.error.message);
+        throw new Error(
+          data.error.message || "RPC error"
+        );
       }
 
       return data.result;
     };
 
-    const tokenAccounts = await rpcCall(
-      "getTokenAccountsByOwner",
-      [
-        walletAddress,
-        {
-          mint: MINT
-        },
-        {
-          encoding: "jsonParsed"
-        }
-      ]
-    );
+    /*
+     * Get NEXORA token accounts owned by the wallet.
+     */
+    let tokenAccounts;
 
-    if (
-      !tokenAccounts ||
-      tokenAccounts.value.length === 0
-    ) {
+    try {
+      tokenAccounts = await rpcCall(
+        "getTokenAccountsByOwner",
+        [
+          walletAddress,
+          {
+            mint: MINT
+          },
+          {
+            encoding: "jsonParsed"
+          }
+        ]
+      );
+    } catch (error) {
+      console.error(
+        "Token account lookup failed:",
+        error
+      );
+
+      historyTransactions.innerHTML =
+        "<p>Unable to load NEXORA token account.</p>";
+
+      return;
+    }
+
+    const accounts =
+      tokenAccounts?.value || [];
+
+    if (accounts.length === 0) {
       historyTransactions.innerHTML =
         "<p>No NEXORA transactions found.</p>";
       return;
     }
 
-    const signatureResults =
-      await Promise.all(
-        tokenAccounts.value.map(account =>
-          rpcCall(
+    /*
+     * Collect signatures from every NEXORA
+     * token account one at a time.
+     */
+    const signatureMap = new Map();
+
+    for (const account of accounts) {
+      const tokenAccount =
+        account?.pubkey;
+
+      if (
+        !tokenAccount ||
+        typeof tokenAccount !== "string"
+      ) {
+        continue;
+      }
+
+      try {
+        const signatures =
+          await rpcCall(
             "getSignaturesForAddress",
             [
-              account.pubkey,
+              tokenAccount,
               {
-                limit: 20
+                limit: 30
               }
             ]
-          )
-        )
-      );
+          );
 
-    const signatureList = [];
-
-    signatureResults.forEach(signatures => {
-      signatures.forEach(sigInfo => {
-        if (sigInfo.signature) {
-          signatureList.push(sigInfo);
+        for (const item of signatures || []) {
+          if (
+            item &&
+            item.signature &&
+            !item.err
+          ) {
+            signatureMap.set(
+              item.signature,
+              item
+            );
+          }
         }
-      });
-    });
+      } catch (error) {
+        console.error(
+          "Signature lookup failed:",
+          tokenAccount,
+          error
+        );
+      }
+    }
 
-    const uniqueSignatures =
+    const signatureList =
       Array.from(
-        new Map(
-          signatureList.map(sig => [
-            sig.signature,
-            sig
-          ])
-        ).values()
-      );
+        signatureMap.values()
+      )
+      .sort(
+        (a, b) =>
+          (b.blockTime || 0) -
+          (a.blockTime || 0)
+      )
+      .slice(0, 20);
 
-    const transactionResults =
-      await Promise.all(
-        uniqueSignatures.map(async sigInfo => {
-          const tx = await rpcCall(
+    if (signatureList.length === 0) {
+      historyTransactions.innerHTML =
+        "<p>No NEXORA transactions found.</p>";
+      return;
+    }
+
+    const allTransactions = [];
+
+    /*
+     * Load transactions one at a time.
+     * One failed RPC request will not break
+     * the entire History page.
+     */
+    for (const sigInfo of signatureList) {
+      try {
+        const tx =
+          await rpcCall(
             "getTransaction",
             [
               sigInfo.signature,
               {
                 encoding: "jsonParsed",
+                commitment: "confirmed",
                 maxSupportedTransactionVersion: 0
               }
             ]
           );
 
-          return {
-            sigInfo,
-            tx
-          };
-        })
-      );
-
-    const allTransactions = [];
-
-    transactionResults.forEach(
-      ({ sigInfo, tx }) => {
-        if (!tx || !tx.meta) return;
+        if (!tx || !tx.meta) {
+          continue;
+        }
 
         let preAmount = 0;
         let postAmount = 0;
@@ -1121,7 +1194,9 @@ function showServices() {
         const change =
           postAmount - preAmount;
 
-        if (change === 0) return;
+        if (change === 0) {
+          continue;
+        }
 
         allTransactions.push({
           signature: sigInfo.signature,
@@ -1131,12 +1206,20 @@ function showServices() {
             sigInfo.blockTime ||
             0
         });
+
+      } catch (error) {
+        console.error(
+          "Transaction lookup failed:",
+          sigInfo.signature,
+          error
+        );
       }
-    );
+    }
 
     allTransactions.sort(
       (a, b) =>
-        b.blockTime - a.blockTime
+        (b.blockTime || 0) -
+        (a.blockTime || 0)
     );
 
     if (allTransactions.length === 0) {
@@ -1186,6 +1269,7 @@ function showServices() {
         <a
           href="https://explorer.solana.com/tx/${tx.signature}?cluster=devnet"
           target="_blank"
+          rel="noopener noreferrer"
           style="
             display:inline-block;
             margin-top:10px;
@@ -1209,10 +1293,10 @@ function showServices() {
 
     historyTransactions.innerHTML =
       "<p>History error: " +
-      (error?.message || error) +
+      (error.message || error) +
       "</p>";
   }
-    }
+   } 
             
     function showSettings() {
   let page = document.getElementById("settingsPage");
