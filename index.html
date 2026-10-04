@@ -1027,31 +1027,34 @@ function showServices() {
     };
 
   const tokenAccounts =
-await rpcCall(
-  "getTokenAccountsByOwner",
-  [
-    walletAddress,
-    {
-      mint: MINT
-    },
-    {
-      encoding: "jsonParsed"
-    }
-  ]
-);
+  await rpcCall(
+    "getTokenAccountsByOwner",
+    [
+      walletAddress,
+      {
+        programId:
+          "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+      },
+      {
+        encoding: "jsonParsed"
+      }
+    ]
+  );
 
-if (
-  !tokenAccounts ||
-  !Array.isArray(tokenAccounts.value) ||
-  tokenAccounts.value.length === 0
-) {
+const nexoraAccounts =
+  (tokenAccounts?.value || []).filter(
+    account =>
+      account?.account?.data?.parsed?.info?.mint === MINT
+  );
+
+if (nexoraAccounts.length === 0) {
   historyTransactions.innerHTML =
     "<p>No NEXORA token account found.</p>";
   return;
 }
 
 const tokenAccountAddresses =
-  tokenAccounts.value.map(
+  nexoraAccounts.map(
     account => account.pubkey.toString()
   );
 
