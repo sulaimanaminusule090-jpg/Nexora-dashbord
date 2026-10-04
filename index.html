@@ -1026,10 +1026,7 @@ function showServices() {
       return data.result;
     };
 
-   const TOKEN_PROGRAM_ID =
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-
-const tokenAccounts = {
+   const tokenAccounts = {
   value: []
 };
 
@@ -1039,7 +1036,7 @@ try {
     [
       walletAddress,
       {
-        programId: TOKEN_PROGRAM_ID
+        mint: MINT
       },
       {
         encoding: "jsonParsed",
@@ -1049,11 +1046,7 @@ try {
   );
 
   tokenAccounts.value =
-    (result?.value || []).filter(account => {
-      return (
-        account?.account?.data?.parsed?.info?.mint === MINT
-      );
-    });
+    result?.value || [];
 
 } catch (error) {
   console.error(
