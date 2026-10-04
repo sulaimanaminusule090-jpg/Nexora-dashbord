@@ -1113,25 +1113,52 @@ for (const sigInfo of uniqueSignatures) {
     let postAmount = 0;
 
     for (const balance of preBalances) {
-      if (
-        balance.mint === MINT &&
-        balance.owner === walletAddress
-      ) {
-        preAmount += Number(
-          balance.uiTokenAmount?.amount || 0
-        ) / 1e9;
-      }
-    }
+      const accountKey =
+  tx.transaction?.message?.accountKeys?.[
+    balance.accountIndex
+  ];
+
+const tokenAccount =
+  typeof accountKey === "string"
+    ? accountKey
+    : accountKey?.pubkey;
+
+if (
+  balance.mint === MINT &&
+  (
+    balance.owner === walletAddress ||
+    tokenAccount ===
+      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+  )
+) {
+  preAmount += Number(
+    balance.uiTokenAmount?.amount || 0
+  ) / 1e9;
+}
 
     for (const balance of postBalances) {
-      if (
-        balance.mint === MINT &&
-        balance.owner === walletAddress
-      ) {
-        postAmount += Number(
-          balance.uiTokenAmount?.amount || 0
-        ) / 1e9;
-      }
+const accountKey =
+  tx.transaction?.message?.accountKeys?.[
+    balance.accountIndex
+  ];
+
+const tokenAccount =
+  typeof accountKey === "string"
+    ? accountKey
+    : accountKey?.pubkey;
+
+if (
+  balance.mint === MINT &&
+  (
+    balance.owner === walletAddress ||
+    tokenAccount ===
+      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+  )
+) {
+  postAmount += Number(
+    balance.uiTokenAmount?.amount || 0
+  ) / 1e9;
+}
     }
 
     const change = postAmount - preAmount;
