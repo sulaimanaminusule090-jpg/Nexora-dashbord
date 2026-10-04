@@ -1754,57 +1754,62 @@ async function updateWalletSol() {
   }
 }
 
-  
-async function loadRecentTransactions() {
-  try {
-    const provider =
-      window.phantom?.solana || window.solana;
+  async function loadRecentTransactions() {
+  const provider =
+    window.phantom?.solana || window.solana;
 
-    if (!provider || !provider.publicKey) {
-      return;
+  const container =
+    document.getElementById("recentTransactions");
+
+  if (!container) return;
+
+  if (!provider || !provider.publicKey) {
+    container.innerHTML =
+      "<p>No recent NEXORA transactions</p>";
+    return;
+  }
+
+  const RPC =
+    "https://api.devnet.solana.com";
+
+  const NEXORA_MINT =
+    "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLKq8o";
+
+  const wallet =
+    provider.publicKey.toString();
+
+  const rpcCall = async (method, params) => {
+    const response = await fetch(RPC, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: Date.now() + Math.random(),
+        method,
+        params
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(data.error.message);
     }
 
-    const RPC =
-      "https://api.devnet.solana.com";
+    return data.result;
+  };
 
-    const NEXORA_MINT =
-      "mmmQHoCZBUK8UDS1bPhWCYd4n8tJ7X1E5BGqMbrLKq8o";
+  try {
+    container.innerHTML =
+      "<p>Loading recent transactions...</p>";
 
-    const wallet =
-      provider.publicKey.toString();
+    // Get NEXORA token accounts owned by this wallet
+    let tokenAccounts = null;
 
-    const container =
-      document.getElementById("recentTransactions");
-
-    if (!container) return;
-
-    const headers = {
-      "Content-Type": "application/json"
-    };
-
-    const rpcCall = async (method, params) => {
-      const response = await fetch(RPC, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          id: Date.now() + Math.random(),
-          method: method,
-          params: params
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
-
-      return data.result;
-    };
-
-    const tokenAccounts =
-      await rpcCall(
+    try {
+      tokenAccounts = await rpcCall(
         "getTokenAccountsByOwner",
         [
           wallet,
@@ -1816,75 +1821,102 @@ async function loadRecentTransactions() {
           }
         ]
       );
+    } catch (error) {
+      console.error(
+        "Token account lookup failed:",
+        error
+      );
+    }
 
     const addresses = [
       wallet,
-      ...(tokenAccounts?.value || []).map(
-        account => account.pubkey
-      )
+      ...(tokenAccounts?.value || [])
+        .map(account => account.pubkey)
+        .filter(Boolean)
     ];
 
-    const signatureResults =
-      await Promise.all(
-        addresses.map(address =>
-          rpcCall(
+    // Remove duplicate addresses
+    const uniqueAddresses =
+      [...new Set(addresses)];
+
+    let signatureResults = [];
+
+    // Get signatures without allowing one failed request
+    // to break the entire Recent Transactions section.
+    for (const address of uniqueAddresses) {
+      try {
+        const signatures =
+          await rpcCall(
             "getSignaturesForAddress",
             [
               address,
               {
-                limit: 10
+                limit: 8
               }
             ]
-          )
-        )
-      );
+          );
 
+        signatureResults.push(
+          ...(signatures || [])
+        );
+      } catch (error) {
+        console.error(
+          "Signature lookup failed:",
+          address,
+          error
+        );
+      }
+    }
+
+    // Remove duplicate signatures
     const signatureMap = new Map();
 
-    signatureResults.forEach(signatures => {
-      (signatures || []).forEach(item => {
-        if (!item.err && item.signature) {
-          signatureMap.set(
-            item.signature,
-            item
-          );
-        }
-      });
+    signatureResults.forEach(item => {
+      if (
+        item &&
+        !item.err &&
+        item.signature
+      ) {
+        signatureMap.set(
+          item.signature,
+          item
+        );
+      }
     });
 
     const signatureEntries =
       Array.from(
         signatureMap.values()
-      ).slice(0, 10);
-
-    const transactionResults =
-      await Promise.all(
-        signatureEntries.map(async item => {
-          const tx =
-            await rpcCall(
-              "getTransaction",
-              [
-                item.signature,
-                {
-                  encoding: "jsonParsed",
-                  commitment: "confirmed",
-                  maxSupportedTransactionVersion: 0
-                }
-              ]
-            );
-
-          return {
-            item,
-            tx
-          };
-        })
-      );
+      )
+      .sort(
+        (a, b) =>
+          (b.blockTime || 0) -
+          (a.blockTime || 0)
+      )
+      .slice(0, 5);
 
     const transactions = [];
 
-    transactionResults.forEach(
-      ({ item, tx }) => {
-        if (!tx?.meta) return;
+    // Load transactions one by one so one RPC failure
+    // does not remove all Recent Transactions.
+    for (const item of signatureEntries) {
+      try {
+        const tx =
+          await rpcCall(
+            "getTransaction",
+            [
+              item.signature,
+              {
+                encoding: "jsonParsed",
+                commitment: "confirmed",
+                maxSupportedTransactionVersion: 0
+              }
+            ]
+          );
+
+        if (!tx || !tx.meta) {
+          continue;
+        }
 
         const preBalances =
           tx.meta.preTokenBalances || [];
@@ -1892,15 +1924,16 @@ async function loadRecentTransactions() {
         const postBalances =
           tx.meta.postTokenBalances || [];
 
-        const accountIndexes = new Set();
+        let preAmount = 0;
+        let postAmount = 0;
 
         preBalances.forEach(balance => {
           if (
             balance.mint === NEXORA_MINT &&
             balance.owner === wallet
           ) {
-            accountIndexes.add(
-              balance.accountIndex
+            preAmount += Number(
+              balance.uiTokenAmount?.uiAmount || 0
             );
           }
         });
@@ -1910,56 +1943,24 @@ async function loadRecentTransactions() {
             balance.mint === NEXORA_MINT &&
             balance.owner === wallet
           ) {
-            accountIndexes.add(
-              balance.accountIndex
+            postAmount += Number(
+              balance.uiTokenAmount?.uiAmount || 0
             );
           }
         });
 
-        if (accountIndexes.size === 0) {
-          return;
+        const delta =
+          postAmount - preAmount;
+
+        if (delta === 0) {
+          continue;
         }
-
-        let walletDelta = 0;
-
-        accountIndexes.forEach(index => {
-          const pre =
-            preBalances.find(
-              balance =>
-                balance.accountIndex === index &&
-                balance.mint === NEXORA_MINT &&
-                balance.owner === wallet
-            );
-
-          const post =
-            postBalances.find(
-              balance =>
-                balance.accountIndex === index &&
-                balance.mint === NEXORA_MINT &&
-                balance.owner === wallet
-            );
-
-          const preAmount =
-            Number(
-              pre?.uiTokenAmount?.uiAmount || 0
-            );
-
-          const postAmount =
-            Number(
-              post?.uiTokenAmount?.uiAmount || 0
-            );
-
-          walletDelta +=
-            postAmount - preAmount;
-        });
-
-        if (walletDelta === 0) return;
 
         transactions.push({
           signature: item.signature,
-          amount: Math.abs(walletDelta),
+          amount: Math.abs(delta),
           type:
-            walletDelta < 0
+            delta < 0
               ? "Sent"
               : "Received",
           blockTime:
@@ -1967,8 +1968,14 @@ async function loadRecentTransactions() {
             item.blockTime ||
             0
         });
+      } catch (error) {
+        console.error(
+          "Transaction lookup failed:",
+          item.signature,
+          error
+        );
       }
-    );
+    }
 
     transactions.sort(
       (a, b) =>
@@ -1999,25 +2006,30 @@ async function loadRecentTransactions() {
             "?cluster=devnet";
 
           return `
-            <div class="transaction-item"
-              style="padding:12px 0;border-bottom:1px solid #ddd;">
-
+            <div
+              class="transaction-item"
+              style="padding:12px 0;border-bottom:1px solid #ddd;"
+            >
               <strong>
                 ${tx.type} ${tx.amount} NEXORA
               </strong>
 
-              <div style="font-size:12px;margin-top:4px;">
+              <div
+                style="font-size:12px;margin-top:4px;"
+              >
                 ${date}
               </div>
 
-              <a
-                href="${explorerUrl}"
-                target="_blank"
-                rel="noopener noreferrer"
-                style="font-size:11px;word-break:break-all;">
-                View transaction
-              </a>
-
+              <div style="margin-top:4px;">
+                <a
+                  href="${explorerUrl}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style="font-size:11px;word-break:break-all;"
+                >
+                  View transaction
+                </a>
+              </div>
             </div>
           `;
         })
@@ -2028,8 +2040,11 @@ async function loadRecentTransactions() {
       "Recent transactions error:",
       error
     );
+
+    container.innerHTML =
+      "<p>Unable to load recent transactions</p>";
   }
-}
+      }
 function receiveToken() {
   const address =
   document.getElementById("walletPageAddress")?.textContent?.trim() ||
