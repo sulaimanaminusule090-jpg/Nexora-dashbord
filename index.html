@@ -1151,15 +1151,17 @@ if (
 }
 
       const amount =
-        Number(
-          info.tokenAmount?.uiAmountString ||
-          info.tokenAmount?.uiAmount ||
-          0
-        );
+  info.tokenAmount?.uiAmountString
+    ? Number(info.tokenAmount.uiAmountString)
+    : info.tokenAmount?.uiAmount
+      ? Number(info.tokenAmount.uiAmount)
+      : info.amount
+        ? Number(info.amount) / 1e9
+        : 0;
 
-      if (!amount) {
-        continue;
-      }
+if (!amount) {
+  continue;
+}
 
       if (
         tokenAccountAddresses.includes(
