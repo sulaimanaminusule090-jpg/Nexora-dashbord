@@ -1031,31 +1031,62 @@ function showServices() {
     /*
      * Get NEXORA token accounts owned by the wallet.
      */
-    let tokenAccounts;
+    let tokenAccounts = {
+  value: []
+};
 
-    try {
-      tokenAccounts = await rpcCall(
-        "getTokenAccountsByOwner",
-        [
-          walletAddress,
-          {
-            mint: MINT
-          },
-          {
-            encoding: "jsonParsed"
-          }
-        ]
-      );
-    } catch (error) {
-      console.error(
-        "Token account lookup failed:",
-        error
-      );
+const TOKEN_PROGRAM_ID =
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 
-      historyTransactions.innerHTML =
-        "<p>Unable to load NEXORA token account.</p>";
+const TOKEN_2022_PROGRAM_ID =
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1Y2B2bJQ5Gq5Jv";
 
-      return;
+const programIds = [
+  TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID
+];
+
+for (const programId of programIds) {
+  try {
+    const result = await rpcCall(
+      "getTokenAccountsByOwner",
+      [
+        walletAddress,
+        {
+          programId: programId
+        },
+        {
+          encoding: "jsonParsed",
+          commitment: "confirmed"
+        }
+      ]
+    );
+
+    const matchingAccounts =
+      (result?.value || []).filter(account => {
+        const mint =
+          account?.account?.data?.parsed?.info?.mint;
+
+        return mint === MINT;
+      });
+
+    tokenAccounts.value.push(
+      ...matchingAccounts
+    );
+
+  } catch (error) {
+    console.error(
+      "Token program lookup failed:",
+      programId,
+      error
+    );
+  }
+}
+
+if (tokenAccounts.value.length === 0) {
+  historyTransactions.innerHTML =
+    "<p>No NEXORA transactions found.</p>";
+  return;
     }
 
     const accounts =
