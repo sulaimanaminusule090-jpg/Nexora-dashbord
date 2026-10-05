@@ -1132,98 +1132,68 @@ const allTransactions = [];
           }
         });
 
-        const preBalances =
-  tx.meta.preTokenBalances || [];
-
-const postBalances =
-  tx.meta.postTokenBalances || [];
-
-const messageKeys =
-  tx.transaction?.message?.accountKeys || [];
-
-const loadedAddresses =
-  tx.meta?.loadedAddresses || {};
-
-const accountKeys = [
-  ...messageKeys,
-  ...(loadedAddresses.writable || []),
-  ...(loadedAddresses.readonly || [])
+       const instructions = [
+  ...(tx.transaction?.message?.instructions || [])
 ];
 
-const tokenAccountIndex =
-  accountKeys.findIndex(
-    key =>
-      (typeof key === "string"
-        ? key
-        : key?.pubkey) === TOKEN_ACCOUNT
-  );
-
-
-
-const pre =
-  preBalances.find(
-    b =>
-      b.accountIndex === tokenAccountIndex
-  ) ||
-  preBalances.find(
-    b =>
-      b.owner === walletAddress
-  );
-
-const post =
-  postBalances.find(
-    b =>
-      b.accountIndex === tokenAccountIndex
-  ) ||
-  postBalances.find(
-    b =>
-      b.owner === walletAddress
-  );
-
-if (!pre && !post) {
-  continue;
-}
-
-const preAmount = BigInt(
-  pre?.uiTokenAmount?.amount || "0"
-);
-
-const postAmount = BigInt(
-  post?.uiTokenAmount?.amount || "0"
-);
-
-const difference =
-  postAmount - preAmount;
-
-if (difference === 0n) {
-  continue;
-}
-
-const decimals =
-  post?.uiTokenAmount?.decimals ??
-  pre?.uiTokenAmount?.decimals ??
-  9;
-
-const amount =
-  Number(
-    difference < 0n
-      ? -difference
-      : difference
-  ) / Math.pow(10, decimals);
-
-allTransactions.push({
-  signature:
-    sigInfo.signature,
-  amount: amount,
-  type:
-    difference < 0n
-      ? "Sent"
-      : "Received",
-  blockTime:
-    tx.blockTime ||
-    sigInfo.blockTime ||
-    0
+(tx.meta.innerInstructions || []).forEach(group => {
+  if (group?.instructions) {
+    instructions.push(...group.instructions);
+  }
 });
+
+for (const instruction of instructions) {
+  const parsed = instruction?.parsed;
+  const info = parsed?.info;
+
+  if (!info) continue;
+
+  if (
+    instruction.program !== "spl-token" &&
+    instruction.program !== "spl-token-2022"
+  ) {
+    continue;
+  }
+
+  const source = info.source;
+  const destination = info.destination;
+
+  if (
+    source !== TOKEN_ACCOUNT &&
+    destination !== TOKEN_ACCOUNT
+  ) {
+    continue;
+  }
+
+  const tokenAmount =
+    info.tokenAmount?.amount ||
+    info.amount ||
+    "0";
+
+  const decimals =
+    info.tokenAmount?.decimals ?? 9;
+
+  const amount =
+    Number(tokenAmount) /
+    Math.pow(10, decimals);
+
+  if (amount <= 0) continue;
+
+  allTransactions.push({
+    signature: sigInfo.signature,
+    amount: amount,
+    type:
+      source === TOKEN_ACCOUNT
+        ? "Sent"
+        : "Received",
+    blockTime:
+      tx.blockTime ||
+      sigInfo.blockTime ||
+      0
+  });
+
+  break;
+} 
         
       } catch (error) {
         console.error(
