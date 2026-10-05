@@ -1170,20 +1170,24 @@ for (const instruction of instructions) {
     continue;
   }
 
-  const source = info.source;
-  const destination = info.destination;
+ const source = info.source;
+const destination = info.destination;
 
-  if (
-    !walletTokenAccounts.has(source) &&
-    !walletTokenAccounts.has(destination)
-  ) {
-    continue;
-  }
+if (!source || !destination) {
+  continue;
+}
 
-  const accountKeys =
+if (
+  !walletTokenAccounts.has(source) &&
+  !walletTokenAccounts.has(destination)
+) {
+  continue;
+}
+
+const accountKeys =
   tx.transaction?.message?.accountKeys || [];
 
-const accountAddressForIndex = index => {
+const getAccountAddress = index => {
   const key = accountKeys[index];
 
   return typeof key === "string"
@@ -1191,47 +1195,97 @@ const accountAddressForIndex = index => {
     : key?.pubkey;
 };
 
-const walletTokenAccount =
-  walletTokenAccounts.has(source)
-    ? source
-    : destination;
-
-const walletTokenIndex =
+const sourceIndex =
   accountKeys.findIndex(
     key =>
       (typeof key === "string"
         ? key
-        : key?.pubkey) === walletTokenAccount
+        : key?.pubkey) === source
   );
 
-const preBalance =
-  (tx.meta.preTokenBalances || []).find(
-    balance =>
-      balance.accountIndex === walletTokenIndex
+const destinationIndex =
+  accountKeys.findIndex(
+    key =>
+      (typeof key === "string"
+        ? key
+        : key?.pubkey) === destination
   );
 
-const postBalance =
-  (tx.meta.postTokenBalances || []).find(
+const preBalances =
+  tx.meta.preTokenBalances || [];
+
+const postBalances =
+  tx.meta.postTokenBalances || [];
+
+const sourcePre =
+  preBalances.find(
     balance =>
-      balance.accountIndex === walletTokenIndex
+      balance.accountIndex === sourceIndex &&
+      balance.mint === MINT
   );
+
+const sourcePost =
+  postBalances.find(
+    balance =>
+      balance.accountIndex === sourceIndex &&
+      balance.mint === MINT
+  );
+
+const destinationPre =
+  preBalances.find(
+    balance =>
+      balance.accountIndex === destinationIndex &&
+      balance.mint === MINT
+  );
+
+const destinationPost =
+  postBalances.find(
+    balance =>
+      balance.accountIndex === destinationIndex &&
+      balance.mint === MINT
+  );
+
+let walletBalance;
+let transactionType;
+
+if (walletTokenAccounts.has(source)) {
+  walletBalance = {
+    pre: sourcePre,
+    post: sourcePost
+  };
+
+  transactionType = "Sent";
+} else {
+  walletBalance = {
+    pre: destinationPre,
+    post: destinationPost
+  };
+
+  transactionType = "Received";
+}
+
+if (!walletBalance.pre && !walletBalance.post) {
+  continue;
+}
 
 const preAmount = BigInt(
-  preBalance?.uiTokenAmount?.amount || "0"
+  walletBalance.pre?.uiTokenAmount?.amount || "0"
 );
 
 const postAmount = BigInt(
-  postBalance?.uiTokenAmount?.amount || "0"
+  walletBalance.post?.uiTokenAmount?.amount || "0"
 );
 
 const difference =
   postAmount - preAmount;
 
-if (difference === 0n) continue;
+if (difference === 0n) {
+  continue;
+}
 
 const decimals =
-  postBalance?.uiTokenAmount?.decimals ??
-  preBalance?.uiTokenAmount?.decimals ??
+  walletBalance.post?.uiTokenAmount?.decimals ??
+  walletBalance.pre?.uiTokenAmount?.decimals ??
   9;
 
 const amount =
@@ -1241,19 +1295,22 @@ const amount =
       : difference
   ) / Math.pow(10, decimals);
 
+if (amount <= 0) {
+  continue;
+}
+
 allTransactions.push({
   signature: sigInfo.signature,
   amount: amount,
-  type: difference < 0n
-    ? "Sent"
-    : "Received",
+  type:
+    transactionType,
   blockTime:
     tx.blockTime ||
     sigInfo.blockTime ||
     0
 });
 
-break;
+break; 
 }     
       } catch (error) {
         console.error(
