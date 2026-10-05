@@ -1050,31 +1050,9 @@ function showServices() {
     const walletAddress =
   provider.publicKey.toString();
 
-const tokenAccounts = new Set();
-
-const tokenPrograms = [
-  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
-  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
-];
-
-for (const programId of tokenPrograms) {
-  const accounts =
-    await rpcCall(
-      "getTokenAccountsByOwner",
-      [
-        walletAddress,
-        {
-          programId: programId
-        }
-      ]
-    );
-
-  for (const account of accounts?.value || []) {
-    if (account?.pubkey) {
-      tokenAccounts.add(account.pubkey);
-    }
-  }
-}
+const tokenAccounts = new Set([
+  walletAddress
+]);
 
 const signatureMap = new Map();
 
