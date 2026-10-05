@@ -1023,7 +1023,8 @@ function showServices() {
 
     const TOKEN_ACCOUNT =
   "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh";
-
+const OLD_TOKEN_ACCOUNT =
+  "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV";
     const rpcCall = async (method, params) => {
       const response = await fetch(RPC, {
         method: "POST",
@@ -1051,7 +1052,9 @@ function showServices() {
   provider.publicKey.toString();
 
 const tokenAccounts = new Set([
-  walletAddress
+  walletAddress,
+  TOKEN_ACCOUNT,
+  OLD_TOKEN_ACCOUNT
 ]);
 
 const signatureMap = new Map();
