@@ -1115,7 +1115,13 @@ const allTransactions = [];
           );
 
         if (!tx?.meta) {
-          continue;
+  historyTransactions.innerHTML =
+    "<p>DEBUG — Signatures: " +
+    signatures.length +
+    "<br>Transaction data missing for: " +
+    sigInfo.signature +
+    "</p>";
+  return;
         }
 
         
