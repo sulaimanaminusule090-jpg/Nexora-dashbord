@@ -1953,12 +1953,7 @@ async function updateWalletSol() {
         )
         .slice(0, 20);
 
-        const transactions = [];
-
-    const nexoraTokenAccounts = new Set([
-      "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
-      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-    ]);
+          const transactions = [];
 
     for (const item of signatureEntries) {
       try {
@@ -1978,22 +1973,54 @@ async function updateWalletSol() {
           continue;
         }
 
-        const instructions =
-          tx.transaction?.message?.instructions || [];
-
-        const innerInstructions =
-          (tx.meta.innerInstructions || [])
-            .flatMap(group => group.instructions || []);
-
-        const allInstructions = [
-          ...instructions,
-          ...innerInstructions
+        const instructions = [
+          ...(tx.transaction?.message?.instructions || [])
         ];
 
-        for (const instruction of allInstructions) {
-          const parsed = instruction?.parsed;
+        (tx.meta.innerInstructions || []).forEach(group => {
+          if (group?.instructions) {
+            instructions.push(...group.instructions);
+          }
+        });
 
-          if (!parsed) {
+        const walletTokenAccounts = new Set();
+
+        for (const balance of [
+          ...(tx.meta.preTokenBalances || []),
+          ...(tx.meta.postTokenBalances || [])
+        ]) {
+          if (
+            balance?.owner === wallet &&
+            balance?.mint === NEXORA_MINT
+          ) {
+            const accountKey =
+              tx.transaction?.message?.accountKeys?.[
+                balance.accountIndex
+              ];
+
+            const accountAddress =
+              typeof accountKey === "string"
+                ? accountKey
+                : accountKey?.pubkey;
+
+            if (accountAddress) {
+              walletTokenAccounts.add(accountAddress);
+            }
+          }
+        }
+
+        for (const instruction of instructions) {
+          const parsed = instruction?.parsed;
+          const info = parsed?.info;
+
+          if (!parsed || !info) {
+            continue;
+          }
+
+          if (
+            instruction.program !== "spl-token" &&
+            instruction.program !== "spl-token-2022"
+          ) {
             continue;
           }
 
@@ -2004,52 +2031,50 @@ async function updateWalletSol() {
             continue;
           }
 
-          const info = parsed.info || {};
-
           const source = info.source;
           const destination = info.destination;
 
+          if (!source || !destination) {
+            continue;
+          }
+
           if (
-            !nexoraTokenAccounts.has(source) &&
-            !nexoraTokenAccounts.has(destination)
+            !walletTokenAccounts.has(source) &&
+            !walletTokenAccounts.has(destination)
           ) {
             continue;
           }
 
-          let amountRaw = "0";
-
-          if (parsed.type === "transferChecked") {
-            amountRaw =
-              info.tokenAmount?.amount || "0";
-
-            if (
-              info.mint &&
-              info.mint !== NEXORA_MINT
-            ) {
-              continue;
-            }
-          } else {
-            amountRaw =
-              info.amount || "0";
+          if (
+            parsed.type === "transferChecked" &&
+            info.mint &&
+            info.mint !== NEXORA_MINT
+          ) {
+            continue;
           }
 
+          const tokenAmount =
+            info.tokenAmount?.amount ||
+            info.amount ||
+            "0";
+
+          const decimals =
+            info.tokenAmount?.decimals ?? 9;
+
           const amount =
-            Number(amountRaw) /
-            Math.pow(10, 9);
+            Number(tokenAmount) /
+            Math.pow(10, decimals);
 
           if (amount <= 0) {
             continue;
           }
 
-          const type =
-            nexoraTokenAccounts.has(source)
-              ? "Sent"
-              : "Received";
-
           transactions.push({
             signature: item.signature,
             amount: amount,
-            type: type,
+            type: walletTokenAccounts.has(source)
+              ? "Sent"
+              : "Received",
             blockTime:
               tx.blockTime ||
               item.blockTime ||
