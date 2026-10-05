@@ -1895,45 +1895,17 @@ async function updateWalletSol() {
     container.innerHTML =
       "<p>Loading recent transactions...</p>";
 
-    // Get NEXORA token accounts owned by this wallet
-    let tokenAccounts = null;
-
-    try {
-      tokenAccounts = await rpcCall(
-        "getTokenAccountsByOwner",
-        [
-          wallet,
-          {
-            mint: NEXORA_MINT
-          },
-          {
-            encoding: "jsonParsed"
-          }
-        ]
-      );
-    } catch (error) {
-      console.error(
-        "Token account lookup failed:",
-        error
-      );
-    }
-
-    const addresses = [
+        // Use the wallet and the known NEXORA token accounts
+    // to find recent NEXORA transactions.
+    const tokenAccounts = new Set([
       wallet,
-      ...(tokenAccounts?.value || [])
-        .map(account => account.pubkey)
-        .filter(Boolean)
-    ];
-
-    // Remove duplicate addresses
-    const uniqueAddresses =
-      [...new Set(addresses)];
+      "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
+      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+    ]);
 
     let signatureResults = [];
 
-    // Get signatures without allowing one failed request
-    // to break the entire Recent Transactions section.
-    for (const address of uniqueAddresses) {
+    for (const address of tokenAccounts) {
       try {
         const signatures =
           await rpcCall(
@@ -1941,7 +1913,7 @@ async function updateWalletSol() {
             [
               address,
               {
-                limit: 8
+                limit: 20
               }
             ]
           );
@@ -1958,7 +1930,6 @@ async function updateWalletSol() {
       }
     }
 
-    // Remove duplicate signatures
     const signatureMap = new Map();
 
     signatureResults.forEach(item => {
@@ -1983,12 +1954,10 @@ async function updateWalletSol() {
           (b.blockTime || 0) -
           (a.blockTime || 0)
       )
-      .slice(0, 5);
+      .slice(0, 20);
 
     const transactions = [];
 
-    // Load transactions one by one so one RPC failure
-    // does not remove all Recent Transactions.
     for (const item of signatureEntries) {
       try {
         const tx =
@@ -2004,9 +1973,20 @@ async function updateWalletSol() {
             ]
           );
 
-        if (!tx || !tx.meta) {
+        if (!tx?.meta) {
           continue;
         }
+
+        const accountKeys =
+          tx.transaction?.message?.accountKeys || [];
+
+        const getAccountAddress = index => {
+          const key = accountKeys[index];
+
+          return typeof key === "string"
+            ? key
+            : key?.pubkey;
+        };
 
         const preBalances =
           tx.meta.preTokenBalances || [];
@@ -2014,43 +1994,137 @@ async function updateWalletSol() {
         const postBalances =
           tx.meta.postTokenBalances || [];
 
-        let preAmount = 0;
-        let postAmount = 0;
+        // Find the NEXORA mint from our known NEXORA
+        // token accounts in this transaction.
+        let nexoraMint = null;
 
-        preBalances.forEach(balance => {
-          if (
-            balance.mint === NEXORA_MINT &&
-            balance.owner === wallet
-          ) {
-            preAmount += Number(
-              balance.uiTokenAmount?.uiAmount || 0
+        for (const balance of [
+          ...preBalances,
+          ...postBalances
+        ]) {
+          const accountAddress =
+            getAccountAddress(
+              balance.accountIndex
             );
-          }
-        });
 
-        postBalances.forEach(balance => {
           if (
-            balance.mint === NEXORA_MINT &&
-            balance.owner === wallet
+            accountAddress ===
+              "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh" ||
+            accountAddress ===
+              "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
           ) {
-            postAmount += Number(
-              balance.uiTokenAmount?.uiAmount || 0
-            );
+            nexoraMint = balance.mint;
+            break;
           }
-        });
+        }
 
-        const delta =
-          postAmount - preAmount;
+        if (!nexoraMint) {
+          continue;
+        }
 
-        if (delta === 0) {
+        const walletTokenAccounts =
+          new Set();
+
+        for (const balance of [
+          ...preBalances,
+          ...postBalances
+        ]) {
+          if (
+            balance.owner === wallet &&
+            balance.mint === nexoraMint
+          ) {
+            const accountAddress =
+              getAccountAddress(
+                balance.accountIndex
+              );
+
+            if (accountAddress) {
+              walletTokenAccounts.add(
+                accountAddress
+              );
+            }
+          }
+        }
+
+        if (
+          walletTokenAccounts.size === 0
+        ) {
+          continue;
+        }
+
+        let deltaRaw = 0n;
+
+        for (const tokenAccount of walletTokenAccounts) {
+          const pre =
+            preBalances.find(balance =>
+              getAccountAddress(
+                balance.accountIndex
+              ) === tokenAccount &&
+              balance.mint === nexoraMint
+            );
+
+          const post =
+            postBalances.find(balance =>
+              getAccountAddress(
+                balance.accountIndex
+              ) === tokenAccount &&
+              balance.mint === nexoraMint
+            );
+
+          const preAmount = BigInt(
+            pre?.uiTokenAmount?.amount || "0"
+          );
+
+          const postAmount = BigInt(
+            post?.uiTokenAmount?.amount || "0"
+          );
+
+          deltaRaw +=
+            postAmount - preAmount;
+        }
+
+        if (deltaRaw === 0n) {
+          continue;
+        }
+
+        const decimals =
+          postBalances.find(
+            balance =>
+              balance.mint === nexoraMint &&
+              walletTokenAccounts.has(
+                getAccountAddress(
+                  balance.accountIndex
+                )
+              )
+          )?.uiTokenAmount?.decimals ??
+          preBalances.find(
+            balance =>
+              balance.mint === nexoraMint &&
+              walletTokenAccounts.has(
+                getAccountAddress(
+                  balance.accountIndex
+                )
+              )
+          )?.uiTokenAmount?.decimals ??
+          9;
+
+        const amount =
+          Number(
+            deltaRaw < 0n
+              ? -deltaRaw
+              : deltaRaw
+          ) /
+          Math.pow(10, decimals);
+
+        if (amount <= 0) {
           continue;
         }
 
         transactions.push({
           signature: item.signature,
-          amount: Math.abs(delta),
+          amount: amount,
           type:
-            delta < 0
+            deltaRaw < 0n
               ? "Sent"
               : "Received",
           blockTime:
