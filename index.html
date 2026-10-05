@@ -1198,9 +1198,13 @@ for (const instruction of instructions) {
     );
 
     if (allTransactions.length === 0) {
-      historyTransactions.innerHTML =
-        "<p>No NEXORA transactions found.</p>";
-      return;
+  historyTransactions.innerHTML =
+    "<p>DEBUG — Signatures found: " +
+    signatures.length +
+    "<br>Transactions matched: " +
+    allTransactions.length +
+    "</p>";
+  return;
     }
 
     historyTransactions.innerHTML = "";
