@@ -1898,60 +1898,46 @@ async function updateWalletSol() {
             // Use the wallet and known NEXORA token accounts
     // to find recent NEXORA transactions.
     const tokenAccounts = new Set([
-      wallet,
-      "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
-      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-    ]);
+  wallet,
+  "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
+  "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+]);
 
-    let signatureResults = [];
+const signatureMap = new Map();
 
-    for (const address of tokenAccounts) {
-      try {
-        const signatures = await rpcCall(
-          "getSignaturesForAddress",
-          [
-            address,
-            {
-              limit: 20
-            }
-          ]
-        );
+for (const tokenAccount of tokenAccounts) {
+  const accountSignatures =
+    await rpcCall(
+      "getSignaturesForAddress",
+      [
+        tokenAccount,
+        {
+          limit: 50
+        }
+      ]
+    );
 
-        signatureResults.push(
-          ...(signatures || [])
-        );
-      } catch (error) {
-        console.error(
-          "Signature lookup failed:",
-          address,
-          error
-        );
-      }
+  for (const sigInfo of accountSignatures || []) {
+    if (
+      sigInfo?.signature &&
+      !sigInfo.err
+    ) {
+      signatureMap.set(
+        sigInfo.signature,
+        sigInfo
+      );
     }
+  }
+}
 
-    const signatureMap = new Map();
-
-    signatureResults.forEach(item => {
-      if (
-        item &&
-        !item.err &&
-        item.signature
-      ) {
-        signatureMap.set(
-          item.signature,
-          item
-        );
-      }
-    });
-
-    const signatureEntries =
-      Array.from(signatureMap.values())
-        .sort(
-          (a, b) =>
-            (b.blockTime || 0) -
-            (a.blockTime || 0)
-        )
-        .slice(0, 20);
+const signatureEntries =
+  Array.from(signatureMap.values())
+    .sort(
+      (a, b) =>
+        (b.blockTime || 0) -
+        (a.blockTime || 0)
+    )
+    .slice(0, 100);
 
           const transactions = [];
 
