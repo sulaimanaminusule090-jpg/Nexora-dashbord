@@ -1118,19 +1118,7 @@ const allTransactions = [];
           continue;
         }
 
-        const instructions = [
-          ...(tx.transaction?.message?.instructions || [])
-        ];
-
-        (
-          tx.meta.innerInstructions || []
-        ).forEach(group => {
-          if (group?.instructions) {
-            instructions.push(
-              ...group.instructions
-            );
-          }
-        });
+        
 
        const instructions = [
   ...(tx.transaction?.message?.instructions || [])
