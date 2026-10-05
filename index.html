@@ -1973,19 +1973,38 @@ async function updateWalletSol() {
           continue;
         }
 
-        const preBalances =
+                const preBalances =
           tx.meta.preTokenBalances || [];
 
         const postBalances =
           tx.meta.postTokenBalances || [];
 
+        const currentTokenAccount =
+          "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh";
+
+        const accountKeys =
+          tx.transaction?.message?.accountKeys || [];
+
+        const getAccountAddress = index => {
+          const key = accountKeys[index];
+
+          return typeof key === "string"
+            ? key
+            : key?.pubkey;
+        };
+
         let preAmountRaw = 0n;
         let postAmountRaw = 0n;
 
         for (const balance of preBalances) {
+          const accountAddress =
+            getAccountAddress(
+              balance.accountIndex
+            );
+
           if (
-            balance.mint === NEXORA_MINT &&
-            balance.owner === wallet
+            accountAddress === currentTokenAccount &&
+            balance.mint === NEXORA_MINT
           ) {
             preAmountRaw += BigInt(
               balance.uiTokenAmount?.amount || "0"
@@ -1994,9 +2013,14 @@ async function updateWalletSol() {
         }
 
         for (const balance of postBalances) {
+          const accountAddress =
+            getAccountAddress(
+              balance.accountIndex
+            );
+
           if (
-            balance.mint === NEXORA_MINT &&
-            balance.owner === wallet
+            accountAddress === currentTokenAccount &&
+            balance.mint === NEXORA_MINT
           ) {
             postAmountRaw += BigInt(
               balance.uiTokenAmount?.amount || "0"
@@ -2021,7 +2045,7 @@ async function updateWalletSol() {
 
         if (amount <= 0) {
           continue;
-        }
+              }
 
         transactions.push({
           signature: item.signature,
