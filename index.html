@@ -1885,7 +1885,9 @@ async function updateWalletSol() {
     const data = await response.json();
 
     if (data.error) {
-      throw new Error(data.error.message);
+  throw new Error(
+    method + ": " + data.error.message
+  );
     }
 
     return data.result;
