@@ -1136,6 +1136,27 @@ const allTransactions = [];
   }
 });
 
+const walletTokenAccounts = new Set();
+
+for (const balance of [
+  ...(tx.meta.preTokenBalances || []),
+  ...(tx.meta.postTokenBalances || [])
+]) {
+  if (balance?.owner === walletAddress) {
+    const accountKey =
+      tx.transaction?.message?.accountKeys?.[balance.accountIndex];
+
+    const accountAddress =
+      typeof accountKey === "string"
+        ? accountKey
+        : accountKey?.pubkey;
+
+    if (accountAddress) {
+      walletTokenAccounts.add(accountAddress);
+    }
+  }
+}
+
 for (const instruction of instructions) {
   const parsed = instruction?.parsed;
   const info = parsed?.info;
@@ -1153,8 +1174,8 @@ for (const instruction of instructions) {
   const destination = info.destination;
 
   if (
-    source !== TOKEN_ACCOUNT &&
-    destination !== TOKEN_ACCOUNT
+    !walletTokenAccounts.has(source) &&
+    !walletTokenAccounts.has(destination)
   ) {
     continue;
   }
@@ -1176,10 +1197,9 @@ for (const instruction of instructions) {
   allTransactions.push({
     signature: sigInfo.signature,
     amount: amount,
-    type:
-      source === TOKEN_ACCOUNT
-        ? "Sent"
-        : "Received",
+    type: walletTokenAccounts.has(source)
+      ? "Sent"
+      : "Received",
     blockTime:
       tx.blockTime ||
       sigInfo.blockTime ||
@@ -1187,7 +1207,7 @@ for (const instruction of instructions) {
   });
 
   break;
-} 
+}
         
       } catch (error) {
         console.error(
