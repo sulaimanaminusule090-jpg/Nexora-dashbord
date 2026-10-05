@@ -1953,7 +1953,12 @@ async function updateWalletSol() {
         )
         .slice(0, 20);
 
-    const transactions = [];
+        const transactions = [];
+
+    const nexoraTokenAccounts = new Set([
+      "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
+      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+    ]);
 
     for (const item of signatureEntries) {
       try {
@@ -1973,68 +1978,86 @@ async function updateWalletSol() {
           continue;
         }
 
-                        const preBalances =
-          tx.meta.preTokenBalances || [];
+        const instructions =
+          tx.transaction?.message?.instructions || [];
 
-        const postBalances =
-          tx.meta.postTokenBalances || [];
+        const innerInstructions =
+          (tx.meta.innerInstructions || [])
+            .flatMap(group => group.instructions || []);
 
-        let preAmountRaw = 0n;
-        let postAmountRaw = 0n;
+        const allInstructions = [
+          ...instructions,
+          ...innerInstructions
+        ];
 
-        for (const balance of preBalances) {
-          if (
-            balance.mint === NEXORA_MINT &&
-            balance.owner === wallet
-          ) {
-            preAmountRaw += BigInt(
-              balance.uiTokenAmount?.amount || "0"
-            );
+        for (const instruction of allInstructions) {
+          const parsed = instruction?.parsed;
+
+          if (!parsed) {
+            continue;
           }
-        }
 
-        for (const balance of postBalances) {
           if (
-            balance.mint === NEXORA_MINT &&
-            balance.owner === wallet
+            parsed.type !== "transfer" &&
+            parsed.type !== "transferChecked"
           ) {
-            postAmountRaw += BigInt(
-              balance.uiTokenAmount?.amount || "0"
-            );
+            continue;
           }
-        }
 
-        const deltaRaw =
-          postAmountRaw - preAmountRaw;
+          const info = parsed.info || {};
 
-        if (deltaRaw === 0n) {
-          continue;
-        }
+          const source = info.source;
+          const destination = info.destination;
 
-        const amount =
-          Number(
-            deltaRaw < 0n
-              ? -deltaRaw
-              : deltaRaw
-          ) /
-          Math.pow(10, 9);
+          if (
+            !nexoraTokenAccounts.has(source) &&
+            !nexoraTokenAccounts.has(destination)
+          ) {
+            continue;
+          }
 
-        if (amount <= 0) {
-          continue;
-        }
+          let amountRaw = "0";
 
-        transactions.push({
-          signature: item.signature,
-          amount: amount,
-          type:
-            deltaRaw < 0n
+          if (parsed.type === "transferChecked") {
+            amountRaw =
+              info.tokenAmount?.amount || "0";
+
+            if (
+              info.mint &&
+              info.mint !== NEXORA_MINT
+            ) {
+              continue;
+            }
+          } else {
+            amountRaw =
+              info.amount || "0";
+          }
+
+          const amount =
+            Number(amountRaw) /
+            Math.pow(10, 9);
+
+          if (amount <= 0) {
+            continue;
+          }
+
+          const type =
+            nexoraTokenAccounts.has(source)
               ? "Sent"
-              : "Received",
-          blockTime:
-            tx.blockTime ||
-            item.blockTime ||
-            0
-        });
+              : "Received";
+
+          transactions.push({
+            signature: item.signature,
+            amount: amount,
+            type: type,
+            blockTime:
+              tx.blockTime ||
+              item.blockTime ||
+              0
+          });
+
+          break;
+        }
 
       } catch (error) {
         console.error(
