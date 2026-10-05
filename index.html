@@ -1158,21 +1158,31 @@ const tokenAccountIndex =
         : key?.pubkey) === TOKEN_ACCOUNT
   );
 
-if (tokenAccountIndex === -1) {
-  continue;
-}
+
 
 const pre =
   preBalances.find(
     b =>
       b.accountIndex === tokenAccountIndex
+  ) ||
+  preBalances.find(
+    b =>
+      b.owner === walletAddress
   );
 
 const post =
   postBalances.find(
     b =>
       b.accountIndex === tokenAccountIndex
+  ) ||
+  postBalances.find(
+    b =>
+      b.owner === walletAddress
   );
+
+if (!pre && !post) {
+  continue;
+}
 
 const preAmount = BigInt(
   pre?.uiTokenAmount?.amount || "0"
