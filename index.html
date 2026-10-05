@@ -2100,9 +2100,13 @@ async function updateWalletSol() {
     );
 
     if (transactions.length === 0) {
-      container.innerHTML =
-        "<p>No recent NEXORA transactions</p>";
-      return;
+  container.innerHTML =
+    "<p>DEBUG — Signatures found: " +
+    signatureEntries.length +
+    "<br>Transactions matched: " +
+    transactions.length +
+    "</p>";
+  return;
     }
 
     container.innerHTML =
