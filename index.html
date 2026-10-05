@@ -1180,35 +1180,81 @@ for (const instruction of instructions) {
     continue;
   }
 
-  const tokenAmount =
-    info.tokenAmount?.amount ||
-    info.amount ||
-    "0";
+  const accountKeys =
+  tx.transaction?.message?.accountKeys || [];
 
-  const decimals =
-    info.tokenAmount?.decimals ?? 9;
+const accountAddressForIndex = index => {
+  const key = accountKeys[index];
 
-  const amount =
-    Number(tokenAmount) /
-    Math.pow(10, decimals);
+  return typeof key === "string"
+    ? key
+    : key?.pubkey;
+};
 
-  if (amount <= 0) continue;
+const walletTokenAccount =
+  walletTokenAccounts.has(source)
+    ? source
+    : destination;
 
-  allTransactions.push({
-    signature: sigInfo.signature,
-    amount: amount,
-    type: walletTokenAccounts.has(source)
-      ? "Sent"
-      : "Received",
-    blockTime:
-      tx.blockTime ||
-      sigInfo.blockTime ||
-      0
-  });
+const walletTokenIndex =
+  accountKeys.findIndex(
+    key =>
+      (typeof key === "string"
+        ? key
+        : key?.pubkey) === walletTokenAccount
+  );
 
-  break;
-}
-        
+const preBalance =
+  (tx.meta.preTokenBalances || []).find(
+    balance =>
+      balance.accountIndex === walletTokenIndex
+  );
+
+const postBalance =
+  (tx.meta.postTokenBalances || []).find(
+    balance =>
+      balance.accountIndex === walletTokenIndex
+  );
+
+const preAmount = BigInt(
+  preBalance?.uiTokenAmount?.amount || "0"
+);
+
+const postAmount = BigInt(
+  postBalance?.uiTokenAmount?.amount || "0"
+);
+
+const difference =
+  postAmount - preAmount;
+
+if (difference === 0n) continue;
+
+const decimals =
+  postBalance?.uiTokenAmount?.decimals ??
+  preBalance?.uiTokenAmount?.decimals ??
+  9;
+
+const amount =
+  Number(
+    difference < 0n
+      ? -difference
+      : difference
+  ) / Math.pow(10, decimals);
+
+allTransactions.push({
+  signature: sigInfo.signature,
+  amount: amount,
+  type: difference < 0n
+    ? "Sent"
+    : "Received",
+  blockTime:
+    tx.blockTime ||
+    sigInfo.blockTime ||
+    0
+});
+
+break;
+}     
       } catch (error) {
         console.error(
           "Transaction lookup failed:",
