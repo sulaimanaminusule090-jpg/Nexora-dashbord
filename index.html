@@ -2148,7 +2148,9 @@ const signatureEntries =
     );
 
     container.innerHTML =
-      "<p>Unable to load recent transactions</p>";
+  "<p>Recent Transactions Error:<br>" +
+  (error?.message || error) +
+  "</p>";
   }
       }
 function receiveToken() {
