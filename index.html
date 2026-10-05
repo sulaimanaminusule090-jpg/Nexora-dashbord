@@ -1220,29 +1220,25 @@ const postBalances =
 const sourcePre =
   preBalances.find(
     balance =>
-      balance.accountIndex === sourceIndex &&
-      balance.mint === MINT
+      balance.accountIndex === sourceIndex
   );
 
 const sourcePost =
   postBalances.find(
     balance =>
-      balance.accountIndex === sourceIndex &&
-      balance.mint === MINT
+      balance.accountIndex === sourceIndex
   );
 
 const destinationPre =
   preBalances.find(
     balance =>
-      balance.accountIndex === destinationIndex &&
-      balance.mint === MINT
+      balance.accountIndex === destinationIndex
   );
 
 const destinationPost =
   postBalances.find(
     balance =>
-      balance.accountIndex === destinationIndex &&
-      balance.mint === MINT
+      balance.accountIndex === destinationIndex
   );
 
 let walletBalance;
