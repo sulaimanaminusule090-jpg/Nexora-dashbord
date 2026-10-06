@@ -1885,12 +1885,12 @@ async function updateWalletSol() {
     const mintPublicKey = new PublicKey(NEXORA_MINT);
 
 const tokenAccountResult =
-    await connection.getTokenAccountsByOwner(
-        new PublicKey(wallet),
-        {
-            mint: mintPublicKey
-        }
-    );
+  await connection.getTokenAccountsByOwner(
+    provider.publicKey,
+    {
+      mint: mintPublicKey
+    }
+  );
 
 const tokenAccounts =
     tokenAccountResult.value.map(
