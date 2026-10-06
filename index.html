@@ -1951,77 +1951,7 @@ for (const item of signatureEntries) {
 
     if (!tx?.meta) continue;
 
-    const walletTokenAccounts = new Set([
-  "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
-  "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-]);
-
-const preBalances =
-  tx.meta.preTokenBalances || [];
-
-const postBalances =
-  tx.meta.postTokenBalances || [];
-
-let netChange = 0;
-
-for (const account of walletTokenAccounts) {
-  const accountKeys =
-    tx.transaction?.message?.accountKeys || [];
-
-  for (let i = 0; i < accountKeys.length; i++) {
-    const key = accountKeys[i];
-
-    const pubkey =
-      key?.pubkey?.toString?.() ||
-      key?.pubkey ||
-      key?.toString?.();
-
-    if (pubkey !== account) continue;
-
-    const pre =
-      preBalances.find(
-        item => item.accountIndex === i
-      );
-
-    const post =
-      postBalances.find(
-        item => item.accountIndex === i
-      );
-
-    const preAmount = Number(
-      pre?.uiTokenAmount?.amount || "0"
-    );
-
-    const postAmount = Number(
-      post?.uiTokenAmount?.amount || "0"
-    );
-
-    netChange += postAmount - preAmount;
-  }
-}
-
-if (netChange === 0) continue;
-
-const amount =
-  Math.abs(netChange) / 1_000_000_000;
-
-if (amount <= 0) continue;
-
-transactions.push({
-  signature: item.signature,
-  amount,
-  type:
-    netChange < 0
-      ? "Sent"
-      : "Received",
-  blockTime:
-    tx.blockTime ||
-    item.blockTime ||
-    0
-});
-
-break;
-    }
+    
 
   } catch (error) {
     console.error(
