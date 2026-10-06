@@ -2030,10 +2030,11 @@ async function updateWalletSol() {
 
             amount,
 
-            type:
-              walletTokenAccounts.has(source)
-                ? "Sent"
-                : "Received",
+        type:
+  source ===
+  "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh"
+    ? "Sent"
+    : "Received",
 
             blockTime:
               tx.blockTime ||
