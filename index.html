@@ -1844,7 +1844,7 @@ async function updateWalletSol() {
   }
 }
 
-  async function loadRecentTransactions() {
+ async function loadRecentTransactions() {
   const provider =
     window.phantom?.solana || window.solana;
 
@@ -1868,110 +1868,97 @@ async function updateWalletSol() {
   const wallet =
     provider.publicKey.toString();
 
-  const rpcCall = async (method, params) => {
-    const response = await fetch(RPC, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: Date.now() + Math.random(),
-        method,
-        params
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.error) {
-  throw new Error(
-    method + ": " + data.error.message
-  );
-    }
-
-    return data.result;
-  };
-
   try {
     container.innerHTML =
       "<p>Loading recent transactions...</p>";
 
-            
-
-const tokenAccounts = new Set([
-  wallet,
-  "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
-  "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-]);
-
-const signatureMap = new Map();
-
-for (const tokenAccount of tokenAccounts) {
-  const accountSignatures =
-    await rpcCall(
-      "getSignaturesForAddress",
-      [
-        tokenAccount,
-        {
-          limit: 50
-        }
-      ]
+    const {
+      Connection,
+      PublicKey
+    } = await import(
+      "https://esm.sh/@solana/web3.js@1.98.4"
     );
 
-  for (const sigInfo of accountSignatures || []) {
-    if (
-      sigInfo?.signature &&
-      !sigInfo.err
-    ) {
-      signatureMap.set(
-        sigInfo.signature,
-        sigInfo
-      );
+    const connection =
+      new Connection(RPC, "confirmed");
+
+    const tokenAccounts = [
+      wallet,
+      "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
+      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+    ];
+
+    const signatureMap = new Map();
+
+    for (const address of tokenAccounts) {
+      try {
+        const signatures =
+          await connection.getSignaturesForAddress(
+            new PublicKey(address),
+            {
+              limit: 50
+            }
+          );
+
+        for (const item of signatures || []) {
+          if (
+            item?.signature &&
+            !item.err
+          ) {
+            signatureMap.set(
+              item.signature,
+              item
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Signature lookup failed:",
+          address,
+          error
+        );
+      }
     }
-  }
-}
 
-const signatureEntries =
-  Array.from(signatureMap.values())
-    .sort(
-      (a, b) =>
-        (b.blockTime || 0) -
-        (a.blockTime || 0)
-    )
-    .slice(0, 100);
+    const signatureEntries =
+      Array.from(signatureMap.values())
+        .sort(
+          (a, b) =>
+            (b.blockTime || 0) -
+            (a.blockTime || 0)
+        )
+        .slice(0, 100);
 
-          const transactions = [];
+    const transactions = [];
 
     for (const item of signatureEntries) {
       try {
-        const tx = await rpcCall(
-          "getTransaction",
-          [
+        const tx =
+          await connection.getParsedTransaction(
             item.signature,
             {
-              encoding: "jsonParsed",
               commitment: "confirmed",
               maxSupportedTransactionVersion: 0
             }
-          ]
-        );
+          );
 
-        if (!tx?.meta) {
-          continue;
-        }
+        if (!tx?.meta) continue;
 
         const instructions = [
           ...(tx.transaction?.message?.instructions || [])
         ];
 
-        (tx.meta.innerInstructions || []).forEach(group => {
-          if (group?.instructions) {
-            instructions.push(...group.instructions);
-          }
-        });
+        (tx.meta.innerInstructions || [])
+          .forEach(group => {
+            if (group?.instructions) {
+              instructions.push(
+                ...group.instructions
+              );
+            }
+          });
 
-        const walletTokenAccounts = new Set();
+        const walletTokenAccounts =
+          new Set();
 
         for (const balance of [
           ...(tx.meta.preTokenBalances || []),
@@ -1982,7 +1969,7 @@ const signatureEntries =
             balance?.mint === NEXORA_MINT
           ) {
             const accountKey =
-              tx.transaction?.message?.accountKeys?.[
+              tx.transaction.message.accountKeys[
                 balance.accountIndex
               ];
 
@@ -1992,18 +1979,21 @@ const signatureEntries =
                 : accountKey?.pubkey;
 
             if (accountAddress) {
-              walletTokenAccounts.add(accountAddress);
+              walletTokenAccounts.add(
+                accountAddress
+              );
             }
           }
         }
 
         for (const instruction of instructions) {
-          const parsed = instruction?.parsed;
-          const info = parsed?.info;
+          const parsed =
+            instruction?.parsed;
 
-          if (!parsed || !info) {
-            continue;
-          }
+          const info =
+            parsed?.info;
+
+          if (!parsed || !info) continue;
 
           if (
             instruction.program !== "spl-token" &&
@@ -2019,8 +2009,11 @@ const signatureEntries =
             continue;
           }
 
-          const source = info.source;
-          const destination = info.destination;
+          const source =
+            info.source;
+
+          const destination =
+            info.destination;
 
           if (!source || !destination) {
             continue;
@@ -2041,7 +2034,7 @@ const signatureEntries =
             continue;
           }
 
-          const tokenAmount =
+          const rawAmount =
             info.tokenAmount?.amount ||
             info.amount ||
             "0";
@@ -2050,19 +2043,22 @@ const signatureEntries =
             info.tokenAmount?.decimals ?? 9;
 
           const amount =
-            Number(tokenAmount) /
+            Number(rawAmount) /
             Math.pow(10, decimals);
 
-          if (amount <= 0) {
-            continue;
-          }
+          if (amount <= 0) continue;
 
           transactions.push({
-            signature: item.signature,
-            amount: amount,
-            type: walletTokenAccounts.has(source)
-              ? "Sent"
-              : "Received",
+            signature:
+              item.signature,
+
+            amount,
+
+            type:
+              walletTokenAccounts.has(source)
+                ? "Sent"
+                : "Received",
+
             blockTime:
               tx.blockTime ||
               item.blockTime ||
@@ -2071,7 +2067,6 @@ const signatureEntries =
 
           break;
         }
-
       } catch (error) {
         console.error(
           "Transaction lookup failed:",
@@ -2088,13 +2083,9 @@ const signatureEntries =
     );
 
     if (transactions.length === 0) {
-  container.innerHTML =
-    "<p>DEBUG — Signatures found: " +
-    signatureEntries.length +
-    "<br>Transactions matched: " +
-    transactions.length +
-    "</p>";
-  return;
+      container.innerHTML =
+        "<p>No recent NEXORA transactions</p>";
+      return;
     }
 
     container.innerHTML =
@@ -2150,11 +2141,11 @@ const signatureEntries =
     );
 
     container.innerHTML =
-  "<p>Recent Transactions Error:<br>" +
-  (error?.message || error) +
-  "</p>";
+      "<p>Recent Transactions Error:<br>" +
+      (error?.message || error) +
+      "</p>";
   }
-      }
+ } 
 function receiveToken() {
   const address =
   document.getElementById("walletPageAddress")?.textContent?.trim() ||
