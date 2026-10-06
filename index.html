@@ -1957,34 +1957,10 @@ async function updateWalletSol() {
             }
           });
 
-        const walletTokenAccounts =
-          new Set();
-
-        for (const balance of [
-          ...(tx.meta.preTokenBalances || []),
-          ...(tx.meta.postTokenBalances || [])
-        ]) {
-          if (
-            balance?.owner === wallet &&
-            balance?.mint === NEXORA_MINT
-          ) {
-            const accountKey =
-              tx.transaction.message.accountKeys[
-                balance.accountIndex
-              ];
-
-            const accountAddress =
-              typeof accountKey === "string"
-                ? accountKey
-                : accountKey?.pubkey;
-
-            if (accountAddress) {
-              walletTokenAccounts.add(
-                accountAddress
-              );
-            }
-          }
-        }
+        const walletTokenAccounts = new Set([
+  "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
+  "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+]);
 
         for (const instruction of instructions) {
           const parsed =
