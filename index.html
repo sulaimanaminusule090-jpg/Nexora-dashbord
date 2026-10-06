@@ -1899,25 +1899,36 @@ async function updateWalletSol() {
 
             
 
+const tokenAccounts = new Set([
+  wallet,
+  "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
+  "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+]);
+
 const signatureMap = new Map();
 
-const accountSignatures = await rpcCall(
-  "getSignaturesForAddress",
-  [
-    wallet,
-    {
-      commitment: "confirmed",
-      limit: 50
-    }
-  ]
-);
-
-for (const sigInfo of accountSignatures || []) {
-  if (sigInfo?.signature && !sigInfo.err) {
-    signatureMap.set(
-      sigInfo.signature,
-      sigInfo
+for (const tokenAccount of tokenAccounts) {
+  const accountSignatures =
+    await rpcCall(
+      "getSignaturesForAddress",
+      [
+        tokenAccount,
+        {
+          limit: 50
+        }
+      ]
     );
+
+  for (const sigInfo of accountSignatures || []) {
+    if (
+      sigInfo?.signature &&
+      !sigInfo.err
+    ) {
+      signatureMap.set(
+        sigInfo.signature,
+        sigInfo
+      );
+    }
   }
 }
 
