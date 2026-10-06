@@ -1931,127 +1931,139 @@ async function updateWalletSol() {
 
     const transactions = [];
 
-    for (const item of signatureEntries) {
-      try {
-        const tx =
-          await connection.getParsedTransaction(
-            item.signature,
-            {
-              commitment: "confirmed",
-              maxSupportedTransactionVersion: 0
-            }
+    const signatures =
+  signatureEntries.map(
+    item => item.signature
+  );
+
+const parsedTransactions =
+  await connection.getParsedTransactions(
+    signatures,
+    {
+      commitment: "confirmed",
+      maxSupportedTransactionVersion: 0
+    }
+  );
+
+for (let i = 0; i < signatureEntries.length; i++) {
+  try {
+    const item =
+      signatureEntries[i];
+
+    const tx =
+      parsedTransactions[i];
+
+    if (!tx?.meta) continue;
+
+    const instructions = [
+      ...(tx.transaction?.message?.instructions || [])
+    ];
+
+    (tx.meta.innerInstructions || [])
+      .forEach(group => {
+        if (group?.instructions) {
+          instructions.push(
+            ...group.instructions
           );
+        }
+      });
 
-        if (!tx?.meta) continue;
+    const walletTokenAccounts = new Set([
+      "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
+      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+    ]);
 
-        const instructions = [
-          ...(tx.transaction?.message?.instructions || [])
-        ];
+    for (const instruction of instructions) {
+      const parsed =
+        instruction?.parsed;
 
-        (tx.meta.innerInstructions || [])
-          .forEach(group => {
-            if (group?.instructions) {
-              instructions.push(
-                ...group.instructions
-              );
-            }
-          });
+      const info =
+        parsed?.info;
 
-        const walletTokenAccounts = new Set([
-  "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
-  "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-]);
+      if (!parsed || !info) continue;
 
-        for (const instruction of instructions) {
-          const parsed =
-            instruction?.parsed;
+      if (
+        instruction.program !== "spl-token" &&
+        instruction.program !== "spl-token-2022"
+      ) {
+        continue;
+      }
 
-          const info =
-            parsed?.info;
+      if (
+        parsed.type !== "transfer" &&
+        parsed.type !== "transferChecked"
+      ) {
+        continue;
+      }
 
-          if (!parsed || !info) continue;
+      const source =
+        info.source;
 
-          if (
-            instruction.program !== "spl-token" &&
-            instruction.program !== "spl-token-2022"
-          ) {
-            continue;
-          }
+      const destination =
+        info.destination;
 
-          if (
-            parsed.type !== "transfer" &&
-            parsed.type !== "transferChecked"
-          ) {
-            continue;
-          }
+      if (!source || !destination) {
+        continue;
+      }
 
-          const source =
-            info.source;
+      if (
+        !walletTokenAccounts.has(source) &&
+        !walletTokenAccounts.has(destination)
+      ) {
+        continue;
+      }
 
-          const destination =
-            info.destination;
+      if (
+        parsed.type === "transferChecked" &&
+        info.mint &&
+        info.mint !== NEXORA_MINT
+      ) {
+        continue;
+      }
 
-          if (!source || !destination) {
-            continue;
-          }
+      const rawAmount =
+        info.tokenAmount?.amount ||
+        info.amount ||
+        "0";
 
-          if (
-            !walletTokenAccounts.has(source) &&
-            !walletTokenAccounts.has(destination)
-          ) {
-            continue;
-          }
+      const decimals =
+        info.tokenAmount?.decimals ?? 9;
 
-          if (
-            parsed.type === "transferChecked" &&
-            info.mint &&
-            info.mint !== NEXORA_MINT
-          ) {
-            continue;
-          }
+      const amount =
+        Number(rawAmount) /
+        Math.pow(10, decimals);
 
-          const rawAmount =
-            info.tokenAmount?.amount ||
-            info.amount ||
-            "0";
+      if (amount <= 0) continue;
 
-          const decimals =
-            info.tokenAmount?.decimals ?? 9;
+      transactions.push({
+        signature:
+          item.signature,
 
-          const amount =
-            Number(rawAmount) /
-            Math.pow(10, decimals);
-
-          if (amount <= 0) continue;
-
-          transactions.push({
-            signature:
-              item.signature,
-
-            amount,
+        amount,
 
         type:
-  source ===
-  "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh"
-    ? "Sent"
-    : "Received",
+          source ===
+          "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh"
+            ? "Sent"
+            : "Received",
 
-            blockTime:
-              tx.blockTime ||
-              item.blockTime ||
-              0
-          });
+        blockTime:
+          tx.blockTime ||
+          item.blockTime ||
+          0
+      });
 
-          break;
-        }
-      } catch (error) {
-        console.error(
-          "Transaction lookup failed:",
-          item.signature,
-          error
-        );
-      }
+      break;
     }
+
+  } catch (error) {
+    console.error(
+      "Transaction lookup failed:",
+      signatureEntries[i]?.signature,
+      error
+    );
+  }
+}
 
     transactions.sort(
       (a, b) =>
