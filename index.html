@@ -1927,31 +1927,27 @@ async function updateWalletSol() {
             (b.blockTime || 0) -
             (a.blockTime || 0)
         )
-        .slice(0, 5);
+        .slice(0, 15);
 
     const transactions = [];
 
-    const signatures =
-  signatureEntries.map(
-    item => item.signature
+    const delay = ms =>
+  new Promise(resolve =>
+    setTimeout(resolve, ms)
   );
 
-const parsedTransactions =
-  await connection.getParsedTransactions(
-    signatures,
-    {
-      commitment: "confirmed",
-      maxSupportedTransactionVersion: 0
-    }
-  );
-
-for (let i = 0; i < signatureEntries.length; i++) {
+for (const item of signatureEntries) {
   try {
-    const item =
-      signatureEntries[i];
-
     const tx =
-      parsedTransactions[i];
+      await connection.getParsedTransaction(
+        item.signature,
+        {
+          commitment: "confirmed",
+          maxSupportedTransactionVersion: 0
+        }
+      );
+
+    await delay(150);
 
     if (!tx?.meta) continue;
 
