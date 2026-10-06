@@ -1882,11 +1882,20 @@ async function updateWalletSol() {
     const connection =
       new Connection(RPC, "confirmed");
 
-    const tokenAccounts = [
-      
-      "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
-      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-    ];
+    const mintPublicKey = new PublicKey(NEXORA_MINT);
+
+const tokenAccountResult =
+    await connection.getTokenAccountsByOwner(
+        new PublicKey(wallet),
+        {
+            mint: mintPublicKey
+        }
+    );
+
+const tokenAccounts =
+    tokenAccountResult.value.map(
+        account => account.pubkey.toString()
+    );
 
     const signatureMap = new Map();
 
