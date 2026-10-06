@@ -1951,105 +1951,76 @@ for (const item of signatureEntries) {
 
     if (!tx?.meta) continue;
 
-    const instructions = [
-      ...(tx.transaction?.message?.instructions || [])
-    ];
-
-    (tx.meta.innerInstructions || [])
-      .forEach(group => {
-        if (group?.instructions) {
-          instructions.push(
-            ...group.instructions
-          );
-        }
-      });
-
     const walletTokenAccounts = new Set([
-      "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
-      "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
-    ]);
+  "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh",
+  "H7jeu7d5iAhNEBDb5e5YgjbQWdESrCMJmghTx7yqQHTV"
+]);
 
-    for (const instruction of instructions) {
-      const parsed =
-        instruction?.parsed;
+const preBalances =
+  tx.meta.preTokenBalances || [];
 
-      const info =
-        parsed?.info;
+const postBalances =
+  tx.meta.postTokenBalances || [];
 
-      if (!parsed || !info) continue;
+let netChange = 0;
 
-      if (
-        instruction.program !== "spl-token" &&
-        instruction.program !== "spl-token-2022"
-      ) {
-        continue;
-      }
+for (const account of walletTokenAccounts) {
+  const accountKeys =
+    tx.transaction?.message?.accountKeys || [];
 
-      if (
-        parsed.type !== "transfer" &&
-        parsed.type !== "transferChecked"
-      ) {
-        continue;
-      }
+  for (let i = 0; i < accountKeys.length; i++) {
+    const key = accountKeys[i];
 
-      const source =
-        info.source;
+    const pubkey =
+      key?.pubkey?.toString?.() ||
+      key?.pubkey ||
+      key?.toString?.();
 
-      const destination =
-        info.destination;
+    if (pubkey !== account) continue;
 
-      if (!source || !destination) {
-        continue;
-      }
+    const pre =
+      preBalances.find(
+        item => item.accountIndex === i
+      );
 
-      if (
-        !walletTokenAccounts.has(source) &&
-        !walletTokenAccounts.has(destination)
-      ) {
-        continue;
-      }
+    const post =
+      postBalances.find(
+        item => item.accountIndex === i
+      );
 
-      if (
-        parsed.type === "transferChecked" &&
-        info.mint &&
-        info.mint !== NEXORA_MINT
-      ) {
-        continue;
-      }
+    const preAmount = Number(
+      pre?.uiTokenAmount?.amount || "0"
+    );
 
-      const rawAmount =
-        info.tokenAmount?.amount ||
-        info.amount ||
-        "0";
+    const postAmount = Number(
+      post?.uiTokenAmount?.amount || "0"
+    );
 
-      const decimals =
-        info.tokenAmount?.decimals ?? 9;
+    netChange += postAmount - preAmount;
+  }
+}
 
-      const amount =
-        Number(rawAmount) /
-        Math.pow(10, decimals);
+if (netChange === 0) continue;
 
-      if (amount <= 0) continue;
+const amount =
+  Math.abs(netChange) / 1_000_000_000;
 
-      transactions.push({
-        signature:
-          item.signature,
+if (amount <= 0) continue;
 
-        amount,
+transactions.push({
+  signature: item.signature,
+  amount,
+  type:
+    netChange < 0
+      ? "Sent"
+      : "Received",
+  blockTime:
+    tx.blockTime ||
+    item.blockTime ||
+    0
+});
 
-        type:
-          source ===
-          "CvyyQ2WYFu6DpS8H3TQFV5DG36QzUDKkxGo1wG6Pxbh"
-            ? "Sent"
-            : "Received",
-
-        blockTime:
-          tx.blockTime ||
-          item.blockTime ||
-          0
-      });
-
-      break;
+break;
     }
 
   } catch (error) {
