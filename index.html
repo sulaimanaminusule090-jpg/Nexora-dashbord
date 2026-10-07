@@ -6,7 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Nexora Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+<script>
+const SUPABASE_URL = "https://jttesnopsbjseocktqku.supabase.co";
+const SUPABASE_KEY = "sb_publishable_KJk8CLoJN-_DXmcjpS-Rnw_MUPHQzo1";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+</script>
   <style>
     * {
       box-sizing: border-box;
