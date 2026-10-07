@@ -1007,7 +1007,7 @@ function showServices() {
 
         <div style="padding:20px;">
 
-            <div style="
+            <div onclick="showNexoraAI()" style="
                 background:white;
                 padding:20px;
                 border-radius:20px;
@@ -1180,6 +1180,221 @@ function showServices() {
 
     document.body.appendChild(page);
 }
+    function showNexoraAI() {
+    const existingPage = document.getElementById("nexoraAIPage");
+
+    if (existingPage) {
+        existingPage.remove();
+        return;
+    }
+
+    const page = document.createElement("div");
+    page.id = "nexoraAIPage";
+
+    page.style.cssText = `
+        position: fixed;
+        inset: 0;
+        background: #f5f7fb;
+        z-index: 10000;
+        overflow-y: auto;
+        font-family: Arial, sans-serif;
+        padding-bottom: 90px;
+    `;
+
+    page.innerHTML = `
+        <div style="
+            background:#111827;
+            color:white;
+            padding:20px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        ">
+            <div>
+                <div style="font-size:22px;font-weight:bold;">
+                    🤖 Nexora AI
+                </div>
+                <div style="font-size:13px;opacity:.75;">
+                    AI-powered tools for the Nexora ecosystem
+                </div>
+            </div>
+
+            <button onclick="document.getElementById('nexoraAIPage').remove()"
+                style="
+                    background:none;
+                    border:none;
+                    color:white;
+                    font-size:30px;
+                    cursor:pointer;
+                ">
+                ×
+            </button>
+        </div>
+
+        <div style="padding:20px;">
+
+            <div style="
+                background:white;
+                border-radius:18px;
+                padding:20px;
+                margin-bottom:18px;
+                box-shadow:0 4px 15px rgba(0,0,0,.06);
+            ">
+                <div style="font-size:18px;font-weight:bold;">
+                    AI Credits
+                </div>
+
+                <div style="
+                    font-size:32px;
+                    font-weight:bold;
+                    margin-top:10px;
+                ">
+                    Free Plan
+                </div>
+
+                <div style="
+                    margin-top:8px;
+                    color:#6b7280;
+                ">
+                    Limited AI access
+                </div>
+
+                <button style="
+                    width:100%;
+                    margin-top:18px;
+                    padding:14px;
+                    border:none;
+                    border-radius:12px;
+                    background:#111827;
+                    color:white;
+                    font-weight:bold;
+                    cursor:pointer;
+                ">
+                    Upgrade to Pro
+                </button>
+            </div>
+
+            <div style="
+                background:white;
+                border-radius:18px;
+                padding:20px;
+                margin-bottom:18px;
+                box-shadow:0 4px 15px rgba(0,0,0,.06);
+            ">
+                <div style="font-size:19px;font-weight:bold;">
+                    💬 Ask Nexora AI
+                </div>
+
+                <div style="
+                    margin-top:12px;
+                    padding:18px;
+                    background:#f3f4f6;
+                    border-radius:12px;
+                    color:#6b7280;
+                ">
+                    Ask questions about Nexora, wallets,
+                    transactions and future ecosystem tools.
+                </div>
+
+                <input
+                    type="text"
+                    placeholder="Ask Nexora AI..."
+                    style="
+                        width:100%;
+                        box-sizing:border-box;
+                        margin-top:14px;
+                        padding:14px;
+                        border:1px solid #ddd;
+                        border-radius:12px;
+                        outline:none;
+                    "
+                >
+
+                <button style="
+                    width:100%;
+                    margin-top:10px;
+                    padding:14px;
+                    border:none;
+                    border-radius:12px;
+                    background:#2563eb;
+                    color:white;
+                    font-weight:bold;
+                    cursor:pointer;
+                ">
+                    Ask AI
+                </button>
+            </div>
+
+            <div style="
+                background:white;
+                border-radius:18px;
+                padding:20px;
+                margin-bottom:18px;
+                box-shadow:0 4px 15px rgba(0,0,0,.06);
+            ">
+                <div style="font-size:19px;font-weight:bold;">
+                    ⭐ Nexora AI Pro
+                </div>
+
+                <div style="margin-top:12px;color:#4b5563;">
+                    • More AI credits<br>
+                    • Advanced analysis<br>
+                    • Portfolio insights<br>
+                    • Priority processing
+                </div>
+
+                <button style="
+                    width:100%;
+                    margin-top:18px;
+                    padding:14px;
+                    border:none;
+                    border-radius:12px;
+                    background:#7c3aed;
+                    color:white;
+                    font-weight:bold;
+                    cursor:pointer;
+                ">
+                    Upgrade to Pro
+                </button>
+            </div>
+
+            <div style="
+                background:white;
+                border-radius:18px;
+                padding:20px;
+                box-shadow:0 4px 15px rgba(0,0,0,.06);
+            ">
+                <div style="font-size:19px;font-weight:bold;">
+                    🏢 Nexora AI Business
+                </div>
+
+                <div style="margin-top:12px;color:#4b5563;">
+                    • High AI limits<br>
+                    • API access<br>
+                    • Advanced analytics<br>
+                    • Business tools
+                </div>
+
+                <button style="
+                    width:100%;
+                    margin-top:18px;
+                    padding:14px;
+                    border:none;
+                    border-radius:12px;
+                    background:#059669;
+                    color:white;
+                    font-weight:bold;
+                    cursor:pointer;
+                ">
+                    Business Plan
+                </button>
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(page);
+    }
    async function showHistory() {
   const historyPage =
     document.getElementById("historyPage");
