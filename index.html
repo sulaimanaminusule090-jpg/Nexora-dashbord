@@ -953,7 +953,232 @@ function closeWallet() {
   document.getElementById("walletModal").style.display = "none";
 }
 function showServices() {
-  alert("Nexora Services will be available soon.");
+    const existingPage = document.getElementById("servicesPage");
+
+    if (existingPage) {
+        existingPage.remove();
+        return;
+    }
+
+    const page = document.createElement("div");
+    page.id = "servicesPage";
+
+    page.style.cssText = `
+        position: fixed;
+        inset: 0;
+        background: #f5f7fb;
+        z-index: 9999;
+        overflow-y: auto;
+        padding-bottom: 90px;
+        font-family: Arial, sans-serif;
+    `;
+
+    page.innerHTML = `
+        <div style="
+            background:#111827;
+            color:white;
+            padding:20px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            position:sticky;
+            top:0;
+            z-index:2;
+        ">
+            <div style="font-size:24px;font-weight:bold;">
+                Nexora Services
+            </div>
+
+            <button
+                onclick="document.getElementById('servicesPage').remove()"
+                style="
+                    border:0;
+                    background:#374151;
+                    color:white;
+                    width:44px;
+                    height:44px;
+                    border-radius:50%;
+                    font-size:24px;
+                "
+            >
+                ×
+            </button>
+        </div>
+
+        <div style="padding:20px;">
+
+            <div style="
+                background:white;
+                padding:20px;
+                border-radius:20px;
+                margin-bottom:16px;
+                border:1px solid #e4e8ef;
+            ">
+                <div style="font-size:28px;margin-bottom:10px;">🤖</div>
+                <div style="font-size:21px;font-weight:bold;">
+                    Nexora AI
+                </div>
+                <div style="color:#6b7280;margin-top:8px;">
+                    AI-powered tools for the Nexora ecosystem.
+                </div>
+                <div style="
+                    display:inline-block;
+                    margin-top:14px;
+                    padding:7px 12px;
+                    border-radius:20px;
+                    background:#eef2ff;
+                    color:#374151;
+                    font-size:13px;
+                    font-weight:bold;
+                ">
+                    Coming Soon
+                </div>
+            </div>
+
+            <div style="
+                background:white;
+                padding:20px;
+                border-radius:20px;
+                margin-bottom:16px;
+                border:1px solid #e4e8ef;
+            ">
+                <div style="font-size:28px;margin-bottom:10px;">🛡️</div>
+                <div style="font-size:21px;font-weight:bold;">
+                    AI Security
+                </div>
+                <div style="color:#6b7280;margin-top:8px;">
+                    Security tools designed to help users understand wallet and transaction risks.
+                </div>
+                <div style="
+                    display:inline-block;
+                    margin-top:14px;
+                    padding:7px 12px;
+                    border-radius:20px;
+                    background:#eef2ff;
+                    color:#374151;
+                    font-size:13px;
+                    font-weight:bold;
+                ">
+                    Coming Soon
+                </div>
+            </div>
+
+            <div style="
+                background:white;
+                padding:20px;
+                border-radius:20px;
+                margin-bottom:16px;
+                border:1px solid #e4e8ef;
+            ">
+                <div style="font-size:28px;margin-bottom:10px;">💳</div>
+                <div style="font-size:21px;font-weight:bold;">
+                    Nexora Pay
+                </div>
+                <div style="color:#6b7280;margin-top:8px;">
+                    Future payment services powered by the Nexora ecosystem.
+                </div>
+                <div style="
+                    display:inline-block;
+                    margin-top:14px;
+                    padding:7px 12px;
+                    border-radius:20px;
+                    background:#eef2ff;
+                    color:#374151;
+                    font-size:13px;
+                    font-weight:bold;
+                ">
+                    Coming Soon
+                </div>
+            </div>
+
+            <div style="
+                background:white;
+                padding:20px;
+                border-radius:20px;
+                margin-bottom:16px;
+                border:1px solid #e4e8ef;
+            ">
+                <div style="font-size:28px;margin-bottom:10px;">📊</div>
+                <div style="font-size:21px;font-weight:bold;">
+                    Portfolio
+                </div>
+                <div style="color:#6b7280;margin-top:8px;">
+                    Track your Nexora assets and wallet activity.
+                </div>
+                <div style="
+                    display:inline-block;
+                    margin-top:14px;
+                    padding:7px 12px;
+                    border-radius:20px;
+                    background:#eef2ff;
+                    color:#374151;
+                    font-size:13px;
+                    font-weight:bold;
+                ">
+                    Coming Soon
+                </div>
+            </div>
+
+            <div style="
+                background:white;
+                padding:20px;
+                border-radius:20px;
+                margin-bottom:16px;
+                border:1px solid #e4e8ef;
+            ">
+                <div style="font-size:28px;margin-bottom:10px;">🔄</div>
+                <div style="font-size:21px;font-weight:bold;">
+                    Token Services
+                </div>
+                <div style="color:#6b7280;margin-top:8px;">
+                    Future tools and services built around the Nexora token ecosystem.
+                </div>
+                <div style="
+                    display:inline-block;
+                    margin-top:14px;
+                    padding:7px 12px;
+                    border-radius:20px;
+                    background:#eef2ff;
+                    color:#374151;
+                    font-size:13px;
+                    font-weight:bold;
+                ">
+                    Coming Soon
+                </div>
+            </div>
+
+            <div style="
+                background:white;
+                padding:20px;
+                border-radius:20px;
+                margin-bottom:16px;
+                border:1px solid #e4e8ef;
+            ">
+                <div style="font-size:28px;margin-bottom:10px;">🏪</div>
+                <div style="font-size:21px;font-weight:bold;">
+                    Nexora Marketplace
+                </div>
+                <div style="color:#6b7280;margin-top:8px;">
+                    A future marketplace for products and services within the Nexora ecosystem.
+                </div>
+                <div style="
+                    display:inline-block;
+                    margin-top:14px;
+                    padding:7px 12px;
+                    border-radius:20px;
+                    background:#eef2ff;
+                    color:#374151;
+                    font-size:13px;
+                    font-weight:bold;
+                ">
+                    Coming Soon
+                </div>
+            </div>
+
+        </div>
+    `;
+
+    document.body.appendChild(page);
 }
    async function showHistory() {
   const historyPage =
