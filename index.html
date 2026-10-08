@@ -1746,15 +1746,7 @@ for (const tokenAccount of tokenAccounts) {
     }
 }
 
-const signatures = Array.from(
-    signatureMap.values()
-)
-.sort(
-    (a, b) =>
-        (b.blockTime || 0) -
-        (a.blockTime || 0)
-)
-.slice(0, 100);
+
 
 const signatures =
   Array.from(signatureMap.values())
