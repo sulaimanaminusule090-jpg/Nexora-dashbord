@@ -1697,41 +1697,25 @@ const OLD_TOKEN_ACCOUNT =
     const walletAddress =
   provider.publicKey.toString();
 
-const tokenAccounts = new Set();
-
-const tokenAccountsResult = await rpcCall(
-    "getTokenAccountsByOwner",
-    [
-        walletAddress,
-        {
-            mint: MINT
-        },
-        {
-            encoding: "jsonParsed"
-        }
-    ]
-);
-
-for (
-    const account of tokenAccountsResult?.value || []
-) {
-    if (account?.pubkey) {
-        tokenAccounts.add(account.pubkey);
-    }
-}
+const tokenAccounts = new Set([
+    walletAddress,
+    TOKEN_ACCOUNT,
+    OLD_TOKEN_ACCOUNT
+]);
 
 const signatureMap = new Map();
 
 for (const tokenAccount of tokenAccounts) {
-    const accountSignatures = await rpcCall(
-        "getSignaturesForAddress",
-        [
-            tokenAccount,
-            {
-                limit: 100
-            }
-        ]
-    );
+    const accountSignatures =
+        await rpcCall(
+            "getSignaturesForAddress",
+            [
+                tokenAccount,
+                {
+                    limit: 50
+                }
+            ]
+        );
 
     for (const sigInfo of accountSignatures || []) {
         if (
@@ -1745,17 +1729,6 @@ for (const tokenAccount of tokenAccounts) {
         }
     }
 }
-
-
-
-const signatures =
-  Array.from(signatureMap.values())
-    .sort(
-      (a, b) =>
-        (b.blockTime || 0) -
-        (a.blockTime || 0)
-    )
-    .slice(0, 100);
 
 const allTransactions = [];
 
