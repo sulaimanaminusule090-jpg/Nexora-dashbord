@@ -1559,6 +1559,48 @@ function showServices() {
 
     document.body.appendChild(page);
     }
+    async function saveTransactionToSupabase(tx, walletAddress) {
+    try {
+        if (!tx || !tx.signature || !walletAddress) return;
+
+        const { data: existing, error: checkError } =
+            await supabase
+                .from("transactions")
+                .select("id")
+                .eq("signature", tx.signature)
+                .maybeSingle();
+
+        if (checkError) {
+            console.error("Supabase check error:", checkError);
+            return;
+        }
+
+        if (existing) {
+            return;
+        }
+
+        const { error } = await supabase
+            .from("transactions")
+            .insert({
+                wallet_address: walletAddress,
+                signature: tx.signature,
+                transaction_type: tx.type,
+                token_symbol: "NEXORA",
+                amount: Number(tx.amount || 0),
+                status: "confirmed"
+            });
+
+        if (error) {
+            console.error("Supabase save error:", error);
+            return;
+        }
+
+        console.log("NEXORA transaction saved:", tx.signature);
+
+    } catch (error) {
+        console.error("saveTransactionToSupabase error:", error);
+    }
+    }
    async function showHistory() {
   const historyPage =
     document.getElementById("historyPage");
@@ -1894,6 +1936,10 @@ break;
 
       historyTransactions.appendChild(item);
     });
+    await saveTransactionToSupabase(
+    tx,
+    provider.publicKey.toString()
+);
 
   } catch (error) {
     console.error(
