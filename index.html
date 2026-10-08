@@ -1754,13 +1754,13 @@ for (const balance of [
       tx.transaction?.message?.accountKeys?.[balance.accountIndex];
 
     const accountAddress =
-      typeof accountKey === "string"
+    typeof accountKey === "string"
         ? accountKey
-        : accountKey?.pubkey;
+        : accountKey?.pubkey?.toString();
 
-    if (accountAddress) {
-      walletTokenAccounts.add(accountAddress);
-    }
+if (accountAddress) {
+    walletTokenAccounts.add(accountAddress);
+}
   }
 }
 
