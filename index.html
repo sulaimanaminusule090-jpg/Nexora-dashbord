@@ -1891,7 +1891,7 @@ break;
 
     historyTransactions.innerHTML = "";
 
-    allTransactions.forEach(tx => {
+    allTransactions.forEach(async (tx) => {
       const date =
         tx.blockTime
           ? new Date(
@@ -1935,11 +1935,12 @@ break;
       `;
 
       historyTransactions.appendChild(item);
-    });
-    await saveTransactionToSupabase(
-    tx,
-    provider.publicKey.toString()
+
+await saveTransactionToSupabase(
+  tx,
+  provider.publicKey.toString()
 );
+});
 
   } catch (error) {
     console.error(
