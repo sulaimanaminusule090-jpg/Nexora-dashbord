@@ -1564,8 +1564,8 @@ function showServices() {
         if (!tx || !tx.signature || !walletAddress) return;
 
         const { data: existing, error: checkError } =
-            await supabase
-                .from("transactions")
+            await supabaseClient
+    .from("transactions")
                 .select("id")
                 .eq("signature", tx.signature)
                 .maybeSingle();
@@ -1579,7 +1579,7 @@ function showServices() {
             return;
         }
 
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from("transactions")
             .insert({
                 wallet_address: walletAddress,
@@ -2931,6 +2931,51 @@ function viewMintExplorer() {
   window.open(explorerUrl, "_blank");
 }
     showHome();
+    
+async function saveTransactionToSupabase(tx, walletAddress) {
+  try {
+    if (!tx || !walletAddress) {
+      throw new Error("Transaction or wallet address is missing.");
+    }
+
+    const signature =
+      tx.signature ||
+      tx.transaction?.signatures?.[0] ||
+      tx.signatures?.[0];
+
+    if (!signature) {
+      throw new Error("Transaction signature is missing.");
+    }
+
+    const row = {
+      wallet_address: walletAddress,
+      signature: signature,
+      transaction_type: "transfer",
+      token_symbol: "NEXORA",
+      amount: Number(tx.amount || 0),
+      from_address: tx.from_address || tx.source || walletAddress,
+      to_address: tx.to_address || tx.destination || null,
+      status: "confirmed"
+    };
+
+    const { data, error } = await supabaseClient
+      .from("transactions")
+      .upsert(row, { onConflict: "signature" })
+      .select();
+
+    if (error) {
+      console.error("Supabase transaction save failed:", error);
+      return false;
+    }
+
+    console.log("Nexora transaction saved:", data);
+    return true;
+  } catch (error) {
+    console.error("Transaction save error:", error);
+    return false;
+  }
+}
+    
   </script>
 
 </body>
