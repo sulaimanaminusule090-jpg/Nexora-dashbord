@@ -2972,49 +2972,59 @@ function viewMintExplorer() {
 }
     showHome();
     
+
 async function saveTransactionToSupabase(tx, walletAddress) {
   try {
-    if (!tx || !walletAddress) {
-      throw new Error("Transaction or wallet address is missing.");
+    if (!tx?.signature || !walletAddress) {
+      throw new Error("Transaction signature or wallet address is missing.");
     }
 
-    const signature =
-      tx.signature ||
-      tx.transaction?.signatures?.[0] ||
-      tx.signatures?.[0];
+    const { data: sessionData, error: sessionError } =
+      await supabaseClient.auth.getSession();
 
-    if (!signature) {
-      throw new Error("Transaction signature is missing.");
+    if (sessionError) throw sessionError;
+
+    let user = sessionData.session?.user;
+
+    if (!user) {
+      const { data, error } =
+        await supabaseClient.auth.signInAnonymously();
+
+      if (error) throw error;
+
+      user = data.user || data.session?.user;
+    }
+
+    if (!user?.id) {
+      throw new Error("Supabase user session is unavailable.");
     }
 
     const row = {
+      user_id: user.id,
       wallet_address: walletAddress,
-      signature: signature,
-      transaction_type: "transfer",
+      signature: tx.signature,
+      transaction_type: tx.type || "transfer",
       token_symbol: "NEXORA",
       amount: Number(tx.amount || 0),
-      from_address: tx.from_address || tx.source || walletAddress,
-      to_address: tx.to_address || tx.destination || null,
+      from_address: tx.from_address || walletAddress,
+      to_address: tx.to_address || null,
       status: "confirmed"
     };
 
-    const { data, error } = await supabaseClient
+    const { error } = await supabaseClient
       .from("transactions")
-      .upsert(row, { onConflict: "signature" })
-      .select();
+      .insert(row);
 
-    if (error) {
-      console.error("Supabase transaction save failed:", error);
-      return false;
-    }
+    if (error) throw error;
 
-    console.log("Nexora transaction saved:", data);
+    console.log("Transaction saved to Supabase:", tx.signature);
     return true;
   } catch (error) {
-    console.error("Transaction save error:", error);
+    console.error("Supabase transaction save failed:", error);
     return false;
   }
 }
+    
     
   </script>
 
