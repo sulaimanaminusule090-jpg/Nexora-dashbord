@@ -848,7 +848,22 @@ if (!confirmed) {
     signature
   );
 }
+const savedToSupabase = await saveTransactionToSupabase(
+  {
+    signature: signature,
+    type: "Sent",
+    amount: amount,
+    from_address: sender.toString(),
+    to_address: recipient.toString()
+  },
+  sender.toString()
+);
 
+if (!savedToSupabase) {
+  console.error(
+    "Transfer succeeded on Solana, but database saving failed."
+  );
+}
     alert(
       "NEXORA sent successfully!\n\nTransaction:\n" +
       result.signature
@@ -1559,48 +1574,73 @@ function showServices() {
 
     document.body.appendChild(page);
     }
-    async function saveTransactionToSupabase(tx, walletAddress) {
-    try {
-        if (!tx || !tx.signature || !walletAddress) return;
-
-        const { data: existing, error: checkError } =
-            await supabaseClient
-    .from("transactions")
-                .select("id")
-                .eq("signature", tx.signature)
-                .maybeSingle();
-
-        if (checkError) {
-            console.error("Supabase check error:", checkError);
-            return;
-        }
-
-        if (existing) {
-            return;
-        }
-
-        const { error } = await supabaseClient
-            .from("transactions")
-            .insert({
-                wallet_address: walletAddress,
-                signature: tx.signature,
-                transaction_type: tx.type,
-                token_symbol: "NEXORA",
-                amount: Number(tx.amount || 0),
-                status: "confirmed"
-            });
-
-        if (error) {
-            console.error("Supabase save error:", error);
-            return;
-        }
-
-        console.log("NEXORA transaction saved:", tx.signature);
-
-    } catch (error) {
-        console.error("saveTransactionToSupabase error:", error);
+    
+async function saveTransactionToSupabase(tx, walletAddress) {
+  try {
+    if (!tx?.signature || !walletAddress) {
+      throw new Error("Transaction signature or wallet address is missing.");
     }
+
+    const { data: sessionData, error: sessionError } =
+      await supabaseClient.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    let user = sessionData.session?.user;
+
+    if (!user) {
+      const { data, error } =
+        await supabaseClient.auth.signInAnonymously();
+
+      if (error) throw error;
+
+      user = data.user || data.session?.user;
     }
+
+    if (!user?.id) {
+      throw new Error("Supabase user session is unavailable.");
+    }
+
+    const row = {
+      user_id: user.id,
+      wallet_address: walletAddress,
+      signature: tx.signature,
+      transaction_type: tx.type || "transfer",
+      token_symbol: "NEXORA",
+      amount: Number(tx.amount || 0),
+      from_address: tx.from_address || walletAddress,
+      to_address: tx.to_address || null,
+      status: "confirmed"
+    };
+
+    const { data: existing, error: lookupError } =
+      await supabaseClient
+        .from("transactions")
+        .select("id")
+        .eq("signature", tx.signature)
+        .maybeSingle();
+
+    if (lookupError) throw lookupError;
+
+    if (existing) {
+      console.log("Transaction already saved:", tx.signature);
+      return true;
+    }
+
+    const { error: insertError } = await supabaseClient
+      .from("transactions")
+      .insert(row);
+
+    if (insertError) throw insertError;
+
+    console.log("Transaction saved to Supabase:", tx.signature);
+    return true;
+  } catch (error) {
+    console.error("Supabase transaction save failed:", error.message);
+    return false;
+  }
+}
+    
    async function showHistory() {
   const historyPage =
     document.getElementById("historyPage");
