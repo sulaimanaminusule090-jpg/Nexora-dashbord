@@ -1636,6 +1636,8 @@ async function saveTransactionToSupabase(tx, walletAddress) {
     console.log("Transaction saved to Supabase:", tx.signature);
     return true;
     } catch (error) {
+    
+  console.error("Supabase transaction save failed:", error.message);
     if (error?.code === "23505") {
       const { data: existing, error: lookupError } =
         await supabaseClient
