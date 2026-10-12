@@ -1825,15 +1825,15 @@ const allTransactions = [];
             ]
           );
 
-        if (!tx?.meta) {
-  historyTransactions.innerHTML =
-    "<p>DEBUG — Signatures: " +
-    signatures.length +
-    "<br>Transaction data missing for: " +
-    sigInfo.signature +
-    "</p>";
-  return;
-        }
+        
+if (!tx?.meta) {
+  console.warn(
+    "Transaction data missing:",
+    sigInfo.signature
+  );
+  continue;
+}
+        
 
         
 
