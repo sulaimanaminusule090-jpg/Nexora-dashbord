@@ -1580,7 +1580,9 @@ async function saveTransactionToSupabase(tx, walletAddress) {
     if (!tx?.signature || !walletAddress) {
       throw new Error("Transaction signature or wallet address is missing.");
     }
-
+if (String(tx.type || "").toLowerCase() === "sent" && !tx.to_address) {
+  throw new Error("Recipient address is missing.");
+}
     const { data: sessionData, error: sessionError } =
       await supabaseClient.auth.getSession();
 
@@ -1613,19 +1615,34 @@ async function saveTransactionToSupabase(tx, walletAddress) {
       status: "confirmed"
     };
 
-    const { data: existing, error: lookupError } =
-      await supabaseClient
-        .from("transactions")
-        .select("id")
-        .eq("signature", tx.signature)
-        .maybeSingle();
+   
+const { data: existing, error: lookupError } =
+  await supabaseClient
+    .from("transactions")
+    .select("id, to_address")
+    .eq("signature", tx.signature)
+    .maybeSingle();
 
-    if (lookupError) throw lookupError;
+if (lookupError) throw lookupError;
 
-    if (existing) {
-      console.log("Transaction already saved:", tx.signature);
-      return true;
-    }
+if (existing) {
+  if (!existing.to_address && tx.to_address) {
+    const { error: updateError } = await supabaseClient
+      .from("transactions")
+      .update({ to_address: tx.to_address })
+      .eq("id", existing.id)
+      .is("to_address", null);
+
+    if (updateError) throw updateError;
+
+    console.log("Recipient address repaired:", tx.signature);
+  } else {
+    console.log("Transaction already saved:", tx.signature);
+  }
+
+  return true;
+}
+    
 
     const { error: insertError } = await supabaseClient
       .from("transactions")
