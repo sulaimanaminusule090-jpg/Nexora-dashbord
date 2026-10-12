@@ -1635,11 +1635,32 @@ async function saveTransactionToSupabase(tx, walletAddress) {
 
     console.log("Transaction saved to Supabase:", tx.signature);
     return true;
-  } catch (error) {
-    console.error("Supabase transaction save failed:", error.message);
+    } catch (error) {
+    if (error?.code === "23505") {
+      const { data: existing, error: lookupError } =
+        await supabaseClient
+          .from("transactions")
+          .select("id")
+          .eq("signature", tx.signature)
+          .maybeSingle();
+
+      if (!lookupError && existing) {
+        console.log(
+          "Transaction already saved:",
+          tx.signature
+        );
+        return true;
+      }
+    }
+
+    console.error(
+      "Supabase transaction save failed:",
+      error?.message || error
+    );
     return false;
   }
 }
+
     
    async function showHistory() {
   const historyPage =
