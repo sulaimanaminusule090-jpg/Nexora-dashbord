@@ -1995,7 +1995,10 @@ break;
       `;
 
       historyTransactions.appendChild(item);
-
+await saveTransactionToSupabase(
+  tx,
+  provider.publicKey.toString()
+);
 
 });
 
