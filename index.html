@@ -2973,57 +2973,7 @@ function viewMintExplorer() {
     showHome();
     
 
-async function saveTransactionToSupabase(tx, walletAddress) {
-  try {
-    if (!tx?.signature || !walletAddress) {
-      throw new Error("Transaction signature or wallet address is missing.");
-    }
 
-    const { data: sessionData, error: sessionError } =
-      await supabaseClient.auth.getSession();
-
-    if (sessionError) throw sessionError;
-
-    let user = sessionData.session?.user;
-
-    if (!user) {
-      const { data, error } =
-        await supabaseClient.auth.signInAnonymously();
-
-      if (error) throw error;
-
-      user = data.user || data.session?.user;
-    }
-
-    if (!user?.id) {
-      throw new Error("Supabase user session is unavailable.");
-    }
-
-    const row = {
-      user_id: user.id,
-      wallet_address: walletAddress,
-      signature: tx.signature,
-      transaction_type: tx.type || "transfer",
-      token_symbol: "NEXORA",
-      amount: Number(tx.amount || 0),
-      from_address: tx.from_address || walletAddress,
-      to_address: tx.to_address || null,
-      status: "confirmed"
-    };
-
-    const { error } = await supabaseClient
-      .from("transactions")
-      .insert(row);
-
-    if (error) throw error;
-
-    console.log("Transaction saved to Supabase:", tx.signature);
-    return true;
-  } catch (error) {
-    console.error("Supabase transaction save failed:", error);
-    return false;
-  }
-}
     
     
   </script>
