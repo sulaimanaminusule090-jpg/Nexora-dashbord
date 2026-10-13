@@ -45,9 +45,17 @@ async function analyzeCoin(symbol) {
 
   const response = await fetch(url);
 
+  
   if (!response.ok) {
-    throw new Error("Market data unavailable for " + symbol);
+    const errorBody = await response.text();
+
+    throw new Error(
+      "Binance HTTP " + response.status +
+      " for " + symbol + ": " +
+      errorBody.slice(0, 200)
+    );
   }
+  
 
   const candles = await response.json();
 
