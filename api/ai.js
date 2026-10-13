@@ -55,12 +55,26 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("OpenAI API error:", data);
+  console.error("OpenAI API error:", {
+    status: response.status,
+    code: data?.error?.code,
+    message: data?.error?.message
+  });
 
-      return res.status(502).json({
-        success: false,
-        error: "Nexora AI could not generate a response."
-      });
+  if (
+  data?.error?.code === "insufficient_quota" ||
+  data?.error?.type === "insufficient_quota"
+) {
+    return res.status(503).json({
+      success: false,
+      error: "Nexora AI is temporarily unavailable because its AI service has run out of API credits. Please try again later."
+    });
+  }
+
+  return res.status(502).json({
+    success: false,
+    error: "Nexora AI could not generate a response right now. Please try again later."
+  });
     }
 
     const answer =
