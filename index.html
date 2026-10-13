@@ -1637,7 +1637,24 @@ async function askNexoraAI() {
     answerBox.textContent = data.answer;
     input.value = "";
   } catch (error) {
-    alert("Nexora AI: " + error.message);
+    let answerBox = document.getElementById(
+  "nexora-ai-answer"
+);
+
+if (!answerBox) {
+  answerBox = document.createElement("div");
+  answerBox.id = "nexora-ai-answer";
+  input.parentElement.appendChild(answerBox);
+}
+
+answerBox.style.cssText =
+  "margin-top:16px;padding:16px;border-radius:12px;" +
+  "background:#fff7ed;color:#9a3412;" +
+  "white-space:pre-wrap;overflow-wrap:anywhere;";
+
+answerBox.textContent =
+  "Nexora AI is temporarily unavailable. " +
+  "Please try again later.";
   } finally {
     if (button) {
       button.disabled = false;
