@@ -1,4 +1,3 @@
-
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({
@@ -10,14 +9,17 @@ export default async function handler(req, res) {
   try {
     const { message } = req.body || {};
 
-    if (!message || typeof message !== "string") {
+    if (
+      typeof message !== "string" ||
+      !message.trim()
+    ) {
       return res.status(400).json({
         success: false,
         error: "Please enter a message."
       });
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return res.status(500).json({
@@ -27,27 +29,30 @@ export default async function handler(req, res) {
     }
 
     const response = await fetch(
-      "https://api.openai.com/v1/chat/completions",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
+          "x-goog-api-key": apiKey
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are Nexora AI, the helpful AI assistant inside the Nexora ecosystem. Explain things clearly, help users understand Nexora services, and never claim a feature or transaction exists unless verified."
-            },
-            {
-              role: "user",
-              content: message.trim()
-            }
-          ],
-          temperature: 0.7
+          systemInstruction: {
+            parts: [{
+              text:
+                "You are Nexora AI, the helpful AI assistant inside the Nexora ecosystem. Explain things clearly and help users understand Nexora services. Never claim a feature or transaction exists unless verified. Never ask users to share passwords, private keys, or wallet seed phrases."
+            }]
+          },
+          contents: [{
+            role: "user",
+            parts: [{
+              text: message.trim()
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024
+          }
         })
       }
     );
@@ -55,30 +60,22 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-  console.error("OpenAI API error:", {
-    status: response.status,
-    code: data?.error?.code,
-    message: data?.error?.message
-  });
+      console.error("Gemini API error:", {
+        status: response.status,
+        message: data?.error?.message
+      });
 
-  if (
-  data?.error?.code === "insufficient_quota" ||
-  data?.error?.type === "insufficient_quota"
-) {
-    return res.status(503).json({
-      success: false,
-      error: "Nexora AI is temporarily unavailable because its AI service has run out of API credits. Please try again later."
-    });
-  }
-
-  return res.status(502).json({
-    success: false,
-    error: "Nexora AI could not generate a response right now. Please try again later."
-  });
+      return res.status(502).json({
+        success: false,
+        error:
+          "Nexora AI could not generate a response. Please try again later."
+      });
     }
 
-    const answer =
-      data.choices?.[0]?.message?.content;
+    const answer = data.candidates?.[0]?.content?.parts
+      ?.map(part => part.text || "")
+      .join("")
+      .trim();
 
     if (!answer) {
       return res.status(502).json({
