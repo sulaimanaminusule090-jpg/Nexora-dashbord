@@ -128,12 +128,21 @@ module.exports = async function handler(req, res) {
       .filter(r => r.status === "fulfilled")
       .map(r => r.value);
 
+    
     if (!data.length) {
+      const failures = results
+        .filter(r => r.status === "rejected")
+        .map(r => String(r.reason?.message || "Unknown market data error"));
+
+      console.error("All crypto signal requests failed:", failures);
+
       return res.status(502).json({
         success: false,
-        error: "Market data is temporarily unavailable."
+        error: "Market data is temporarily unavailable.",
+        diagnostic: failures
       });
     }
+    
 
     return res.status(200).json({
       success: true,
