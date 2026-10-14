@@ -3418,6 +3418,18 @@ async function loadCryptoSignals() {
       list.appendChild(card);
     });
 
+const chartCoin = (result.data || []).find(function (coin) {
+  return coin.poolAddress && coin.network;
+});
+
+if (chartCoin) {
+  loadNexoraChart(
+    chartCoin.network,
+    chartCoin.poolAddress,
+    chartCoin.name || chartCoin.symbol || "Crypto"
+  );
+}
+    
     status.textContent =
       "Provider: " + (result.provider || "Market data") +
       " · Updated: " + new Date().toLocaleTimeString();
