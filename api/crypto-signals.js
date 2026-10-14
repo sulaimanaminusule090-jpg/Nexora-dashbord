@@ -212,11 +212,27 @@ async function searchToken(query, network) {
     let side = "base";
     let matched = false;
 
-    if (addressQuery) {
-      if (baseAddress.toLowerCase() === q) {
+        if (addressQuery) {
+      const baseIdAddress = String(baseId || "")
+        .split("_")
+        .slice(1)
+        .join("_");
+
+      const quoteIdAddress = String(quoteId || "")
+        .split("_")
+        .slice(1)
+        .join("_");
+
+      if (
+        baseAddress.toLowerCase() === q ||
+        baseIdAddress.toLowerCase() === q
+      ) {
         side = "base";
         matched = true;
-      } else if (quoteAddress.toLowerCase() === q) {
+      } else if (
+        quoteAddress.toLowerCase() === q ||
+        quoteIdAddress.toLowerCase() === q
+      ) {
         side = "quote";
         matched = true;
       }
