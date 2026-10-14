@@ -3321,6 +3321,14 @@ async function searchCryptoSignals() {
       }
 
       list.appendChild(card);
+      // Load the selected token's chart after a successful search.
+if (coin.network && coin.poolAddress) {
+  loadNexoraChart(
+    coin.network,
+    coin.poolAddress,
+    coin.name || coin.symbol || query
+  );
+}
     });
 
     status.textContent =
@@ -3615,13 +3623,14 @@ async function loadNexoraChart(
 }
 
 function setNexoraChartTimeframe(timeframe) {
+  const normalizedTimeframe = String(timeframe).toLowerCase();
   const allowed = ["15m", "1h", "4h", "1d"];
 
-  if (!allowed.includes(timeframe)) {
+  if (!allowed.includes(normalizedTimeframe)) {
     return;
   }
 
-  nexoraChartTimeframe = timeframe;
+  nexoraChartTimeframe = normalizedTimeframe;
 
   if (nexoraChartNetwork && nexoraChartPool) {
     loadNexoraChart(
