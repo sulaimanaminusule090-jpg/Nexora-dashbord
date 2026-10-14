@@ -212,43 +212,30 @@ async function searchToken(query, network) {
     let side = "base";
     let matched = false;
 
-        if (addressQuery) {
-      const baseIdAddress = String(baseId || "")
-        .split("_")
-        .slice(1)
-        .join("_");
+      
+if (addressQuery) {
+  if (baseAddress.toLowerCase() === q) {
+    side = "base";
+    matched = true;
+  } else if (quoteAddress.toLowerCase() === q) {
+    side = "quote";
+    matched = true;
+  }
+} else {
+  const baseName = String(base.name || "").trim().toLowerCase();
+  const baseSymbol = String(base.symbol || "").trim().toLowerCase();
+  const quoteName = String(quote.name || "").trim().toLowerCase();
+  const quoteSymbol = String(quote.symbol || "").trim().toLowerCase();
 
-      const quoteIdAddress = String(quoteId || "")
-        .split("_")
-        .slice(1)
-        .join("_");
-
-      if (
-        baseAddress.toLowerCase() === q ||
-        baseIdAddress.toLowerCase() === q
-      ) {
-        side = "base";
-        matched = true;
-      } else if (
-        quoteAddress.toLowerCase() === q ||
-        quoteIdAddress.toLowerCase() === q
-      ) {
-        side = "quote";
-        matched = true;
-      }
-        } else if (
-      String(base.symbol || "").trim().toLowerCase() === q ||
-      String(base.name || "").trim().toLowerCase() === q
-    ) {
-      side = "base";
-      matched = true;
-    } else if (
-      String(quote.symbol || "").trim().toLowerCase() === q ||
-      String(quote.name || "").trim().toLowerCase() === q
-    ) {
-      side = "quote";
-      matched = true;
-    }
+  if (baseSymbol === q || baseName === q) {
+    side = "base";
+    matched = true;
+  } else if (quoteSymbol === q || quoteName === q) {
+    side = "quote";
+    matched = true;
+  }
+}
+    
 
     return {
       pool,
@@ -280,6 +267,16 @@ async function searchToken(query, network) {
   const chosen = eligible[0];
   const attrs = chosen.attrs;
   const token = chosen.side === "base" ? chosen.base : chosen.quote;
+  
+if (
+  addressQuery &&
+  String(token.address || "").toLowerCase() !== query.toLowerCase()
+) {
+  throw new Error(
+    "The returned token address does not match your requested address."
+  );
+}
+  
   const tokenPrice = Number(
     chosen.side === "base"
       ? attrs.base_token_price_usd
