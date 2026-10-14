@@ -199,17 +199,15 @@ async function searchToken(query, network) {
         side = "quote";
         matched = true;
       }
-    } else if (
-      String(base.symbol || "").toLowerCase() === q ||
-      String(base.name || "").toLowerCase() === q ||
-      baseText.includes(q)
+        } else if (
+      String(base.symbol || "").trim().toLowerCase() === q ||
+      String(base.name || "").trim().toLowerCase() === q
     ) {
       side = "base";
       matched = true;
     } else if (
-      String(quote.symbol || "").toLowerCase() === q ||
-      String(quote.name || "").toLowerCase() === q ||
-      quoteText.includes(q)
+      String(quote.symbol || "").trim().toLowerCase() === q ||
+      String(quote.name || "").trim().toLowerCase() === q
     ) {
       side = "quote";
       matched = true;
@@ -226,15 +224,19 @@ async function searchToken(query, network) {
     };
   });
 
-  let eligible = addressQuery
-    ? candidates.filter(item => item.matched)
-    : candidates.filter(item => item.matched);
+    const eligible = candidates.filter(item => item.matched);
 
   if (!eligible.length && addressQuery) {
-    throw new Error("That address was not found on the selected network.");
+    throw new Error(
+      "That address was not found on the selected network. Check the address and blockchain."
+    );
   }
 
-  if (!eligible.length) eligible = candidates;
+  if (!eligible.length) {
+    throw new Error(
+      "No exact token name or symbol match was found on this network. Try the token mint/contract address."
+    );
+  }
 
   eligible.sort((a, b) => b.liquidity - a.liquidity);
 
