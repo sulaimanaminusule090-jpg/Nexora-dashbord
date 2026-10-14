@@ -3434,6 +3434,182 @@ async function loadCryptoSignals() {
 }
 
 loadCryptoSignals();
+   
+let nexoraChart = null;
+let nexoraCandleSeries = null;
+let nexoraChartNetwork = "";
+let nexoraChartPool = "";
+let nexoraChartName = "";
+let nexoraChartTimeframe = "1h";
+
+async function loadNexoraChart(
+  network,
+  pool,
+  coinName
+) {
+  const container = document.getElementById(
+    "nexoraCandlestickChart"
+  );
+  const status = document.getElementById(
+    "nexoraChartStatus"
+  );
+
+  if (!container || !status) {
+    console.error("Nexora chart HTML elements not found.");
+    return;
+  }
+
+  if (
+    !network ||
+    !pool ||
+    !/^[a-zA-Z0-9_-]+$/.test(network)
+  ) {
+    status.textContent = "Select a coin with a valid pool.";
+    return;
+  }
+
+  if (!window.LightweightCharts) {
+    status.textContent = "Chart library is not loaded.";
+    return;
+  }
+
+  nexoraChartNetwork = network;
+  nexoraChartPool = pool;
+  nexoraChartName = coinName || "Crypto";
+  status.textContent =
+    "Loading " + nexoraChartName + " chart...";
+
+  try {
+    const params = new URLSearchParams({
+      network: network,
+      pool: pool,
+      timeframe: nexoraChartTimeframe
+    });
+
+    const response = await fetch(
+      "/api/crypto-chart?" + params.toString(),
+      {
+        method: "GET",
+        headers: { Accept: "application/json" }
+      }
+    );
+
+    const result = await response.json();
+
+    if (
+      !response.ok ||
+      !result.success ||
+      !Array.isArray(result.candles) ||
+      result.candles.length === 0
+    ) {
+      throw new Error(
+        result.error || "No chart candles available."
+      );
+    }
+
+    if (!nexoraChart) {
+      nexoraChart = LightweightCharts.createChart(
+        container,
+        {
+          width: container.clientWidth || 600,
+          height: 320,
+          layout: {
+            background: {
+              type: "solid",
+              color: "#0b1220"
+            },
+            textColor: "#d1d5db"
+          },
+          grid: {
+            vertLines: { color: "#1f2937" },
+            horzLines: { color: "#1f2937" }
+          },
+          timeScale: {
+            timeVisible: true,
+            secondsVisible: false
+          },
+          rightPriceScale: {
+            borderColor: "#374151"
+          }
+        }
+      );
+
+      nexoraCandleSeries =
+        nexoraChart.addCandlestickSeries({
+          upColor: "#22c55e",
+          downColor: "#ef4444",
+          borderVisible: false,
+          wickUpColor: "#22c55e",
+          wickDownColor: "#ef4444"
+        });
+
+      window.addEventListener("resize", function () {
+        if (nexoraChart && container.clientWidth) {
+          nexoraChart.applyOptions({
+            width: container.clientWidth
+          });
+        }
+      });
+    }
+
+    const candles = result.candles
+      .filter(function (c) {
+        return (
+          Number.isFinite(Number(c.time)) &&
+          Number.isFinite(Number(c.open)) &&
+          Number.isFinite(Number(c.high)) &&
+          Number.isFinite(Number(c.low)) &&
+          Number.isFinite(Number(c.close))
+        );
+      })
+      .map(function (c) {
+        return {
+          time: Number(c.time),
+          open: Number(c.open),
+          high: Number(c.high),
+          low: Number(c.low),
+          close: Number(c.close)
+        };
+      });
+
+    if (!candles.length) {
+      throw new Error("No valid candle data returned.");
+    }
+
+    nexoraCandleSeries.setData(candles);
+    nexoraChart.timeScale().fitContent();
+
+    status.textContent =
+      nexoraChartName +
+      " · " +
+      nexoraChartTimeframe +
+      " · " +
+      candles.length +
+      " candles · GeckoTerminal";
+  } catch (error) {
+    console.error("Nexora chart error:", error);
+    status.textContent =
+      "Chart error: " + error.message;
+  }
+}
+
+function setNexoraChartTimeframe(timeframe) {
+  const allowed = ["15m", "1h", "4h", "1d"];
+
+  if (!allowed.includes(timeframe)) {
+    return;
+  }
+
+  nexoraChartTimeframe = timeframe;
+
+  if (nexoraChartNetwork && nexoraChartPool) {
+    loadNexoraChart(
+      nexoraChartNetwork,
+      nexoraChartPool,
+      nexoraChartName
+    );
+  }
+}
     
     
     
