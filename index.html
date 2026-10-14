@@ -3154,6 +3154,155 @@ function viewMintExplorer() {
     showHome();
     
 
+async function searchCryptoSignals() {
+  const status = document.getElementById("cryptoSignalsStatus");
+  const list = document.getElementById("cryptoSignalsList");
+  const input = document.getElementById("cryptoSearchInput");
+  const networkSelect = document.getElementById("cryptoNetwork");
+
+  if (!status || !list || !input || !networkSelect) return;
+
+  const query = input.value.trim();
+  const network = networkSelect.value;
+
+  if (query.length < 2) {
+    status.textContent = "Please enter a coin name, symbol, or address.";
+    input.focus();
+    return;
+  }
+
+  status.textContent = "Searching " + query + " on " + network + "...";
+  list.replaceChildren();
+
+  try {
+    const params = new URLSearchParams({
+      query: query,
+      network: network
+    });
+
+    const response = await fetch(
+      "/api/crypto-signals?" + params.toString(),
+      {
+        method: "GET",
+        headers: { Accept: "application/json" }
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.error || "Could not find market data for this token."
+      );
+    }
+
+    if (!Array.isArray(result.data) || result.data.length === 0) {
+      throw new Error("No matching token market was found.");
+    }
+
+    const money = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumSignificantDigits: 8
+    });
+
+    result.data.forEach(function (coin) {
+      const card = document.createElement("div");
+
+      card.style.cssText =
+        "background:#1f2937;border:1px solid #374151;" +
+        "border-radius:12px;padding:14px;min-width:0;";
+
+      function addText(text, style) {
+        const p = document.createElement("p");
+        p.textContent = text;
+        p.style.cssText = style || "margin:8px 0;";
+        card.appendChild(p);
+      }
+
+      const title = document.createElement("h3");
+      title.textContent =
+        (coin.name || "Unknown token") +
+        " (" + (coin.symbol || "N/A") + ")";
+      title.style.cssText = "margin:0 0 12px;font-size:18px;";
+      card.appendChild(title);
+
+      addText(
+        "Price: " + money.format(Number(coin.price)),
+        "font-size:17px;font-weight:bold;margin:8px 0;"
+      );
+
+      const change = Number(coin.change24h);
+      addText(
+        "24h change: " +
+        (change > 0 ? "+" : "") +
+        change.toFixed(2) + "%",
+        "margin:8px 0;color:" +
+        (change > 0 ? "#34d399" :
+         change < 0 ? "#f87171" : "#d1d5db")
+      );
+
+      addText(
+        "Liquidity: " +
+        (Number.isFinite(Number(coin.liquidity))
+          ? money.format(Number(coin.liquidity))
+          : "Unavailable")
+      );
+
+      addText(
+        "24h volume: " +
+        (Number.isFinite(Number(coin.volume24h))
+          ? money.format(Number(coin.volume24h))
+          : "Unavailable")
+      );
+
+      const signal = document.createElement("p");
+      signal.textContent = "Signal: " + (coin.signal || "Neutral");
+      signal.style.cssText =
+        "font-weight:bold;padding:10px;background:#111827;" +
+        "border-radius:8px;color:" +
+        (coin.signal === "Buy setup" ? "#34d399" :
+         coin.signal === "Sell setup" ? "#f87171" : "#fbbf24");
+      card.appendChild(signal);
+
+      addText(
+        "RSI: " +
+        (coin.rsi == null ? "Unavailable" : coin.rsi)
+      );
+
+      addText(
+        coin.dataStatus || coin.reason || "No additional analysis available.",
+        "font-size:13px;color:#d1d5db;line-height:1.5;"
+      );
+
+      if (coin.address) {
+        addText(
+          "Token address: " + coin.address,
+          "font-size:12px;color:#9ca3af;overflow-wrap:anywhere;"
+        );
+      }
+
+      if (coin.poolAddress) {
+        addText(
+          "Pool: " + coin.poolAddress,
+          "font-size:12px;color:#9ca3af;overflow-wrap:anywhere;"
+        );
+      }
+
+      list.appendChild(card);
+    });
+
+    status.textContent =
+      "Provider: " + (result.provider || "Market data") +
+      " · Updated: " + new Date().toLocaleTimeString();
+
+  } catch (error) {
+    console.error("Nexora token search error:", error);
+    status.textContent =
+      error.message || "Search failed. Please try again.";
+  }
+    }
+    
 
 async function loadCryptoSignals() {
   const status = document.getElementById("cryptoSignalsStatus");
