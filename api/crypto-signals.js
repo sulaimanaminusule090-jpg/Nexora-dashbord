@@ -18,6 +18,7 @@ const NETWORKS = [
   "avalanche"
 ];
 
+
 async function getJson(url) {
   const response = await fetch(url, {
     headers: {
@@ -26,11 +27,22 @@ async function getJson(url) {
   });
 
   if (!response.ok) {
-    throw new Error("Market data provider returned HTTP " + response.status);
+    if (response.status === 404) {
+      throw new Error(
+        "No token or market pool was found for this address on the selected network."
+      );
+    }
+
+    throw new Error(
+      "Market data provider is temporarily unavailable (HTTP " +
+      response.status +
+      "). Please try again."
+    );
   }
 
   return response.json();
 }
+
 
 function calculateRsi(prices, period = 14) {
   if (prices.length <= period) return null;
