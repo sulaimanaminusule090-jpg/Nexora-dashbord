@@ -3563,14 +3563,25 @@ async function loadNexoraChart(
         }
       );
 
+      
       nexoraCandleSeries =
         nexoraChart.addCandlestickSeries({
           upColor: "#22c55e",
           downColor: "#ef4444",
           borderVisible: false,
           wickUpColor: "#22c55e",
-          wickDownColor: "#ef4444"
+          wickDownColor: "#ef4444",
+          priceFormat: {
+            type: "custom",
+            formatter: function (price) {
+              return Number(price).toLocaleString("en-US", {
+                maximumSignificantDigits: 8
+              });
+            },
+            minMove: 0.000000000001
+          }
         });
+      
 
       window.addEventListener("resize", function () {
         if (nexoraChart && container.clientWidth) {
