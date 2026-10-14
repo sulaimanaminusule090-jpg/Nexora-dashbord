@@ -386,6 +386,27 @@ const supabaseClient = supabase.createClient(
     Live market data · Experimental technical analysis
   </p>
 
+<div style="display:grid;grid-template-columns:1fr;gap:10px;margin:16px 0;">
+  <label for="cryptoNetwork" style="font-weight:bold;">Blockchain</label>
+  <select id="cryptoNetwork" style="padding:12px;border-radius:8px;background:#1f2937;color:white;border:1px solid #4b5563;">
+    <option value="solana">Solana</option>
+    <option value="eth">Ethereum</option>
+    <option value="base">Base</option>
+    <option value="bsc">BNB Chain</option>
+    <option value="polygon_pos">Polygon</option>
+    <option value="arbitrum">Arbitrum</option>
+    <option value="optimism">Optimism</option>
+    <option value="avalanche">Avalanche</option>
+  </select>
+
+  <label for="cryptoSearchInput" style="font-weight:bold;">Coin name, symbol ko contract/mint address</label>
+  <input id="cryptoSearchInput" type="text" placeholder="Misali: PEPE ko manna mint address" style="width:100%;box-sizing:border-box;padding:12px;border-radius:8px;background:#1f2937;color:white;border:1px solid #4b5563;">
+
+  <button type="button" onclick="searchCryptoSignals()" style="padding:12px;border:0;border-radius:8px;background:#2563eb;color:white;font-weight:bold;">
+    Search Coin
+  </button>
+</div>
+  
   <div id="cryptoSignalsStatus" role="status" style="padding:12px 0;color:#d1d5db;">
     Loading crypto signals...
   </div>
