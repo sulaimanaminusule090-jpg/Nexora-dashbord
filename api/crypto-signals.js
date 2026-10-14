@@ -126,23 +126,40 @@ function makeSignal(prices) {
     };
   }
 
+  
   let signal = "Hold";
   let reason =
     "The indicators do not confirm a clear buy or sell setup.";
 
-  if (ema20 > ema50 && rsi >= 50 && rsi <= 68) {
+  const lastPrice = validPrices[validPrices.length - 1];
+  const previousPrice = validPrices[validPrices.length - 2];
+
+  if (
+    ema20 > ema50 &&
+    lastPrice > ema20 &&
+    previousPrice <= lastPrice &&
+    rsi >= 50 &&
+    rsi <= 65
+  ) {
     signal = "Buy setup";
     reason =
-      "EMA20 is above EMA50 and RSI confirms positive momentum.";
+      "Price is above EMA20, EMA20 is above EMA50, and RSI confirms positive momentum.";
   } else if (
     ema20 < ema50 &&
-    rsi >= 32 &&
+    lastPrice < ema20 &&
+    previousPrice >= lastPrice &&
+    rsi >= 35 &&
     rsi < 50
   ) {
     signal = "Sell setup";
     reason =
-      "EMA20 is below EMA50 and RSI confirms negative momentum.";
+      "Price is below EMA20, EMA20 is below EMA50, and RSI confirms negative momentum.";
+  } else {
+    signal = "Hold";
+    reason =
+      "The trend and momentum indicators do not agree strongly enough.";
   }
+  
 
   return {
     signal,
