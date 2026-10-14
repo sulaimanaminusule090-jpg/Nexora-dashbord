@@ -3418,17 +3418,24 @@ async function loadCryptoSignals() {
       list.appendChild(card);
     });
 
+
 const chartCoin = (result.data || []).find(function (coin) {
-  return coin.poolAddress && coin.network;
+  return coin.poolAddress;
 });
 
 if (chartCoin) {
+  const chartNetwork =
+    chartCoin.network ||
+    document.getElementById("cryptoNetwork")?.value ||
+    "solana";
+
   loadNexoraChart(
-    chartCoin.network,
+    chartNetwork,
     chartCoin.poolAddress,
     chartCoin.name || chartCoin.symbol || "Crypto"
   );
 }
+    
     
     status.textContent =
       "Provider: " + (result.provider || "Market data") +
