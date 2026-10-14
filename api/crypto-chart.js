@@ -1,20 +1,18 @@
 
 const GECKO = "https://api.geckoterminal.com/api/v2";
 
-const NETWORKS = [
-  "solana", "eth", "base", "bsc",
-  "polygon_pos", "arbitrum", "optimism", "avalanche"
-];
-
 const TIMEFRAMES = {
   "15m": { period: "minute", aggregate: 15 },
   "1h": { period: "hour", aggregate: 1 },
   "4h": { period: "hour", aggregate: 4 },
-  "1D": { period: "day", aggregate: 1 }
+  "1d": { period: "day", aggregate: 1 }
 };
 
 module.exports = async function handler(req, res) {
-  res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=60");
+  res.setHeader(
+    "Cache-Control",
+    "s-maxage=30, stale-while-revalidate=60"
+  );
 
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -33,17 +31,21 @@ module.exports = async function handler(req, res) {
     : "";
 
   const timeframe = typeof req.query.timeframe === "string"
-    ? req.query.timeframe.trim()
+    ? req.query.timeframe.trim().toLowerCase()
     : "1h";
 
-  if (!NETWORKS.includes(network)) {
+  if (
+    !network ||
+    network.length > 64 ||
+    !/^[a-z0-9_]+$/.test(network)
+  ) {
     return res.status(400).json({
       success: false,
-      error: "Unsupported blockchain network."
+      error: "A valid supported network slug is required."
     });
   }
 
-  if (!pool || pool.length > 150) {
+  if (!pool || pool.length > 150 || /[/?#]/.test(pool)) {
     return res.status(400).json({
       success: false,
       error: "A valid pool address is required."
@@ -53,7 +55,7 @@ module.exports = async function handler(req, res) {
   if (!Object.prototype.hasOwnProperty.call(TIMEFRAMES, timeframe)) {
     return res.status(400).json({
       success: false,
-      error: "Unsupported chart timeframe."
+      error: "Use timeframe 15m, 1h, 4h, or 1D."
     });
   }
 
@@ -78,7 +80,7 @@ module.exports = async function handler(req, res) {
       return res.status(response.status === 404 ? 404 : 502).json({
         success: false,
         error: response.status === 404
-          ? "No candle history was found for this pool."
+          ? "No candle history found. Check the network and pool address."
           : "Market data provider is temporarily unavailable."
       });
     }
@@ -117,7 +119,7 @@ module.exports = async function handler(req, res) {
       provider: "GeckoTerminal",
       network: network,
       pool: pool,
-      timeframe: timeframe,
+      timeframe: timeframe === "1d" ? "1D" : timeframe,
       candles: candles
     });
   } catch (error) {
