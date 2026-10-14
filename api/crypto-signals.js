@@ -145,11 +145,32 @@ async function analyzeDefaultCoin(symbol) {
 }
 
 async function searchToken(query, network) {
-  const url =
-    GECKO + "/search/pools?query=" +
-    encodeURIComponent(query) +
-    "&network=" + encodeURIComponent(network) +
-    "&include=base_token,quote_token,dex";
+  const addressQuery =
+    /^0x[a-fA-F0-9]{40}$/.test(query) ||
+    (network === "solana" &&
+      /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(query));
+
+  let url;
+
+  if (addressQuery) {
+    url =
+      GECKO +
+      "/networks/" +
+      encodeURIComponent(network) +
+      "/tokens/" +
+      encodeURIComponent(query) +
+      "/pools?include=base_token,quote_token,dex";
+  } else {
+    url =
+      GECKO +
+      "/search/pools?query=" +
+      encodeURIComponent(query) +
+      "&network=" +
+      encodeURIComponent(network) +
+      "&include=base_token,quote_token,dex";
+  }
+
+  
 
   const result = await getJson(url);
   const pools = Array.isArray(result.data) ? result.data : [];
@@ -165,7 +186,7 @@ async function searchToken(query, network) {
       .map(item => [item.id, item.attributes || {}])
   );
 
-  const addressQuery = query.length > 30;
+  
 
   const candidates = pools.map(pool => {
     const attrs = pool.attributes || {};
