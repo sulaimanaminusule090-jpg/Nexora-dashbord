@@ -374,6 +374,29 @@ const supabaseClient = supabase.createClient(
     <p>No recent transactions</p>
       </div>
 
+<section id="cryptoSignalsSection" style="margin:24px 0;padding:16px;background:#111827;color:#f9fafb;border-radius:16px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+    <h2 style="margin:0;font-size:20px;">Nexora Crypto Signals</h2>
+    <button type="button" onclick="loadCryptoSignals()" style="padding:10px 14px;border:0;border-radius:8px;background:#2563eb;color:white;font-weight:bold;">
+      Refresh
+    </button>
+  </div>
+
+  <p style="color:#9ca3af;font-size:13px;margin:8px 0 16px;">
+    Live market data · Experimental technical analysis
+  </p>
+
+  <div id="cryptoSignalsStatus" role="status" style="padding:12px 0;color:#d1d5db;">
+    Loading crypto signals...
+  </div>
+
+  <div id="cryptoSignalsList" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;"></div>
+
+  <p style="font-size:12px;color:#9ca3af;margin-top:16px;">
+    Signals are experimental, not financial advice or guaranteed returns.
+  </p>
+</section>
+      
   </main>
 
 
@@ -3111,6 +3134,106 @@ function viewMintExplorer() {
     
 
 
+async function loadCryptoSignals() {
+  const status = document.getElementById("cryptoSignalsStatus");
+  const list = document.getElementById("cryptoSignalsList");
+
+  if (!status || !list) return;
+
+  status.textContent = "Loading market data...";
+  list.replaceChildren();
+
+  try {
+    const response = await fetch("/api/crypto-signals", {
+      method: "GET",
+      headers: { Accept: "application/json" }
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(
+        result.error || "Market data is temporarily unavailable."
+      );
+    }
+
+    if (!Array.isArray(result.data) || result.data.length === 0) {
+      throw new Error("No crypto signals are available right now.");
+    }
+
+    const money = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 4
+    });
+
+    result.data.forEach(function (coin) {
+      const card = document.createElement("div");
+
+      card.style.cssText =
+        "background:#1f2937;border:1px solid #374151;" +
+        "border-radius:12px;padding:14px;min-width:0;";
+
+      const title = document.createElement("h3");
+      title.textContent = coin.symbol || "Crypto";
+      title.style.cssText = "margin:0 0 12px;font-size:18px;";
+
+      const price = document.createElement("p");
+      price.textContent =
+        "Price: " + money.format(Number(coin.price));
+      price.style.cssText = "font-size:17px;font-weight:bold;";
+
+      const change = document.createElement("p");
+      const changeValue = Number(coin.change24h);
+
+      change.textContent =
+        "24h change: " +
+        (changeValue > 0 ? "+" : "") +
+        changeValue.toFixed(2) + "%";
+
+      change.style.color =
+        changeValue > 0 ? "#34d399" :
+        changeValue < 0 ? "#f87171" : "#d1d5db";
+
+      const signal = document.createElement("p");
+      signal.textContent = "Signal: " + (coin.signal || "Neutral");
+      signal.style.cssText =
+        "font-weight:bold;padding:8px;background:#111827;" +
+        "border-radius:8px;";
+
+      signal.style.color =
+        coin.signal === "Buy setup" ? "#34d399" :
+        coin.signal === "Sell setup" ? "#f87171" : "#fbbf24";
+
+      const rsi = document.createElement("p");
+      rsi.textContent = "RSI: " + Number(coin.rsi).toFixed(2);
+
+      const reason = document.createElement("p");
+      reason.textContent = coin.reason || "No explanation available.";
+      reason.style.cssText =
+        "font-size:13px;color:#d1d5db;line-height:1.5;";
+
+      card.append(title, price, change, signal, rsi, reason);
+      list.appendChild(card);
+    });
+
+    status.textContent =
+      "Provider: " + (result.provider || "Market data") +
+      " · Updated: " + new Date().toLocaleTimeString();
+
+    if (result.partial) {
+      status.textContent +=
+        " · Some coins could not be loaded.";
+    }
+  } catch (error) {
+    console.error("Nexora Crypto Signals error:", error);
+    status.textContent =
+      "Unable to load signals. Please try Refresh again.";
+  }
+}
+
+loadCryptoSignals();
+    
     
     
   </script>
