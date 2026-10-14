@@ -88,28 +88,60 @@ function calculateEma(prices, period) {
   return result;
 }
 
+
 function makeSignal(prices) {
-  if (prices.length < 55) {
+  const validPrices = Array.isArray(prices)
+    ? prices.filter(
+        price => Number.isFinite(price) && price > 0
+      )
+    : [];
+
+  if (validPrices.length < 55) {
     return {
       signal: "Insufficient market data",
       rsi: null,
-      reason: "This token does not have enough hourly price history for a reliable technical signal."
+      ema20: null,
+      ema50: null,
+      reason:
+        "There is not enough valid hourly price history for a technical signal."
     };
   }
 
-  const rsi = calculateRsi(prices);
-  const ema20 = calculateEma(prices, 20);
-  const ema50 = calculateEma(prices, 50);
+  const rsi = calculateRsi(validPrices, 14);
+  const ema20 = calculateEma(validPrices, 20);
+  const ema50 = calculateEma(validPrices, 50);
 
-  let signal = "Neutral";
-  let reason = "The indicators do not agree on a clear direction.";
+  if (
+    !Number.isFinite(rsi) ||
+    !Number.isFinite(ema20) ||
+    !Number.isFinite(ema50)
+  ) {
+    return {
+      signal: "Insufficient market data",
+      rsi: null,
+      ema20: null,
+      ema50: null,
+      reason:
+        "The technical indicators could not be calculated reliably."
+    };
+  }
+
+  let signal = "Hold";
+  let reason =
+    "The indicators do not confirm a clear buy or sell setup.";
 
   if (ema20 > ema50 && rsi >= 50 && rsi <= 68) {
     signal = "Buy setup";
-    reason = "EMA20 is above EMA50 and RSI shows positive momentum.";
-  } else if (ema20 < ema50 && rsi >= 32 && rsi < 50) {
+    reason =
+      "EMA20 is above EMA50 and RSI confirms positive momentum.";
+  } else if (
+    ema20 < ema50 &&
+    rsi >= 32 &&
+    rsi < 50
+  ) {
     signal = "Sell setup";
-    reason = "EMA20 is below EMA50 and RSI shows negative momentum.";
+    reason =
+      "EMA20 is below EMA50 and RSI confirms negative momentum.";
   }
 
   return {
@@ -120,6 +152,7 @@ function makeSignal(prices) {
     reason
   };
 }
+
 
 async function analyzeDefaultCoin(symbol) {
   const coinId = COINS[symbol];
