@@ -3475,11 +3475,19 @@ if (chartCoin) {
 
 loadCryptoSignals();
     
+
 let nexoraSignalsRefreshTimer = setInterval(() => {
-  if (!document.hidden) {
+  if (document.hidden) return;
+
+  const searchInput = document.getElementById("cryptoSearchInput");
+
+  if (searchInput && searchInput.value.trim().length >= 2) {
+    searchCryptoSignals();
+  } else {
     loadCryptoSignals();
   }
 }, 60000);
+    
     
    
 let nexoraChart = null;
