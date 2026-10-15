@@ -3468,6 +3468,8 @@ let nexoraChartNetwork = "";
 let nexoraChartPool = "";
 let nexoraChartName = "";
 let nexoraChartTimeframe = "1h";
+    let nexoraChartRefreshTimer = null;
+let nexoraChartRequestId = 0;
 
 async function loadNexoraChart(
   network,
