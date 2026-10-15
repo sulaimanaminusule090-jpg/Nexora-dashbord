@@ -324,11 +324,61 @@ if (addressQuery) {
     );
   }
 
-  eligible.sort((a, b) => b.liquidity - a.liquidity);
+ 
+eligible.sort((a, b) => b.liquidity - a.liquidity);
 
-  const chosen = eligible[0];
-  const attrs = chosen.attrs;
-  const token = chosen.side === "base" ? chosen.base : chosen.quote;
+let chosen = null;
+let chosenCandles = [];
+
+for (const candidate of eligible) {
+  const candidatePoolAddress = candidate.attrs.address;
+
+  if (!candidatePoolAddress) continue;
+
+  try {
+    const candleUrl =
+      GECKO +
+      "/networks/" +
+      encodeURIComponent(network) +
+      "/pools/" +
+      encodeURIComponent(candidatePoolAddress) +
+      "/ohlcv/hour?aggregate=1&limit=100&currency=usd&token=" +
+      candidate.side;
+
+    const candleResult = await getJson(candleUrl);
+    const candles =
+      candleResult.data?.attributes?.ohlcv_list || [];
+
+    const validCandles = candles.filter(candle =>
+      Array.isArray(candle) &&
+      Number.isFinite(Number(candle[0])) &&
+      Number.isFinite(Number(candle[4])) &&
+      Number(candle[4]) > 0
+    );
+
+    if (validCandles.length > 0) {
+      chosen = candidate;
+      chosenCandles = validCandles;
+      break;
+    }
+  } catch (error) {
+    console.log(
+      "Pool candles unavailable:",
+      candidatePoolAddress,
+      error.message
+    );
+  }
+}
+
+if (!chosen) {
+  throw new Error(
+    "No matching pool with valid hourly candle history was found."
+  );
+}
+
+const attrs = chosen.attrs;
+const token = chosen.side === "base" ? chosen.base : chosen.quote;
+  
   
 if (
   addressQuery &&
@@ -351,26 +401,14 @@ if (
     throw new Error("A valid token price or liquidity pool is not available.");
   }
 
-  let prices = [];
-
-  try {
-    const ohlcvUrl =
-      GECKO + "/networks/" + network +
-      "/pools/" + encodeURIComponent(poolAddress) +
-      "/ohlcv/hour?aggregate=1&limit=100&currency=usd&token=" +
-      chosen.side;
-
-    const candleResult = await getJson(ohlcvUrl);
-    const candles = candleResult.data?.attributes?.ohlcv_list || [];
-
-    prices = candles
-      .slice()
-      .sort((a, b) => Number(a[0]) - Number(b[0]))
-      .map(candle => Number(candle[4]))
-      .filter(price => Number.isFinite(price) && price > 0);
-  } catch (error) {
-    console.error("Could not load token candles:", error.message);
-  }
+  
+const prices = chosenCandles
+  .slice()
+  .sort((a, b) => Number(a[0]) - Number(b[0]))
+  .map(candle => Number(candle[4]))
+  .filter(price => Number.isFinite(price) && price > 0);
+  
+  
 
   const indicators = makeSignal(prices);
   const changes = attrs.price_change_percentage || {};
