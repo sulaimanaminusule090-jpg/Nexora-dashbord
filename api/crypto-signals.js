@@ -134,30 +134,31 @@ function makeSignal(prices) {
   const lastPrice = validPrices[validPrices.length - 1];
   const previousPrice = validPrices[validPrices.length - 2];
 
+  
   if (
     ema20 > ema50 &&
     lastPrice > ema20 &&
-    previousPrice <= lastPrice &&
+    lastPrice > previousPrice &&
     rsi >= 50 &&
-    rsi <= 65
+    rsi <= 70
   ) {
     signal = "Buy setup";
     reason =
-      "Price is above EMA20, EMA20 is above EMA50, and RSI confirms positive momentum.";
+      "Bullish trend confirmed: price is above EMA20, EMA20 is above EMA50, and RSI shows positive momentum.";
   } else if (
     ema20 < ema50 &&
     lastPrice < ema20 &&
-    previousPrice >= lastPrice &&
-    rsi >= 35 &&
+    lastPrice < previousPrice &&
+    rsi >= 30 &&
     rsi < 50
   ) {
     signal = "Sell setup";
     reason =
-      "Price is below EMA20, EMA20 is below EMA50, and RSI confirms negative momentum.";
+      "Bearish trend confirmed: price is below EMA20, EMA20 is below EMA50, and RSI shows negative momentum.";
   } else {
     signal = "Hold";
     reason =
-      "The trend and momentum indicators do not agree strongly enough.";
+      "The trend and momentum indicators do not confirm a clear buy or sell setup.";
   }
   
 
