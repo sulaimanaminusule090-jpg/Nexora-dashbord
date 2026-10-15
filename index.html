@@ -1565,19 +1565,14 @@ function showServices() {
 
                 
 <div style="display:flex;align-items:center;gap:8px;margin-top:14px;">
-    <label for="nexoraAiFile" style="
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        width:48px;
-        min-width:48px;
-        height:48px;
-        border:1px solid #d1d5db;
-        border-radius:12px;
-        font-size:25px;
-        cursor:pointer;
-        color:#2563eb;
-    ">+</label>
+    
+<button type="button"
+    onclick="document.getElementById('nexoraAiFileMenu').style.display =
+    document.getElementById('nexoraAiFileMenu').style.display === 'block' ? 'none' : 'block';"
+    style="width:48px;min-width:48px;height:48px;border:1px solid #d1d5db;border-radius:12px;font-size:25px;cursor:pointer;color:#2563eb;background:white;">
+    +
+</button>
+
 
     <input
         type="text"
@@ -1592,6 +1587,20 @@ function showServices() {
             outline:none;
         "
     >
+</div>
+
+<div id="nexoraAiFileMenu"
+     style="display:none;margin-top:10px;padding:12px;background:white;border:1px solid #ddd;border-radius:12px;">
+    <button type="button"
+        onclick="document.getElementById('nexoraAiFile').accept='image/*';document.getElementById('nexoraAiFileMenu').style.display='none';document.getElementById('nexoraAiFile').click();"
+        style="display:block;width:100%;padding:12px;margin-bottom:8px;">
+        🖼️ Choose Image
+    </button>
+    <button type="button"
+        onclick="document.getElementById('nexoraAiFile').accept='application/pdf';document.getElementById('nexoraAiFileMenu').style.display='none';document.getElementById('nexoraAiFile').click();"
+        style="display:block;width:100%;padding:12px;">
+        📄 Choose PDF
+    </button>
 </div>
 
 <input
