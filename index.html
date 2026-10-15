@@ -3618,7 +3618,20 @@ async function loadNexoraChart(
       throw new Error("No valid candle data returned.");
     }
 
-    nexoraCandleSeries.setData(candles);
+    
+const sortedCandles = candles
+  .slice()
+  .sort((a, b) => a.time - b.time);
+
+const uniqueCandles = sortedCandles.filter(
+  (candle, index, array) =>
+    index === 0 ||
+    candle.time !== array[index - 1].time
+);
+
+nexoraCandleSeries.setData(uniqueCandles);
+nexoraChart.timeScale().fitContent();
+    
     nexoraChart.timeScale().fitContent();
 
     status.textContent =
