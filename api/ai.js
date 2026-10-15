@@ -7,17 +7,40 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { message } = req.body || {};
+    const { message, attachment } = req.body || {};
 
     if (
-      typeof message !== "string" ||
-      !message.trim()
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: "Please enter a message."
-      });
-    }
+  (typeof message !== "string" || !message.trim()) &&
+  !attachment
+) {
+  return res.status(400).json({
+    success: false,
+    error: "Please enter a question or select a file."
+  });
+}
+
+if (attachment) {
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
+
+  if (
+    !allowedTypes.includes(attachment.mimeType) ||
+    typeof attachment.data !== "string" ||
+    !attachment.data
+  ) {
+    return res.status(400).json({
+      success: false,
+      error: "Please upload a supported image or PDF."
+    });
+  }
+
+  if (attachment.data.length > 4_000_000) {
+    return res.status(413).json({
+      success: false,
+      error: "File is too large. Please use a smaller file."
+    });
+  }
+}
+      
 
     const apiKey = process.env.GEMINI_API_KEY;
 
@@ -77,9 +100,16 @@ of the platform.`
           },
           contents: [{
             role: "user",
-            parts: [{
-              text: message.trim()
-            }]
+            
+              parts: [
+  ...(message.trim() ? [{ text: message.trim() }] : []),
+  ...(attachment ? [{
+    inline_data: {
+      mime_type: attachment.mimeType,
+      data: attachment.data
+    }
+  }] : [])
+]
           }],
           generationConfig: {
             temperature: 0.7,
