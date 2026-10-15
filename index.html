@@ -3474,6 +3474,13 @@ if (chartCoin) {
 }
 
 loadCryptoSignals();
+    
+let nexoraSignalsRefreshTimer = setInterval(() => {
+  if (!document.hidden) {
+    loadCryptoSignals();
+  }
+}, 60000);
+    
    
 let nexoraChart = null;
 let nexoraCandleSeries = null;
