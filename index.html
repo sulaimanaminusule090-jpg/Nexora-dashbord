@@ -1589,19 +1589,29 @@ function showServices() {
     >
 </div>
 
+
 <div id="nexoraAiFileMenu"
      style="display:none;margin-top:10px;padding:12px;background:white;border:1px solid #ddd;border-radius:12px;">
+
     <button type="button"
-        onclick="document.getElementById('nexoraAiFile').accept='image/*';document.getElementById('nexoraAiFileMenu').style.display='none';document.getElementById('nexoraAiFile').click();"
-        style="display:block;width:100%;padding:12px;margin-bottom:8px;">
-        🖼️ Choose Image
+        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.setAttribute('capture','environment');document.getElementById('nexoraAiFileMenu').style.display='none';f.click();"
+        style="display:block;width:100%;padding:14px;margin-bottom:8px;text-align:left;border:0;border-radius:10px;background:#f3f4f6;">
+        📷 Camera
     </button>
+
     <button type="button"
-        onclick="document.getElementById('nexoraAiFile').accept='application/pdf';document.getElementById('nexoraAiFileMenu').style.display='none';document.getElementById('nexoraAiFile').click();"
-        style="display:block;width:100%;padding:12px;">
-        📄 Choose PDF
+        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.removeAttribute('capture');document.getElementById('nexoraAiFileMenu').style.display='none';f.click();"
+        style="display:block;width:100%;padding:14px;margin-bottom:8px;text-align:left;border:0;border-radius:10px;background:#f3f4f6;">
+        🖼️ Photos
+    </button>
+
+    <button type="button"
+        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*,application/pdf';f.removeAttribute('capture');document.getElementById('nexoraAiFileMenu').style.display='none';f.click();"
+        style="display:block;width:100%;padding:14px;text-align:left;border:0;border-radius:10px;background:#f3f4f6;">
+        📎 Files
     </button>
 </div>
+
 
 <input
     id="nexoraAiFile"
@@ -1800,8 +1810,8 @@ async function askNexoraAI() {
         "background:#f3f4f6;color:#111827;" +
         "white-space:pre-wrap;overflow-wrap:anywhere;";
 
-      input.parentElement.parentElement.appendChild(answerBox);
-    }
+        }
+    button.insertAdjacentElement("afterend", answerBox);
 
     
 answerBox.innerHTML = String(data.answer || "")
@@ -1833,8 +1843,8 @@ answerBox.innerHTML = String(data.answer || "")
     if (!answerBox) {
       answerBox = document.createElement("div");
       answerBox.id = "nexora-ai-answer";
-      input.parentElement.parentElement.appendChild(answerBox);
-    }
+          }
+    button.insertAdjacentElement("afterend", answerBox);
 
     answerBox.style.cssText =
       "margin-top:16px;padding:16px;border-radius:12px;" +
