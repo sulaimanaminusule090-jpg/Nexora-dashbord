@@ -3819,6 +3819,20 @@ function setNexoraChartTimeframe(timeframe) {
     );
   }
 }
+  
+if (nexoraChartRefreshTimer) {
+  clearInterval(nexoraChartRefreshTimer);
+}
+
+nexoraChartRefreshTimer = setInterval(() => {
+  if (nexoraChartNetwork && nexoraChartPool) {
+    loadNexoraChart(
+      nexoraChartNetwork,
+      nexoraChartPool,
+      nexoraChartName
+    );
+  }
+}, 60000);
     
     
     
