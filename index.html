@@ -436,7 +436,20 @@ const supabaseClient = supabase.createClient(
     <button type="button" data-timeframe="1D" onclick="setNexoraChartTimeframe('1D')" style="padding:9px 13px;background:#1f2937;color:white;border:1px solid #4b5563;border-radius:7px;">1D</button>
   </div>
 
-  <div id="nexoraCandlestickChart" style="width:100%;height:320px;background:#0b1220;border-radius:8px;"></div>
+  
+<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin:0 0 8px;color:#d1d5db;">
+  <span style="color:#e879f9;">MA5</span>
+  <span style="color:#fb923c;">MA10</span>
+  <span style="color:#8b5cf6;">MA30</span>
+  <span style="color:#f87171;">MA60</span>
+</div>
+
+<div id="nexoraCandlestickChart" style="width:100%;height:260px;background:#0b1220;border-radius:8px;"></div>
+
+<div style="margin-top:8px;color:#9ca3af;font-size:11px;">VOLUME</div>
+
+<div id="nexoraVolumeChart" style="width:100%;height:90px;background:#0b1220;border-radius:8px;"></div>
+  
 
   <p style="font-size:11px;color:#9ca3af;margin-top:10px;">
     Market data may be delayed or unavailable for some tokens. This chart does not guarantee trading profits.
@@ -3464,6 +3477,15 @@ loadCryptoSignals();
    
 let nexoraChart = null;
 let nexoraCandleSeries = null;
+    
+let nexoraVolumeChart = null;
+let nexoraVolumeSeries = null;
+
+let nexoraMa5Series = null;
+let nexoraMa10Series = null;
+let nexoraMa30Series = null;
+let nexoraMa60Series = null;
+    
 let nexoraChartNetwork = "";
 let nexoraChartPool = "";
 let nexoraChartName = "";
@@ -3584,6 +3606,76 @@ async function loadNexoraChart(
           }
         });
       
+nexoraMa5Series = nexoraChart.addLineSeries({
+  color: "#e879f9",
+  lineWidth: 2,
+  title: "MA5",
+  lastValueVisible: false,
+  priceLineVisible: false
+});
+
+nexoraMa10Series = nexoraChart.addLineSeries({
+  color: "#fb923c",
+  lineWidth: 2,
+  title: "MA10",
+  lastValueVisible: false,
+  priceLineVisible: false
+});
+
+nexoraMa30Series = nexoraChart.addLineSeries({
+  color: "#8b5cf6",
+  lineWidth: 2,
+  title: "MA30",
+  lastValueVisible: false,
+  priceLineVisible: false
+});
+
+nexoraMa60Series = nexoraChart.addLineSeries({
+  color: "#f87171",
+  lineWidth: 2,
+  title: "MA60",
+  lastValueVisible: false,
+  priceLineVisible: false
+});
+
+const volumeContainer = document.getElementById(
+  "nexoraVolumeChart"
+);
+
+if (volumeContainer) {
+  nexoraVolumeChart = LightweightCharts.createChart(
+    volumeContainer,
+    {
+      width: volumeContainer.clientWidth || 600,
+      height: 90,
+      layout: {
+        background: {
+          type: "solid",
+          color: "#0b1220"
+        },
+        textColor: "#9ca3af"
+      },
+      grid: {
+        vertLines: { color: "#1f2937" },
+        horzLines: { color: "#1f2937" }
+      },
+      rightPriceScale: {
+        borderColor: "#374151"
+      },
+      timeScale: {
+        timeVisible: false,
+        secondsVisible: false
+      }
+    }
+  );
+
+  nexoraVolumeSeries =
+    nexoraVolumeChart.addHistogramSeries({
+      priceFormat: { type: "volume" },
+      priceScaleId: "right"
+    });
+}
+      
 
       window.addEventListener("resize", function () {
         if (nexoraChart && container.clientWidth) {
@@ -3591,28 +3683,44 @@ async function loadNexoraChart(
             width: container.clientWidth
           });
         }
+        
+const volumeContainer = document.getElementById("nexoraVolumeChart");
+
+if (
+  nexoraVolumeChart &&
+  volumeContainer &&
+  volumeContainer.clientWidth
+) {
+  nexoraVolumeChart.applyOptions({
+    width: volumeContainer.clientWidth
+  });
+}
+        
       });
     }
 
     const candles = result.candles
-      .filter(function (c) {
-        return (
-          Number.isFinite(Number(c.time)) &&
-          Number.isFinite(Number(c.open)) &&
-          Number.isFinite(Number(c.high)) &&
-          Number.isFinite(Number(c.low)) &&
-          Number.isFinite(Number(c.close))
-        );
-      })
-      .map(function (c) {
-        return {
-          time: Number(c.time),
-          open: Number(c.open),
-          high: Number(c.high),
-          low: Number(c.low),
-          close: Number(c.close)
-        };
-      });
+      
+.filter(function (c) {
+  return (
+    Number.isFinite(Number(c.time)) &&
+    Number.isFinite(Number(c.open)) &&
+    Number.isFinite(Number(c.high)) &&
+    Number.isFinite(Number(c.low)) &&
+    Number.isFinite(Number(c.close))
+  );
+})
+.map(function (c) {
+  return {
+    time: Number(c.time),
+    open: Number(c.open),
+    high: Number(c.high),
+    low: Number(c.low),
+    close: Number(c.close),
+    volume: Number(c.volume) || 0
+  };
+});
+    
 
     if (!candles.length) {
       throw new Error("No valid candle data returned.");
@@ -3629,10 +3737,55 @@ const uniqueCandles = sortedCandles.filter(
     candle.time !== array[index - 1].time
 );
 
+
 nexoraCandleSeries.setData(uniqueCandles);
+
+nexoraVolumeSeries.setData(
+  uniqueCandles.map(function (candle) {
+    return {
+      time: candle.time,
+      value: candle.volume || 0,
+      color: candle.close >= candle.open
+        ? "#22c55e"
+        : "#ef4444"
+    };
+  })
+);
+
+nexoraVolumeChart.timeScale().fitContent();
+    
+function buildMovingAverage(period) {
+  return uniqueCandles
+    .map(function (candle, index, array) {
+      if (index < period - 1) return null;
+
+      const recentCandles = array.slice(
+        index - period + 1,
+        index + 1
+      );
+
+      const average = recentCandles.reduce(
+        function (sum, item) {
+          return sum + item.close;
+        },
+        0
+      ) / period;
+
+      return {
+        time: candle.time,
+        value: average
+      };
+    })
+    .filter(Boolean);
+}
+
+nexoraMa5Series.setData(buildMovingAverage(5));
+nexoraMa10Series.setData(buildMovingAverage(10));
+nexoraMa30Series.setData(buildMovingAverage(30));
+nexoraMa60Series.setData(buildMovingAverage(60));
+
 nexoraChart.timeScale().fitContent();
     
-    nexoraChart.timeScale().fitContent();
 
     status.textContent =
       nexoraChartName +
