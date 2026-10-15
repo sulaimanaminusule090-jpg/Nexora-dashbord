@@ -191,9 +191,25 @@ async function analyzeDefaultCoin(symbol) {
     throw new Error("Insufficient historical prices for " + symbol);
   }
 
-  const price = prices[prices.length - 1];
-  const previous = prices[prices.length - 25];
-  const indicators = makeSignal(prices);
+  const latestPoint =
+  result.prices[result.prices.length - 1];
+
+const price = Number(latestPoint[1]);
+
+const targetTimestamp =
+  Number(latestPoint[0]) - 24 * 60 * 60 * 1000;
+
+const previousPoint = result.prices.reduce(
+  (closest, point) =>
+    Math.abs(Number(point[0]) - targetTimestamp) <
+    Math.abs(Number(closest[0]) - targetTimestamp)
+      ? point
+      : closest,
+  result.prices[0]
+);
+
+const previous = Number(previousPoint[1]);
+const indicators = makeSignal(prices);
 
   return {
     symbol,
