@@ -1604,19 +1604,19 @@ function showServices() {
      style="display:none;margin-top:10px;padding:12px;background:white;border:1px solid #ddd;border-radius:12px;">
 
     <button type="button"
-        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.setAttribute('capture','environment');document.getElementById('nexoraAiFileMenu').style.display='none';f.click();"
+        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.setAttribute('capture','environment');f.click();"
         style="display:block;width:100%;padding:14px;margin-bottom:8px;text-align:left;border:0;border-radius:10px;background:#f3f4f6;">
         📷 Camera
     </button>
 
     <button type="button"
-        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.removeAttribute('capture');document.getElementById('nexoraAiFileMenu').style.display='none';f.click();"
+        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.removeAttribute('capture');f.click();"
         style="display:block;width:100%;padding:14px;margin-bottom:8px;text-align:left;border:0;border-radius:10px;background:#f3f4f6;">
         🖼️ Photos
     </button>
 
     <button type="button"
-        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*,application/pdf';f.removeAttribute('capture');document.getElementById('nexoraAiFileMenu').style.display='none';f.click();"
+        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*,application/pdf';f.removeAttribute('capture');f.click();"
         style="display:block;width:100%;padding:14px;text-align:left;border:0;border-radius:10px;background:#f3f4f6;">
         📎 Files
     </button>
