@@ -1626,8 +1626,7 @@ function showServices() {
 <input
     id="nexoraAiFile"
     type="file"
-    accept="image/*,application/pdf"
-    style="display:none;"
+style="position:fixed;left:-9999px;width:1px;height:1px;"
     onchange="
         document.getElementById('nexoraAiFileName').textContent =
         this.files.length ? 'Selected: ' + this.files[0].name : '';
