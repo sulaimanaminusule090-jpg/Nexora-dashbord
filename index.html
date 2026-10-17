@@ -1601,27 +1601,30 @@ function showServices() {
 
 
 
+
 <div id="nexoraAiFileMenu"
      style="display:none;margin-top:10px;padding:12px;background:white;border:1px solid #ddd;border-radius:12px;">
 
-    <label for="nexoraAiFile"
-        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.setAttribute('capture','environment');"
-        style="display:block;padding:14px;margin-bottom:8px;text-align:left;border-radius:10px;background:#f3f4f6;cursor:pointer;">
+    <button type="button"
+        onclick="document.getElementById('nexoraAiFile').accept='image/*';document.getElementById('nexoraAiFile').setAttribute('capture','environment');document.getElementById('nexoraAiFile').click();"
+        style="display:block;width:100%;padding:14px;margin-bottom:8px;text-align:left;border:0;border-radius:10px;background:#f3f4f6;cursor:pointer;">
         📷 Camera
-    </label>
+    </button>
 
-    <label for="nexoraAiFile"
-        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.removeAttribute('capture');"
-        style="display:block;padding:14px;margin-bottom:8px;border-radius:10px;background:#f3f4f6;cursor:pointer;">
+    <button type="button"
+        onclick="document.getElementById('nexoraAiFile').accept='image/*';document.getElementById('nexoraAiFile').removeAttribute('capture');document.getElementById('nexoraAiFile').click();"
+        style="display:block;width:100%;padding:14px;margin-bottom:8px;text-align:left;border:0;border-radius:10px;background:#f3f4f6;cursor:pointer;">
         🖼️ Photos
-    </label>
+    </button>
 
-    <label for="nexoraAiFile"
-        onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*,application/pdf';f.removeAttribute('capture');"
-        style="display:block;padding:14px;border-radius:10px;background:#f3f4f6;cursor:pointer;">
+    <button type="button"
+        onclick="document.getElementById('nexoraAiFile').accept='image/*,application/pdf';document.getElementById('nexoraAiFile').removeAttribute('capture');document.getElementById('nexoraAiFile').click();"
+        style="display:block;width:100%;padding:14px;text-align:left;border:0;border-radius:10px;background:#f3f4f6;cursor:pointer;">
         📎 Files
-    </label>
+    </button>
+
 </div>
+
 
 <input
     id="nexoraAiFile"
