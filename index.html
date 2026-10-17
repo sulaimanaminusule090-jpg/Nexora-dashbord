@@ -1628,7 +1628,7 @@ function showServices() {
     type="file"
     accept="image/*,application/pdf"
     style="position:absolute;width:1px;height:1px;opacity:0;"
-    onchange="document.getElementById('nexoraAiFileName').textContent=this.files.length?'Selected: '+this.files[0].name:'';"
+    onchange="document.getElementById('nexoraAiFileName').textContent=this.files.length?'Selected: '+this.files[0].name:'';const menu=document.getElementById('nexoraAiFileMenu');if(menu)menu.style.display='none';"
 >
 
 
@@ -1722,6 +1722,136 @@ function showServices() {
     document.body.appendChild(page);
     }
    
+function renderNexoraMarkdown(markdown) {
+  const escapeHtml = value => String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  const fence = String.fromCharCode(96);
+  const codeBlocks = [];
+  let source = String(markdown || "").replace(/\r\n?/g, "\n");
+
+  const fencePattern = new RegExp(
+    fence + "{3}([^\\n]*)\\n([\\s\\S]*?)" + fence + "{3}",
+    "g"
+  );
+
+  source = source.replace(fencePattern, function (_, language, code) {
+    const token = "NEXORA_CODE_BLOCK_" + codeBlocks.length + "_TOKEN";
+    codeBlocks.push(
+      '<pre style="overflow-x:auto;padding:12px;border-radius:10px;background:#111827;color:#f9fafb;font-size:14px;line-height:1.5;white-space:pre;"><code>' +
+      escapeHtml(code.replace(/\n+$/, "")) +
+      "</code></pre>"
+    );
+    return "\n" + token + "\n";
+  });
+
+  source = escapeHtml(source);
+
+  const inlineCode = new RegExp(
+    fence + "([^" + fence + "\\n]+)" + fence,
+    "g"
+  );
+
+  const inline = value => value
+    .replace(inlineCode,
+      '<code style="background:#e5e7eb;padding:2px 5px;border-radius:4px;">$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+
+  const lines = source.split("\n");
+  const html = [];
+  let paragraph = [];
+  let listType = null;
+  let listItems = [];
+
+  function flushParagraph() {
+    if (!paragraph.length) return;
+    html.push(
+      '<p style="margin:0 0 14px;line-height:1.65;">' +
+      paragraph.map(inline).join(" ") + "</p>"
+    );
+    paragraph = [];
+  }
+
+  function flushList() {
+    if (!listItems.length) {
+      listType = null;
+      return;
+    }
+    html.push(
+      "<" + listType +
+      ' style="margin:0 0 14px;padding-left:24px;line-height:1.65;">' +
+      listItems.map(item =>
+        '<li style="margin-bottom:5px;">' + inline(item) + "</li>"
+      ).join("") +
+      "</" + listType + ">"
+    );
+    listItems = [];
+    listType = null;
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+
+    if (!line) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const codeMatch = line.match(/^NEXORA_CODE_BLOCK_(\d+)_TOKEN$/);
+    if (codeMatch) {
+      flushParagraph();
+      flushList();
+      html.push(codeBlocks[Number(codeMatch[1])] || "");
+      continue;
+    }
+
+    const heading = line.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {
+      flushParagraph();
+      flushList();
+      const tag = heading[1].length === 1 ? "h2" :
+        heading[1].length === 2 ? "h3" : "h4";
+      html.push(
+        "<" + tag +
+        ' style="margin:18px 0 9px;line-height:1.35;font-weight:700;">' +
+        inline(heading[2]) + "</" + tag + ">"
+      );
+      continue;
+    }
+
+    const bullet = line.match(/^[-*]\s+(.+)$/);
+    const numbered = line.match(/^\d+[.)]\s+(.+)$/);
+
+    if (bullet || numbered) {
+      flushParagraph();
+      const nextType = bullet ? "ul" : "ol";
+      if (listType && listType !== nextType) flushList();
+      listType = nextType;
+      listItems.push((bullet || numbered)[1]);
+      continue;
+    }
+
+    flushList();
+    paragraph.push(line);
+  }
+
+  flushParagraph();
+  flushList();
+
+  return html.join("").replace(
+    /NEXORA_CODE_BLOCK_(\d+)_TOKEN/g,
+    function (_, index) {
+      return codeBlocks[Number(index)] || "";
+    }
+  );
+}
+    
 
 async function askNexoraAI() {
   const input = document.querySelector(
@@ -1822,17 +1952,7 @@ async function askNexoraAI() {
     button.insertAdjacentElement("afterend", answerBox);
 
     
-answerBox.innerHTML = String(data.answer || "")
-  .replace(/&/g, "&amp;")
-  .replace(/</g, "&lt;")
-  .replace(/>/g, "&gt;")
-  .replace(/^### (.*)$/gm, "<h3>$1</h3>")
-  .replace(/^## (.*)$/gm, "<h2>$1</h2>")
-  .replace(/^# (.*)$/gm, "<h1>$1</h1>")
-  .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-  .replace(/^\s*[-*] (.*)$/gm, "• $1")
-  .replace(/^\s*(\d+)\. (.*)$/gm, "$1. $2")
-  .replace(/\n/g, "<br>");
+answerBox.innerHTML = renderNexoraMarkdown(data.answer || "");
     
     input.value = "";
 
@@ -1855,9 +1975,9 @@ answerBox.innerHTML = String(data.answer || "")
     button.insertAdjacentElement("afterend", answerBox);
 
     answerBox.style.cssText =
-      "margin-top:16px;padding:16px;border-radius:12px;" +
-      "background:#fff7ed;color:#9a3412;" +
-      "white-space:pre-wrap;overflow-wrap:anywhere;";
+  "margin-top:16px;padding:16px;border-radius:12px;" +
+  "background:#f3f4f6;color:#111827;font-size:16px;" +
+  "overflow-wrap:anywhere;";
 
     answerBox.textContent =
       error.message || "Nexora AI is temporarily unavailable.";
