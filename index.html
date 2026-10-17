@@ -1801,6 +1801,11 @@ function renderNexoraMarkdown(markdown) {
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
+    if (/^-{3,}$/.test(line)) {
+  flushParagraph();
+  flushList();
+  continue;
+    }
 
     if (!line) {
       flushParagraph();
