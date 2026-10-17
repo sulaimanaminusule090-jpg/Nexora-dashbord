@@ -1607,52 +1607,24 @@ function showServices() {
 <div id="nexoraAiFileMenu"
      style="display:none;position:relative;z-index:9999;pointer-events:auto;margin-top:10px;padding:12px;background:white;border:1px solid #ddd;border-radius:12px;">
 
-  <button type="button" onclick="openNexoraFilePicker('camera')"
+  <button type="button" onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.setAttribute('capture','environment');f.click();"
     style="display:block;width:100%;padding:14px;margin-bottom:8px;border:0;border-radius:10px;background:#f3f4f6;text-align:left;font-size:16px;">
     📷 Camera
   </button>
 
-  <button type="button" onclick="openNexoraFilePicker('photos')"
+  <button type="button" onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*';f.removeAttribute('capture');f.click();"
     style="display:block;width:100%;padding:14px;margin-bottom:8px;border:0;border-radius:10px;background:#f3f4f6;text-align:left;font-size:16px;">
     🖼️ Photos
   </button>
 
-  <button type="button" onclick="openNexoraFilePicker('files')"
+  <button type="button" onclick="const f=document.getElementById('nexoraAiFile');f.accept='image/*,application/pdf';f.removeAttribute('capture');f.click();"
     style="display:block;width:100%;padding:14px;border:0;border-radius:10px;background:#f3f4f6;text-align:left;font-size:16px;">
     📎 Files (PDF)
   </button>
 </div>
 
 
-function openNexoraFilePicker(mode) {
-  const fileInput = document.getElementById("nexoraAiFile");
 
-  if (!fileInput) {
-    alert("Nexora AI file input was not found. Please refresh.");
-    return;
-  }
-
-  if (mode === "camera") {
-    fileInput.accept = "image/*";
-    fileInput.setAttribute("capture", "environment");
-  } else if (mode === "photos") {
-    fileInput.accept = "image/*";
-    fileInput.removeAttribute("capture");
-  } else {
-    fileInput.accept = "image/*,application/pdf";
-    fileInput.removeAttribute("capture");
-  }
-
-  try {
-    if (typeof fileInput.showPicker === "function") {
-      fileInput.showPicker();
-    } else {
-      fileInput.click();
-    }
-  } catch (error) {
-    fileInput.click();
-  }
-}
 
 
 <input
