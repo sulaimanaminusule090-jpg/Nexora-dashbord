@@ -1735,40 +1735,72 @@ function showServices() {
       
 
 
-const fileInput = page.querySelector("#nexoraAiFile");
-const fileMenu = page.querySelector("#nexoraAiFileMenu");
 
-page.querySelector("#nexoraAiCameraButton")
-  .addEventListener("click", function () {
-    fileInput.accept = "image/*";
-    fileInput.setAttribute("capture", "environment");
-    fileInput.click();
-  });
+const fileMenu =
+  document.getElementById("nexoraAiFileMenu");
+const fileInput =
+  document.getElementById("nexoraAiFile");
+const fileName =
+  document.getElementById("nexoraAiFileName");
 
-page.querySelector("#nexoraAiPhotosButton")
-  .addEventListener("click", function () {
-    fileInput.accept = "image/*";
-    fileInput.removeAttribute("capture");
-    fileInput.click();
-  });
+const cameraButton =
+  document.getElementById("nexoraAiCameraButton");
 
-page.querySelector("#nexoraAiFilesButton")
-  .addEventListener("click", function () {
-    fileInput.accept = "image/*,application/pdf";
-    fileInput.removeAttribute("capture");
-    fileInput.click();
-  });
+const photosButton =
+  document.getElementById("nexoraAiPhotosButton");
 
-fileInput.addEventListener("change", function () {
-  const name = page.querySelector("#nexoraAiFileName");
+const filesButton =
+  document.getElementById("nexoraAiFilesButton");
 
-  if (name && fileInput.files.length) {
-    name.textContent =
-      "Selected: " + fileInput.files[0].name;
+function openNexoraFilePicker(accept, capture) {
+  if (!fileInput) {
+    console.error("Nexora file input not found");
+    return;
   }
 
-  fileMenu.style.display = "none";
-});
+  fileInput.value = "";
+  fileInput.accept = accept;
+
+  if (capture) {
+    fileInput.setAttribute("capture", capture);
+  } else {
+    fileInput.removeAttribute("capture");
+  }
+
+  fileInput.click();
+}
+
+if (cameraButton) {
+  cameraButton.addEventListener("click", function () {
+    openNexoraFilePicker("image/*", "environment");
+  });
+}
+
+if (photosButton) {
+  photosButton.addEventListener("click", function () {
+    openNexoraFilePicker("image/*", "");
+  });
+}
+
+if (filesButton) {
+  filesButton.addEventListener("click", function () {
+    openNexoraFilePicker("image/*,application/pdf", "");
+  });
+}
+
+if (fileInput) {
+  fileInput.addEventListener("change", function () {
+    if (fileName && fileInput.files.length > 0) {
+      fileName.textContent =
+        "Selected: " + fileInput.files[0].name;
+    }
+
+    if (fileMenu) {
+      fileMenu.style.display = "none";
+    }
+  });
+}
+      
       
 
       
