@@ -1736,21 +1736,14 @@ function showServices() {
 
 
 
-const fileMenu =
-  document.getElementById("nexoraAiFileMenu");
-const fileInput =
-  document.getElementById("nexoraAiFile");
-const fileName =
-  document.getElementById("nexoraAiFileName");
 
-const cameraButton =
-  document.getElementById("nexoraAiCameraButton");
+const fileMenu = page.querySelector("#nexoraAiFileMenu");
+const fileInput = page.querySelector("#nexoraAiFile");
+const fileName = page.querySelector("#nexoraAiFileName");
 
-const photosButton =
-  document.getElementById("nexoraAiPhotosButton");
-
-const filesButton =
-  document.getElementById("nexoraAiFilesButton");
+const cameraButton = page.querySelector("#nexoraAiCameraButton");
+const photosButton = page.querySelector("#nexoraAiPhotosButton");
+const filesButton = page.querySelector("#nexoraAiFilesButton");
 
 function openNexoraFilePicker(accept, capture) {
   if (!fileInput) {
@@ -1767,7 +1760,15 @@ function openNexoraFilePicker(accept, capture) {
     fileInput.removeAttribute("capture");
   }
 
-  fileInput.click();
+  try {
+    if (typeof fileInput.showPicker === "function") {
+      fileInput.showPicker();
+    } else {
+      fileInput.click();
+    }
+  } catch (error) {
+    fileInput.click();
+  }
 }
 
 if (cameraButton) {
@@ -1800,6 +1801,7 @@ if (fileInput) {
     }
   });
 }
+
       
       
 
