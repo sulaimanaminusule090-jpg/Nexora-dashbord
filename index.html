@@ -2028,19 +2028,17 @@ function openNexoraChatPage() {
       background:white;
       border-top:1px solid #e5e7eb;
     ">
-      <textarea id="nexoraChatInput" rows="1"
-        placeholder="Message Nexora AI..."
-        style="
-          flex:1;
-          resize:none;
-          min-width:0;
-          max-height:120px;
-          padding:13px;
-          border:1px solid #d1d5db;
-          border-radius:12px;
-          font-size:16px;
-          outline:none;
-        "></textarea>
+     
+<textarea id="nexoraChatInput" rows="1"
+  placeholder="Message Nexora AI..."
+  style="flex:1;resize:none;min-width:0;max-height:120px;padding:13px;border:1px solid #d1d5db;border-radius:12px;font-size:16px;outline:none;"></textarea>
+
+<button type="button" id="nexoraChatPlus"
+  style="width:44px;height:44px;flex-shrink:0;border:1px solid #d1d5db;border-radius:50%;background:#f3f4f6;font-size:26px;cursor:pointer;"
+  onclick="document.getElementById('nexoraChatAttachmentMenu').style.display=document.getElementById('nexoraChatAttachmentMenu').style.display==='flex'?'none':'flex';">
+  +
+</button>
+
 <input
   type="file"
   id="nexoraChatCamera"
@@ -2063,28 +2061,38 @@ function openNexoraChatPage() {
   style="display:none;"
 >
 
-<div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
+
+<div style="display:flex;align-items:center;gap:8px;width:100%;">
+  <button
+    id="nexoraChatPlus"
+    type="button"
+    onclick="const menu=document.getElementById('nexoraChatAttachmentMenu');menu.style.display=menu.style.display==='flex'?'none':'flex';"
+    style="width:44px;height:44px;border:1px solid #ddd;border-radius:12px;background:white;font-size:28px;cursor:pointer;"
+  >+</button>
+</div>
+
+
+<div id="nexoraChatFileName"
+  style="width:100%;font-size:13px;color:#6b7280;">
+</div>
+<div id="nexoraChatAttachmentMenu"
+  style="display:none;gap:8px;flex-wrap:wrap;width:100%;">
+
   <button type="button"
-    onclick="document.getElementById('nexoraChatCamera').click()"
-    style="padding:10px;border:1px solid #ddd;border-radius:10px;background:white;">
+    onclick="document.getElementById('nexoraChatCamera').click()">
     📷 Camera
   </button>
 
   <button type="button"
-    onclick="document.getElementById('nexoraChatPhoto').click()"
-    style="padding:10px;border:1px solid #ddd;border-radius:10px;background:white;">
+    onclick="document.getElementById('nexoraChatPhoto').click()">
     🖼️ Photos
   </button>
 
   <button type="button"
-    onclick="document.getElementById('nexoraChatPDF').click()"
-    style="padding:10px;border:1px solid #ddd;border-radius:10px;background:white;">
+    onclick="document.getElementById('nexoraChatPDF').click()">
     📄 Files / PDF
   </button>
-</div>
 
-<div id="nexoraChatFileName"
-  style="width:100%;font-size:13px;color:#6b7280;">
 </div>
       <button id="nexoraChatSend" type="submit"
       style="
