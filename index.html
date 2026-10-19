@@ -2170,6 +2170,37 @@ function openNexoraChatPage() {
   const form = chatPage.querySelector("#nexoraChatForm");
   const send = chatPage.querySelector("#nexoraChatSend");
 
+const attachmentFileName = chatPage.querySelector(
+  "#nexoraChatFileName"
+);
+
+const attachmentMenu = chatPage.querySelector(
+  "#nexoraChatAttachmentMenu"
+);
+
+[
+  "nexoraChatCamera",
+  "nexoraChatPhoto",
+  "nexoraChatPDF"
+].forEach(function (id) {
+  const fileInput = chatPage.querySelector("#" + id);
+
+  if (!fileInput) return;
+
+  fileInput.addEventListener("change", function () {
+    const file = fileInput.files && fileInput.files[0];
+
+    if (!file) return;
+
+    attachmentFileName.textContent =
+      "Selected: " + file.name;
+
+    if (attachmentMenu) {
+      attachmentMenu.style.display = "none";
+    }
+  });
+});
+  
   function addChatMessage(text, isUser) {
     const bubble = document.createElement("div");
 
