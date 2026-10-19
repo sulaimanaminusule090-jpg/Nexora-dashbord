@@ -1648,7 +1648,7 @@ function showServices() {
      style="margin-top:8px;font-size:13px;color:#6b7280;">
 </div>
 
-<button style="
+<button onclick="openNexoraChatPage()" style="
     width:100%;
     margin-top:10px;
     padding:14px;
@@ -1937,6 +1937,208 @@ function renderNexoraMarkdown(markdown) {
     }
   );
 }
+    
+function openNexoraChatPage() {
+  let chatPage = document.getElementById("nexoraChatPage");
+
+  if (chatPage) {
+    chatPage.style.display = "flex";
+    return;
+  }
+
+  chatPage = document.createElement("div");
+  chatPage.id = "nexoraChatPage";
+
+  chatPage.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:100000;
+    display:flex;
+    flex-direction:column;
+    background:#f7f7fb;
+    color:#111827;
+    font-family:Arial,sans-serif;
+  `;
+
+  chatPage.innerHTML = `
+    <header style="
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:14px;
+      background:#ffffff;
+      border-bottom:1px solid #e5e7eb;
+    ">
+      <button id="nexoraChatBack" style="
+        border:0;
+        background:#eef2ff;
+        border-radius:10px;
+        padding:10px 14px;
+        font-size:18px;
+        cursor:pointer;
+      ">←</button>
+
+      <div>
+        <div style="font-size:18px;font-weight:bold">
+          Nexora AI
+        </div>
+        <div style="font-size:12px;color:#64748b">
+          Your multilingual AI assistant
+        </div>
+      </div>
+
+      <button id="nexoraChatNew" style="
+        margin-left:auto;
+        border:0;
+        background:#7c3aed;
+        color:white;
+        border-radius:10px;
+        padding:10px 12px;
+        cursor:pointer;
+      ">New chat</button>
+    </header>
+
+    <main id="nexoraChatMessages" style="
+      flex:1;
+      overflow-y:auto;
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    ">
+      <div style="
+        align-self:flex-start;
+        max-width:90%;
+        background:white;
+        padding:14px;
+        border-radius:14px;
+        box-shadow:0 2px 8px #0000000d;
+      ">
+        <b>Welcome to Nexora AI!</b>
+        <p style="margin-bottom:0">
+          Ask me a question in Hausa, English, or another language.
+        </p>
+      </div>
+    </main>
+
+    <form id="nexoraChatForm" style="
+      display:flex;
+      gap:8px;
+      padding:12px;
+      background:white;
+      border-top:1px solid #e5e7eb;
+    ">
+      <textarea id="nexoraChatInput" rows="1"
+        placeholder="Message Nexora AI..."
+        style="
+          flex:1;
+          resize:none;
+          min-width:0;
+          max-height:120px;
+          padding:13px;
+          border:1px solid #d1d5db;
+          border-radius:12px;
+          font-size:16px;
+          outline:none;
+        "></textarea>
+
+      <button id="nexoraChatSend" type="submit" style="
+        border:0;
+        border-radius:12px;
+        padding:0 17px;
+        background:#7c3aed;
+        color:white;
+        font-size:16px;
+        font-weight:bold;
+        cursor:pointer;
+      ">Send</button>
+    </form>
+  `;
+
+  document.body.appendChild(chatPage);
+
+  const messages = chatPage.querySelector("#nexoraChatMessages");
+  const input = chatPage.querySelector("#nexoraChatInput");
+  const form = chatPage.querySelector("#nexoraChatForm");
+  const send = chatPage.querySelector("#nexoraChatSend");
+
+  function addChatMessage(text, isUser) {
+    const bubble = document.createElement("div");
+
+    bubble.style.cssText = `
+      align-self:${isUser ? "flex-end" : "flex-start"};
+      max-width:90%;
+      padding:14px;
+      border-radius:14px;
+      background:${isUser ? "#7c3aed" : "#ffffff"};
+      color:${isUser ? "#ffffff" : "#111827"};
+      white-space:pre-wrap;
+      overflow-wrap:anywhere;
+      line-height:1.5;
+    `;
+
+    bubble.textContent = text;
+    messages.appendChild(bubble);
+    messages.scrollTop = messages.scrollHeight;
+    return bubble;
+  }
+
+  chatPage.querySelector("#nexoraChatBack").onclick = () => {
+    chatPage.style.display = "none";
+  };
+
+  chatPage.querySelector("#nexoraChatNew").onclick = () => {
+    messages.replaceChildren();
+    addChatMessage(
+      "Welcome! Ask a new question in your preferred language.",
+      false
+    );
+    input.value = "";
+    input.focus();
+  };
+
+  form.onsubmit = async (event) => {
+    event.preventDefault();
+
+    const message = input.value.trim();
+    if (!message || send.disabled) return;
+
+    addChatMessage(message, true);
+    input.value = "";
+    send.disabled = true;
+    send.textContent = "...";
+
+    const reply = addChatMessage("Nexora AI is thinking...", false);
+
+    try {
+      const response = await fetch("/api/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message,
+          attachment: null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.success === false || data.error) {
+        throw new Error(data.error || "Nexora AI request failed.");
+      }
+
+      reply.textContent = data.answer || data.result || "No answer received.";
+    } catch (error) {
+      reply.textContent =
+        error.message || "Nexora AI is temporarily unavailable.";
+    } finally {
+      send.disabled = false;
+      send.textContent = "Send";
+      input.focus();
+    }
+  };
+    }
     
 
 async function askNexoraAI() {
