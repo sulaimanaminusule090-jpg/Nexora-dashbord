@@ -1606,30 +1606,34 @@ function showServices() {
 
 
 
+
 <div id="nexoraAiFileMenu"
-  style="display:none;position:relative;margin-top:10px;padding:12px;background:white;border:1px solid #ddd;border-radius:12px;">
+     style="display:none;position:relative;z-index:9999;pointer-events:auto;margin-top:10px;padding:12px;background:white;border:1px solid #ddd;border-radius:12px;">
 
-  <label style="position:relative;display:block;padding:14px;margin-bottom:8px;border-radius:10px;background:#f3f4f6;font-size:16px;cursor:pointer;">
+  <button id="nexoraAiCameraButton" type="button"
+    style="display:block;width:100%;padding:14px;margin-bottom:8px;border:0;border-radius:10px;background:#f3f4f6;text-align:left;font-size:16px;cursor:pointer;">
     📷 Camera
-    <input id="nexoraAiCameraInput" type="file"
-      accept="image/*" capture="environment"
-      style="position:absolute;inset:0;width:100%;height:100%;opacity:0;z-index:2;cursor:pointer;">
-  </label>
+  </button>
 
-  <label style="position:relative;display:block;padding:14px;margin-bottom:8px;border-radius:10px;background:#f3f4f6;font-size:16px;cursor:pointer;">
+  <button id="nexoraAiPhotosButton" type="button"
+    style="display:block;width:100%;padding:14px;margin-bottom:8px;border:0;border-radius:10px;background:#f3f4f6;text-align:left;font-size:16px;cursor:pointer;">
     🖼️ Photos
-    <input id="nexoraAiPhotosInput" type="file"
-      accept="image/*"
-      style="position:absolute;inset:0;width:100%;height:100%;opacity:0;z-index:2;cursor:pointer;">
-  </label>
+  </button>
 
-  <label style="position:relative;display:block;padding:14px;border-radius:10px;background:#f3f4f6;font-size:16px;cursor:pointer;">
+  <button id="nexoraAiFilesButton" type="button"
+    style="display:block;width:100%;padding:14px;border:0;border-radius:10px;background:#f3f4f6;text-align:left;font-size:16px;cursor:pointer;">
     📎 Files (PDF)
-    <input id="nexoraAiFilesInput" type="file"
-      accept="image/*,application/pdf"
-      style="position:absolute;inset:0;width:100%;height:100%;opacity:0;z-index:2;cursor:pointer;">
-  </label>
+  </button>
 </div>
+
+<input
+  id="nexoraAiFile"
+  type="file"
+  accept="image/*,application/pdf"
+  style="position:absolute;width:1px;height:1px;opacity:0;left:-9999px;"
+  onchange="const n=document.getElementById('nexoraAiFileName');if(n)n.textContent=this.files.length?'Selected: '+this.files[0].name:'';document.getElementById('nexoraAiFileMenu').style.display='none';"
+>
+
 
   
 
@@ -1730,29 +1734,42 @@ function showServices() {
     document.body.appendChild(page);
       
 
+
+const fileInput = page.querySelector("#nexoraAiFile");
 const fileMenu = page.querySelector("#nexoraAiFileMenu");
-const fileName = page.querySelector("#nexoraAiFileName");
 
-[
-  "nexoraAiCameraInput",
-  "nexoraAiPhotosInput",
-  "nexoraAiFilesInput"
-].forEach(function (inputId) {
-  const input = page.querySelector("#" + inputId);
+page.querySelector("#nexoraAiCameraButton")
+  .addEventListener("click", function () {
+    fileInput.accept = "image/*";
+    fileInput.setAttribute("capture", "environment");
+    fileInput.click();
+  });
 
-  if (!input) {
-    console.error("Missing Nexora upload input:", inputId);
-    return;
+page.querySelector("#nexoraAiPhotosButton")
+  .addEventListener("click", function () {
+    fileInput.accept = "image/*";
+    fileInput.removeAttribute("capture");
+    fileInput.click();
+  });
+
+page.querySelector("#nexoraAiFilesButton")
+  .addEventListener("click", function () {
+    fileInput.accept = "image/*,application/pdf";
+    fileInput.removeAttribute("capture");
+    fileInput.click();
+  });
+
+fileInput.addEventListener("change", function () {
+  const name = page.querySelector("#nexoraAiFileName");
+
+  if (name && fileInput.files.length) {
+    name.textContent =
+      "Selected: " + fileInput.files[0].name;
   }
 
-  input.addEventListener("change", function () {
-    if (fileName && input.files && input.files.length > 0) {
-      fileName.textContent = "Selected: " + input.files[0].name;
-    }
-
-    fileMenu.style.display = "none";
-  });
+  fileMenu.style.display = "none";
 });
+      
 
       
     }
