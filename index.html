@@ -2258,45 +2258,98 @@ const attachmentMenu = chatPage.querySelector(
   form.onsubmit = async (event) => {
     event.preventDefault();
 
-    const message = input.value.trim();
-    if (!message || send.disabled) return;
+    
+const message = input.value.trim();
 
-    addChatMessage(message, true);
-    input.value = "";
-    send.disabled = true;
-    send.textContent = "...";
+const fileInputs = [
+  chatPage.querySelector("#nexoraChatCamera"),
+  chatPage.querySelector("#nexoraChatPhoto"),
+  chatPage.querySelector("#nexoraChatPDF")
+];
 
-    const reply = addChatMessage("Nexora AI is thinking...", false);
+const file = fileInputs
+  .filter(Boolean)
+  .map(el => el.files && el.files[0])
+  .find(Boolean);
 
-    try {
-      const response = await fetch("/api/ai", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          message,
-          attachment: null
-        })
-      });
+if (!message && !file) return;
+if (send.disabled) return;
 
-      const data = await response.json();
+let attachment = null;
 
-      if (!response.ok || data.success === false || data.error) {
-        throw new Error(data.error || "Nexora AI request failed.");
-      }
+if (file) {
+  if (
+    !file.type.startsWith("image/") &&
+    file.type !== "application/pdf"
+  ) {
+    alert("Please select an image or PDF file.");
+    return;
+  }
 
-      reply.textContent = data.answer || data.result || "No answer received.";
-    } catch (error) {
-      reply.textContent =
-        error.message || "Nexora AI is temporarily unavailable.";
-    } finally {
-      send.disabled = false;
-      send.textContent = "Send";
-      input.focus();
-    }
+  if (file.size > 3 * 1024 * 1024) {
+    alert("Please choose a file smaller than 3 MB.");
+    return;
+  }
+
+  attachment = {
+    mimeType: file.type,
+    data: await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () =>
+        resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    })
   };
-    }
+}
+
+if (message) addChatMessage(message, true);
+else addChatMessage("Please analyze my attachment.", true);
+
+input.value = "";
+send.disabled = true;
+send.textContent = "...";
+
+const reply = addChatMessage("Nexora AI is thinking...", false);
+
+try {
+  const response = await fetch("/api/ai", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: message || "Please analyze this attachment.",
+      attachment
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || data.success === false || data.error) {
+    throw new Error(data.error || "Nexora AI request failed.");
+  }
+
+  reply.textContent = data.answer || data.result || "No answer received.";
+} catch (error) {
+  reply.textContent = error.message || "Nexora AI is temporarily unavailable.";
+} finally {
+  send.disabled = false;
+  send.textContent = "Send";
+  input.focus();
+
+  fileInputs.filter(Boolean).forEach(el => {
+    el.value = "";
+  });
+
+  const nameBox = chatPage.querySelector("#nexoraChatFileName");
+  if (nameBox) nameBox.replaceChildren();
+}
+    
+
+      
+
+      
     
 
 async function askNexoraAI() {
