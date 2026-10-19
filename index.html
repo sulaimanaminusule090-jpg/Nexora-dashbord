@@ -2110,30 +2110,50 @@ function openNexoraChatPage() {
     style="display:none;"
   >
 
-  <div
-    id="nexoraChatAttachmentMenu"
-    style="
-      display:none;
-      gap:8px;
-      flex-wrap:wrap;
-      width:100%;
-    "
+  
+<div
+  id="nexoraChatAttachmentMenu"
+  style="
+    display:none;
+    flex-direction:column;
+    gap:6px;
+    width:100%;
+    padding:8px;
+    background:#ffffff;
+    border:1px solid #e5e7eb;
+    border-radius:16px;
+    box-shadow:0 4px 16px rgba(0,0,0,0.10);
+    box-sizing:border-box;
+  "
+>
+  <button
+    type="button"
+    onclick="document.getElementById('nexoraChatCamera').click()"
+    style="display:flex;align-items:center;gap:14px;width:100%;padding:14px;border:0;border-radius:12px;background:white;text-align:left;font-size:16px;cursor:pointer;"
   >
-    <button type="button"
-      onclick="document.getElementById('nexoraChatCamera').click()"
-      style="padding:10px;border:1px solid #ddd;border-radius:10px;background:white;"
-    >📷 Camera</button>
+    <span style="font-size:22px;">📷</span>
+    Camera
+  </button>
 
-    <button type="button"
-      onclick="document.getElementById('nexoraChatPhoto').click()"
-      style="padding:10px;border:1px solid #ddd;border-radius:10px;background:white;"
-    >🖼️ Photos</button>
+  <button
+    type="button"
+    onclick="document.getElementById('nexoraChatPhoto').click()"
+    style="display:flex;align-items:center;gap:14px;width:100%;padding:14px;border:0;border-radius:12px;background:white;text-align:left;font-size:16px;cursor:pointer;"
+  >
+    <span style="font-size:22px;">🖼️</span>
+    Photos
+  </button>
 
-    <button type="button"
-      onclick="document.getElementById('nexoraChatPDF').click()"
-      style="padding:10px;border:1px solid #ddd;border-radius:10px;background:white;"
-    >📄 Files / PDF</button>
-  </div>
+  <button
+    type="button"
+    onclick="document.getElementById('nexoraChatPDF').click()"
+    style="display:flex;align-items:center;gap:14px;width:100%;padding:14px;border:0;border-radius:12px;background:white;text-align:left;font-size:16px;cursor:pointer;"
+  >
+    <span style="font-size:22px;">📎</span>
+    Files / PDF
+  </button>
+</div>
+
 
   <div
     id="nexoraChatFileName"
