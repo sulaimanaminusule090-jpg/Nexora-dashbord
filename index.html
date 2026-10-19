@@ -2178,6 +2178,7 @@ const attachmentMenu = chatPage.querySelector(
   "#nexoraChatAttachmentMenu"
 );
 
+
 [
   "nexoraChatCamera",
   "nexoraChatPhoto",
@@ -2192,14 +2193,32 @@ const attachmentMenu = chatPage.querySelector(
 
     if (!file) return;
 
-    attachmentFileName.textContent =
-      "Selected: " + file.name;
+    attachmentFileName.replaceChildren();
+
+    const label = document.createElement("div");
+    label.textContent = "Selected: " + file.name;
+    label.style.marginBottom = "8px";
+    attachmentFileName.appendChild(label);
+
+    if (file.type.startsWith("image/")) {
+      const preview = document.createElement("img");
+
+      preview.src = URL.createObjectURL(file);
+      preview.alt = "Selected image preview";
+      preview.style.maxWidth = "140px";
+      preview.style.maxHeight = "140px";
+      preview.style.objectFit = "contain";
+      preview.style.borderRadius = "10px";
+
+      attachmentFileName.appendChild(preview);
+    }
 
     if (attachmentMenu) {
       attachmentMenu.style.display = "none";
     }
   });
 });
+  
   
   function addChatMessage(text, isUser) {
     const bubble = document.createElement("div");
