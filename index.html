@@ -1742,21 +1742,51 @@ page.querySelector("#nexoraAiCameraButton")
   .addEventListener("click", function () {
     fileInput.accept = "image/*";
     fileInput.setAttribute("capture", "environment");
+    
+try {
+  if (typeof fileInput.showPicker === "function") {
+    fileInput.showPicker();
+  } else {
     fileInput.click();
+  }
+} catch (error) {
+  fileInput.click();
+}
+    
   });
 
 page.querySelector("#nexoraAiPhotosButton")
   .addEventListener("click", function () {
     fileInput.accept = "image/*";
     fileInput.removeAttribute("capture");
+    
+try {
+  if (typeof fileInput.showPicker === "function") {
+    fileInput.showPicker();
+  } else {
     fileInput.click();
+  }
+} catch (error) {
+  fileInput.click();
+}
+
   });
 
 page.querySelector("#nexoraAiFilesButton")
   .addEventListener("click", function () {
     fileInput.accept = "image/*,application/pdf";
     fileInput.removeAttribute("capture");
+    
+try {
+  if (typeof fileInput.showPicker === "function") {
+    fileInput.showPicker();
+  } else {
     fileInput.click();
+  }
+} catch (error) {
+  fileInput.click();
+}
+
   });
 
 fileInput.addEventListener("change", function () {
