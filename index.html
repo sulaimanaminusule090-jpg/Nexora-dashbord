@@ -1630,7 +1630,7 @@ function showServices() {
   id="nexoraAiFile"
   type="file"
   accept="image/*,application/pdf"
-  style="position:absolute;width:1px;height:1px;opacity:0;left:0;bottom:0;"
+  style="position:fixed;width:1px;height:1px;opacity:0.01;left:0;bottom:0;z-index:99999;"
   onchange="const n=document.getElementById('nexoraAiFileName');if(n)n.textContent=this.files.length?'Selected: '+this.files[0].name:'';document.getElementById('nexoraAiFileMenu').style.display='none';"
 >
 
@@ -1745,6 +1745,7 @@ const cameraButton = page.querySelector("#nexoraAiCameraButton");
 const photosButton = page.querySelector("#nexoraAiPhotosButton");
 const filesButton = page.querySelector("#nexoraAiFilesButton");
 
+
 function openNexoraFilePicker(accept, capture) {
   if (!fileInput) {
     console.error("Nexora file input not found");
@@ -1752,7 +1753,7 @@ function openNexoraFilePicker(accept, capture) {
   }
 
   fileInput.value = "";
-  fileInput.accept = accept;
+  fileInput.setAttribute("accept", accept);
 
   if (capture) {
     fileInput.setAttribute("capture", capture);
@@ -1760,16 +1761,10 @@ function openNexoraFilePicker(accept, capture) {
     fileInput.removeAttribute("capture");
   }
 
-  try {
-    if (typeof fileInput.showPicker === "function") {
-      fileInput.showPicker();
-    } else {
-      fileInput.click();
-    }
-  } catch (error) {
-    fileInput.click();
-  }
+  // Open the native file picker directly from the button click.
+  fileInput.click();
 }
+      
 
 if (cameraButton) {
   cameraButton.addEventListener("click", function () {
