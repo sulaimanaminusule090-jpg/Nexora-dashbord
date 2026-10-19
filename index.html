@@ -2041,8 +2041,54 @@ function openNexoraChatPage() {
           font-size:16px;
           outline:none;
         "></textarea>
+<input
+  type="file"
+  id="nexoraChatCamera"
+  accept="image/*"
+  capture="environment"
+  style="display:none;"
+>
 
-      <button id="nexoraChatSend" type="submit" style="
+<input
+  type="file"
+  id="nexoraChatPhoto"
+  accept="image/*"
+  style="display:none;"
+>
+
+<input
+  type="file"
+  id="nexoraChatPDF"
+  accept="application/pdf,.pdf"
+  style="display:none;"
+>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
+  <button type="button"
+    onclick="document.getElementById('nexoraChatCamera').click()"
+    style="padding:10px;border:1px solid #ddd;border-radius:10px;background:white;">
+    📷 Camera
+  </button>
+
+  <button type="button"
+    onclick="document.getElementById('nexoraChatPhoto').click()"
+    style="padding:10px;border:1px solid #ddd;border-radius:10px;background:white;">
+    🖼️ Photos
+  </button>
+
+  <button type="button"
+    onclick="document.getElementById('nexoraChatPDF').click()"
+    style="padding:10px;border:1px solid #ddd;border-radius:10px;background:white;">
+    📄 Files / PDF
+  </button>
+</div>
+
+<div id="nexoraChatFileName"
+  style="width:100%;font-size:13px;color:#6b7280;">
+</div>
+      <button id="nexoraChatSend" type="submit"
+      style="
+      
         border:0;
         border-radius:12px;
         padding:0 17px;
