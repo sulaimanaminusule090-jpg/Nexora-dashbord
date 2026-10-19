@@ -2084,8 +2084,8 @@ function openNexoraChatPage() {
   }
 
   chatPage.querySelector("#nexoraChatBack").onclick = () => {
-    chatPage.style.display = "none";
-  };
+  chatPage.remove();
+};
 
   chatPage.querySelector("#nexoraChatNew").onclick = () => {
     messages.replaceChildren();
