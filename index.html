@@ -2171,25 +2171,23 @@ stopNexoraVoice = () => {
 
     
 recognition.onerror = (event) => {
-  console.error("Nexora speech recognition:", event.error);
+  console.error("Nexora speech recognition error:", event.error);
 
-  if (
-    event.error === "not-allowed" ||
-    event.error === "service-not-allowed"
-  ) {
-    isListening = false;
-    micButton.textContent = "🎙️";
-    micButton.title = "Microphone permission blocked";
+  isListening = false;
+  micButton.textContent = "🎙️";
 
-    alert(
-      "Microphone permission is blocked. Open Nexora in Chrome and allow microphone access for this site."
+  if (event.error === "not-allowed" ||
+      event.error === "service-not-allowed") {
+    micButton.title = "Microphone permission error";
+    console.log(
+      "Nexora microphone error. Check this site's permission in Chrome."
     );
   } else if (event.error === "audio-capture") {
-    isListening = false;
-    micButton.textContent = "🎙️";
     micButton.title = "Microphone unavailable";
   } else if (event.error === "no-speech") {
-    console.log("Nexora: No speech detected.");
+    micButton.title = "No speech detected. Tap to try again.";
+  } else {
+    micButton.title = "Voice input error: " + event.error;
   }
 };
     
