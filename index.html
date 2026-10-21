@@ -1975,7 +1975,21 @@ function openNexoraChatPage() {
         outline:none;
       "
     ></textarea>
-
+<button
+  id="nexoraChatMic"
+  type="button"
+  title="Speak to Nexora AI"
+  style="
+    flex-shrink:0;
+    width:44px;
+    height:44px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    background:white;
+    font-size:22px;
+    cursor:pointer;
+  "
+>🎙️</button>
     <button
       id="nexoraChatPlus"
       type="button"
@@ -2091,7 +2105,65 @@ function openNexoraChatPage() {
   const input = chatPage.querySelector("#nexoraChatInput");
   const form = chatPage.querySelector("#nexoraChatForm");
   const send = chatPage.querySelector("#nexoraChatSend");
+// Nexora AI voice input
+const micButton = chatPage.querySelector("#nexoraChatMic");
 
+if (micButton) {
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    micButton.title = "Voice input is not supported in this browser";
+    micButton.onclick = () => {
+      alert("Voice input is not supported here. Please try Chrome.");
+    };
+  } else {
+    const recognition = new SpeechRecognition();
+
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = navigator.language || "en-US";
+
+    let isListening = false;
+
+    micButton.onclick = () => {
+      if (isListening) {
+        recognition.stop();
+        return;
+      }
+
+      try {
+        recognition.start();
+        isListening = true;
+        micButton.textContent = "🔴";
+        micButton.title = "Listening...";
+      } catch (error) {
+        console.error("Nexora voice input error:", error);
+      }
+    };
+
+    recognition.onresult = (event) => {
+      const transcript =
+        event.results[0][0].transcript.trim();
+
+      if (transcript) {
+        input.value = input.value.trim()
+          ? input.value.trim() + " " + transcript
+          : transcript;
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Nexora speech recognition:", event.error);
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      micButton.textContent = "🎙️";
+      micButton.title = "Speak to Nexora AI";
+    };
+  }
+}
 const attachmentFileName = chatPage.querySelector(
   "#nexoraChatFileName"
 );
@@ -2252,9 +2324,68 @@ try {
     throw new Error(data.error || "Nexora AI request failed.");
   }
 
-  reply.innerHTML = renderNexoraMarkdown(
+  const answerText = String(
   data.answer || data.result || "No answer received."
 );
+
+reply.innerHTML = renderNexoraMarkdown(answerText);
+
+// Add a speak button to the AI response
+const speakButton = document.createElement("button");
+
+speakButton.type = "button";
+speakButton.textContent = "🔊 Listen";
+speakButton.title = "Listen to Nexora AI's answer";
+
+speakButton.style.cssText = `
+  display:block;
+  margin-top:12px;
+  padding:8px 12px;
+  border:1px solid #ddd;
+  border-radius:10px;
+  background:#f9fafb;
+  color:#111827;
+  font-size:14px;
+  cursor:pointer;
+`;
+
+speakButton.onclick = () => {
+  if (!("speechSynthesis" in window)) {
+    alert("Voice output is not supported in this browser.");
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(answerText);
+
+  // Detect common Hausa words; otherwise use the device language.
+  const isHausa =
+    /\b(sannu|wannan|akwai|amma|domin|saboda|yanzu|idan|kuma|yana|kina|kana|muna|suna|za ka|za a|wato|yaya|haka|bayan|cikin|tare|gaskiya|na gode)\b/i
+      .test(answerText);
+
+  utterance.lang = isHausa
+    ? "ha-NG"
+    : (navigator.language || "en-US");
+
+  const voices = window.speechSynthesis.getVoices();
+
+  const matchingVoice = voices.find(voice =>
+    voice.lang.toLowerCase() === utterance.lang.toLowerCase()
+  ) || voices.find(voice =>
+    voice.lang.toLowerCase().startsWith(
+      utterance.lang.split("-")[0].toLowerCase()
+    )
+  );
+
+  if (matchingVoice) {
+    utterance.voice = matchingVoice;
+  }
+
+  window.speechSynthesis.speak(utterance);
+};
+
+reply.appendChild(speakButton);
 } catch (error) {
   reply.textContent = error.message || "Nexora AI is temporarily unavailable.";
 } finally {
