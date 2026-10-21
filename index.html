@@ -2158,8 +2158,18 @@ recognition.interimResults = true;
 };
 
     recognition.onerror = (event) => {
-      console.error("Nexora speech recognition:", event.error);
-    };
+  console.error("Nexora speech recognition:", event.error);
+
+  if (
+    event.error === "not-allowed" ||
+    event.error === "service-not-allowed"
+  ) {
+    micButton.title = "Microphone permission blocked. Check browser site settings.";
+    alert(
+      "Nexora needs microphone permission. Open this site in Chrome and allow Microphone in Site settings."
+    );
+  }
+};
 
     recognition.onend = () => {
   if (isListening) {
