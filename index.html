@@ -1648,7 +1648,7 @@ function showServices() {
      style="margin-top:8px;font-size:13px;color:#6b7280;">
 </div>
 
-<button onclick="openNexoraChatPage()" style="
+<button type="button" style="
     width:100%;
     margin-top:10px;
     padding:14px;
@@ -2330,7 +2330,9 @@ try {
     throw new Error(data.error || "Nexora AI request failed.");
   }
 
-  reply.textContent = data.answer || data.result || "No answer received.";
+  reply.innerHTML = renderNexoraMarkdown(
+  data.answer || data.result || "No answer received."
+);
 } catch (error) {
   reply.textContent = error.message || "Nexora AI is temporarily unavailable.";
 } finally {
