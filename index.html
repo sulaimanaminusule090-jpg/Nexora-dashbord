@@ -1574,93 +1574,15 @@ function showServices() {
                 </div>
 
                 
-<div style="display:flex;align-items:center;gap:8px;margin-top:14px;">
-    
-<button type="button"
-    onclick="document.getElementById('nexoraAiFileMenu').style.display =
-    document.getElementById('nexoraAiFileMenu').style.display === 'block' ? 'none' : 'block';"
-    style="width:48px;min-width:48px;height:48px;border:1px solid #d1d5db;border-radius:12px;font-size:25px;cursor:pointer;color:#2563eb;background:white;">
-    +
-</button>
-
-
-    <input
-        type="text"
-        placeholder="Ask Nexora AI..."
-        style="
-            flex:1;
-            min-width:0;
-            box-sizing:border-box;
-            padding:14px;
-            border:1px solid #ddd;
-            border-radius:12px;
-            outline:none;
-        "
-    >
-</div>
-
-
-
-
-
-
-
-
-
-<div id="nexoraAiFileMenu"
-     style="display:none;position:relative;z-index:9999;pointer-events:auto;margin-top:10px;padding:12px;background:white;border:1px solid #ddd;border-radius:12px;">
-
-  <button id="nexoraAiCameraButton" type="button"
-    style="display:block;width:100%;padding:14px;margin-bottom:8px;border:0;border-radius:10px;background:#f3f4f6;text-align:left;font-size:16px;cursor:pointer;">
-    📷 Camera
-  </button>
-
-  <button id="nexoraAiPhotosButton" type="button"
-    style="display:block;width:100%;padding:14px;margin-bottom:8px;border:0;border-radius:10px;background:#f3f4f6;text-align:left;font-size:16px;cursor:pointer;">
-    🖼️ Photos
-  </button>
-
-  <button id="nexoraAiFilesButton" type="button"
-    style="display:block;width:100%;padding:14px;border:0;border-radius:10px;background:#f3f4f6;text-align:left;font-size:16px;cursor:pointer;">
-    📎 Files (PDF)
+<div style="margin-top:14px;">
+  <button
+    type="button"
+    onclick="openNexoraChatPage()"
+    style="width:100%;padding:15px;border:0;border-radius:12px;background:#2563eb;color:white;font-size:16px;font-weight:bold;cursor:pointer;"
+  >
+    Open Nexora AI →
   </button>
 </div>
-
-<input
-  id="nexoraAiFile"
-  type="file"
-  accept="image/*,application/pdf"
-  style="position:fixed;width:1px;height:1px;opacity:0.01;left:0;bottom:0;z-index:99999;"
-  onchange="const n=document.getElementById('nexoraAiFileName');if(n)n.textContent=this.files.length?'Selected: '+this.files[0].name:'';document.getElementById('nexoraAiFileMenu').style.display='none';"
->
-
-
-  
-
-  
-
-
-
-
-
-
-<div id="nexoraAiFileName"
-     style="margin-top:8px;font-size:13px;color:#6b7280;">
-</div>
-
-<button type="button" style="
-    width:100%;
-    margin-top:10px;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    background:#2563eb;
-    color:white;
-    font-weight:bold;
-    cursor:pointer;
-">
-    Ask AI
-</button>
 
 
             <div style="
