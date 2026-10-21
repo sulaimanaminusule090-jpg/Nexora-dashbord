@@ -2122,7 +2122,9 @@ if (micButton) {
 
     recognition.continuous = true;
 recognition.interimResults = true;
-    recognition.lang = navigator.language || "en-US";
+    recognition.lang = "ha-NG";
+recognition.continuous = false;
+recognition.interimResults = true;
 
     let isListening = false;
 
