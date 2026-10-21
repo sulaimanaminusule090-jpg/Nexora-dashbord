@@ -2108,6 +2108,7 @@ function openNexoraChatPage() {
 // Nexora AI voice input
 const micButton = chatPage.querySelector("#nexoraChatMic");
 console.log("Nexora mic button found:", !!micButton);
+  let stopNexoraVoice = () => {};
 if (micButton) {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2125,7 +2126,18 @@ recognition.interimResults = true;
 recognition.lang = "en-US";
 
     let isListening = false;
+stopNexoraVoice = () => {
+  isListening = false;
 
+  try {
+    recognition.stop();
+  } catch (error) {
+    console.log("Nexora voice stop:", error);
+  }
+
+  micButton.textContent = "🎙️";
+  micButton.title = "Speak to Nexora AI";
+};
     micButton.onclick = () => {
       if (isListening) {
   isListening = false;
@@ -2289,7 +2301,7 @@ const attachmentMenu = chatPage.querySelector(
 
   form.onsubmit = async (event) => {
     event.preventDefault();
-
+stopNexoraVoice();
     
 const message = input.value.trim();
 
