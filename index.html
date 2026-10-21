@@ -2107,7 +2107,7 @@ function openNexoraChatPage() {
   const send = chatPage.querySelector("#nexoraChatSend");
 // Nexora AI voice input
 const micButton = chatPage.querySelector("#nexoraChatMic");
-
+console.log("Nexora mic button found:", !!micButton);
 if (micButton) {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
