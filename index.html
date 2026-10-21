@@ -2297,8 +2297,28 @@ if (file) {
   };
 }
 
-if (message) addChatMessage(message, true);
-else addChatMessage("Please analyze my attachment.", true);
+const userBubble = addChatMessage(
+  message || "Please analyze my attachment.",
+  true
+);
+
+if (file && file.type.startsWith("image/")) {
+  const imagePreview = document.createElement("img");
+
+  imagePreview.src = URL.createObjectURL(file);
+  imagePreview.alt = "Attached image";
+  imagePreview.style.cssText = `
+    display:block;
+    max-width:220px;
+    max-height:260px;
+    margin-top:10px;
+    border-radius:12px;
+    object-fit:contain;
+  `;
+
+  userBubble.appendChild(imagePreview);
+  messages.scrollTop = messages.scrollHeight;
+}
 
 input.value = "";
 send.disabled = true;
