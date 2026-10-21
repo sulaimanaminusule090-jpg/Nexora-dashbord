@@ -2128,8 +2128,11 @@ recognition.interimResults = true;
 
     micButton.onclick = () => {
       if (isListening) {
-        recognition.stop();
-        return;
+  isListening = false;
+  recognition.stop();
+  micButton.textContent = "🎙️";
+  micButton.title = "Speak to Nexora AI";
+  return;
       }
 
       try {
@@ -2159,10 +2162,23 @@ recognition.interimResults = true;
     };
 
     recognition.onend = () => {
-      isListening = false;
-      micButton.textContent = "🎙️";
-      micButton.title = "Speak to Nexora AI";
-    };
+  if (isListening) {
+    setTimeout(() => {
+      if (isListening) {
+        try {
+          recognition.start();
+        } catch (error) {
+          console.log("Nexora voice restarting:", error);
+        }
+      }
+    }, 300);
+
+    return;
+  }
+
+  micButton.textContent = "🎙️";
+  micButton.title = "Speak to Nexora AI";
+};
   }
 }
 const attachmentFileName = chatPage.querySelector(
