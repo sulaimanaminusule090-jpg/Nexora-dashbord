@@ -2120,9 +2120,9 @@ if (micButton) {
     };
   } else {
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "ha-NG";
+recognition.continuous = true;
+recognition.interimResults = false;
+recognition.lang = "en-NG";
 
     let isListening = false;
 
