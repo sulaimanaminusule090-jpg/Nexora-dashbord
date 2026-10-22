@@ -2107,8 +2107,8 @@ function openNexoraChatPage() {
   const send = chatPage.querySelector("#nexoraChatSend");
 // Nexora AI voice input
 const micButton = chatPage.querySelector("#nexoraChatMic");
-console.log("Nexora mic button found:", !!micButton);
-  let stopNexoraVoice = () => {};
+let stopNexoraVoice = () => {};
+
 if (micButton) {
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -2116,100 +2116,86 @@ if (micButton) {
   if (!SpeechRecognition) {
     micButton.title = "Voice input is not supported in this browser";
     micButton.onclick = () => {
-      alert("Voice input is not supported here. Please try Chrome.");
+      alert("Voice input is not supported. Please try Chrome.");
     };
   } else {
     const recognition = new SpeechRecognition();
-
-    recognition.continuous = true;
-recognition.interimResults = true;
-recognition.lang = "en-US";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "ha-NG";
 
     let isListening = false;
-stopNexoraVoice = () => {
-  isListening = false;
 
-  try {
-    recognition.stop();
-  } catch (error) {
-    console.log("Nexora voice stop:", error);
-  }
+    const resetMic = () => {
+      isListening = false;
+      micButton.textContent = "🎙️";
+      micButton.title = "Tap to speak to Nexora AI";
+    };
 
-  micButton.textContent = "🎙️";
-  micButton.title = "Speak to Nexora AI";
-};
+    stopNexoraVoice = () => {
+      if (isListening) {
+        try {
+          recognition.stop();
+        } catch (error) {
+          console.log("Voice stop:", error);
+        }
+      }
+      resetMic();
+    };
+
     micButton.onclick = () => {
       if (isListening) {
-  isListening = false;
-  recognition.stop();
-  micButton.textContent = "🎙️";
-  micButton.title = "Speak to Nexora AI";
-  return;
+        stopNexoraVoice();
+        return;
       }
 
       try {
         recognition.start();
         isListening = true;
         micButton.textContent = "🔴";
-        micButton.title = "Listening...";
+        micButton.title = "Listening... tap to stop";
       } catch (error) {
-        console.error("Nexora voice input error:", error);
+        console.error("Voice start error:", error);
+        resetMic();
       }
     };
 
     recognition.onresult = (event) => {
-  let transcript = "";
+      let transcript = "";
 
-  for (let i = event.resultIndex; i < event.results.length; i++) {
-    transcript += event.results[i][0].transcript;
-  }
-
-  if (transcript.trim()) {
-    input.value = transcript.trim();
-  }
-};
-
-    
-recognition.onerror = (event) => {
-  console.error("Nexora speech recognition error:", event.error);
-
-  isListening = false;
-  micButton.textContent = "🎙️";
-
-  if (event.error === "not-allowed" ||
-      event.error === "service-not-allowed") {
-    micButton.title = "Microphone permission error";
-    console.log(
-      "Nexora microphone error. Check this site's permission in Chrome."
-    );
-  } else if (event.error === "audio-capture") {
-    micButton.title = "Microphone unavailable";
-  } else if (event.error === "no-speech") {
-    micButton.title = "No speech detected. Tap to try again.";
-  } else {
-    micButton.title = "Voice input error: " + event.error;
-  }
-};
-    
-
-    recognition.onend = () => {
-  if (isListening) {
-    setTimeout(() => {
-      if (isListening) {
-        try {
-          recognition.start();
-        } catch (error) {
-          console.log("Nexora voice restarting:", error);
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          transcript += event.results[i][0].transcript;
         }
       }
-    }, 300);
 
-    return;
-  }
+      if (transcript.trim()) {
+        input.value = [input.value.trim(), transcript.trim()]
+          .filter(Boolean)
+          .join(" ");
+        input.focus();
+      }
+    };
 
-  micButton.textContent = "🎙️";
-  micButton.title = "Speak to Nexora AI";
-};
+    recognition.onerror = (event) => {
+      console.error("Voice recognition error:", event.error);
+      resetMic();
+
+      if (
+        event.error === "not-allowed" ||
+        event.error === "service-not-allowed"
+      ) {
+        micButton.title = "Allow microphone access in Chrome settings";
+      } else if (event.error === "no-speech") {
+        micButton.title = "No speech detected. Tap to try again.";
+      } else {
+        micButton.title = "Voice error: " + event.error;
+      }
+    };
+
+    recognition.onend = () => {
+      resetMic();
+    };
   }
 }
 const attachmentFileName = chatPage.querySelector(
