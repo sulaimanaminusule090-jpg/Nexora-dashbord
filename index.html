@@ -2160,22 +2160,24 @@ recognition.lang = "en-NG";
       }
     };
 
-    recognition.onresult = (event) => {
-      let transcript = "";
+    
+recognition.onresult = (event) => {
+  let transcript = "";
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          transcript += event.results[i][0].transcript;
-        }
-      }
+  for (let i = event.resultIndex; i < event.results.length; i++) {
+    if (event.results[i].isFinal) {
+      transcript += event.results[i][0].transcript + " ";
+    }
+  }
 
-      if (transcript.trim()) {
-        input.value = [input.value.trim(), transcript.trim()]
-          .filter(Boolean)
-          .join(" ");
-        input.focus();
-      }
-    };
+  transcript = transcript.trim();
+
+  if (transcript) {
+    input.value = transcript;
+    input.focus();
+  }
+};
+    
 
     recognition.onerror = (event) => {
       console.error("Voice recognition error:", event.error);
