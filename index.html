@@ -2194,8 +2194,20 @@ if (micButton) {
     };
 
     recognition.onend = () => {
-      resetMic();
-    };
+  if (isListening) {
+    setTimeout(() => {
+      if (isListening) {
+        try {
+          recognition.start();
+        } catch (error) {
+          console.log("Nexora voice restart:", error);
+        }
+      }
+    }, 300);
+  } else {
+    resetMic();
+  }
+};
   }
 }
 const attachmentFileName = chatPage.querySelector(
