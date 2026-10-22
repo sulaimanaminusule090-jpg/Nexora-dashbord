@@ -2179,7 +2179,13 @@ if (micButton) {
 
     recognition.onerror = (event) => {
       console.error("Voice recognition error:", event.error);
-      resetMic();
+      if (
+  event.error === "not-allowed" ||
+  event.error === "service-not-allowed" ||
+  event.error === "audio-capture"
+) {
+  resetMic();
+      }
 
       if (
         event.error === "not-allowed" ||
