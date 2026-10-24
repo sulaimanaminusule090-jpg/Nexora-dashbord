@@ -111,43 +111,71 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const transcriptionResponse = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/interactions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
-        },
-        body: JSON.stringify({
-          model: "gemini-3.5-transcribe",
-          input: [
-            {
-              type: "audio",
-              uri: uploaded.file.uri,
-              mime_type: safeMimeType
-            }
-          ],
-          generation_config: {
-            transcription_config: {
-              mode: "smart",
-              language_codes: []
-            }
-          }
-        })
-      }
-    );
+    
+    let transcriptionResponse;
+    let result;
 
-    const result = await transcriptionResponse.json();
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      transcriptionResponse = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/interactions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+          },
+          body: JSON.stringify({
+            model: "gemini-3.5-transcribe",
+            input: [
+              {
+                type: "audio",
+                uri: uploaded.file.uri,
+                mime_type: safeMimeType
+              }
+            ],
+            generation_config: {
+              transcription_config: {
+                mode: "smart",
+                language_codes: []
+              }
+            }
+          })
+        }
+      );
+
+      result = await transcriptionResponse.json();
+
+      if (transcriptionResponse.ok) break;
+
+      const temporaryError =
+        transcriptionResponse.status === 429 ||
+        transcriptionResponse.status === 500 ||
+        transcriptionResponse.status === 502 ||
+        transcriptionResponse.status === 503 ||
+        transcriptionResponse.status === 504;
+
+      if (!temporaryError || attempt === 3) break;
+
+      await new Promise(resolve =>
+        setTimeout(resolve, attempt * 1500)
+      );
+    }
 
     if (!transcriptionResponse.ok) {
       console.error("Transcription failed:", result);
 
+      const status = transcriptionResponse.status;
+      const message = result.error?.message || "";
+
       return res.status(502).json({
         success: false,
-        error: result.error?.message || "Transcription failed."
+        error:
+          status === 503 || status === 429
+            ? "Gemini is busy. Please try recording again in a moment."
+            : message || "Transcription failed. Please try again."
       });
     }
+    
 
     const transcript = result.output_text?.trim();
 
