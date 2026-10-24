@@ -2558,17 +2558,30 @@ speakButton.onclick = async () => {
     });
 
     const audioUrl = URL.createObjectURL(audioBlob);
-    const audioPlayer = new Audio(audioUrl);
+    
 
-    audioPlayer.onended = () => {
-      URL.revokeObjectURL(audioUrl);
-    };
+const audioPlayer = document.createElement("audio");
 
-    audioPlayer.onerror = () => {
-      URL.revokeObjectURL(audioUrl);
-    };
+audioPlayer.controls = true;
+audioPlayer.preload = "metadata";
+audioPlayer.src = audioUrl;
+audioPlayer.style.display = "block";
+audioPlayer.style.width = "100%";
+audioPlayer.style.marginTop = "10px";
 
-    await audioPlayer.play();
+audioPlayer.onended = () => {
+  URL.revokeObjectURL(audioUrl);
+};
+
+audioPlayer.onerror = () => {
+  console.error("Audio playback failed.");
+};
+
+speakButton.insertAdjacentElement("afterend", audioPlayer);
+speakButton.textContent = "▶ Audio ready — tap Play below";
+    
+
+    
   } catch (error) {
   console.error("Listen error:", error);
   alert(
