@@ -2162,12 +2162,17 @@ recognition.maxAlternatives = 1;
       }
     };
 
- let finalTranscript = "";
+ 
+let finalTranscript = "";
 
 recognition.onresult = (event) => {
   let interimTranscript = "";
 
-  for (let i = event.resultIndex; i < event.results.length; i++) {
+  for (
+    let i = event.resultIndex;
+    i < event.results.length;
+    i++
+  ) {
     const text = event.results[i][0].transcript;
 
     if (event.results[i].isFinal) {
@@ -2177,9 +2182,12 @@ recognition.onresult = (event) => {
     }
   }
 
-  input.value = finalTranscript + interimTranscript;
+  input.value =
+    (finalTranscript + interimTranscript).trim();
+
   input.focus();
-};   
+};
+    
 
     
 
