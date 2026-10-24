@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
     if (!apiKey) {
       return res.status(500).json({
         success: false,
-        error: "Gemini API key is not configured."
+        error: "GEMINI_API_KEY is not configured."
       });
     }
 
@@ -22,13 +22,6 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({
         success: false,
         error: "Audio data is required."
-      });
-    }
-
-    if (audio.length > 3000000) {
-      return res.status(413).json({
-        success: false,
-        error: "Recording is too large. Please record a shorter message."
       });
     }
 
@@ -40,14 +33,50 @@ module.exports = async function handler(req, res) {
       "audio/wav",
       "audio/aac",
       "audio/mp3",
-      "audio/m4a"
+      "audio/m4a",
+      "audio/opus"
     ];
 
     const safeMimeType = allowedTypes.includes(mimeType)
       ? mimeType
       : "audio/webm";
 
-    const response = await fetch(
+    const audioBuffer = Buffer.from(audio, "base64");
+
+    if (audioBuffer.length > 5 * 1024 * 1024) {
+      return res.status(413).json({
+        success: false,
+        error: "Recording is too large. Please record a shorter message."
+      });
+    }
+
+    const uploadResponse = await fetch(
+      "https://generativelanguage.googleapis.com/upload/v1beta/files",
+      {
+        method: "POST",
+        headers: {
+          "x-goog-api-key": apiKey,
+          "X-Goog-Upload-Protocol": "raw",
+          "X-Goog-Upload-Command": "upload, finalize",
+          "X-Goog-Upload-Header-Content-Type": safeMimeType,
+          "Content-Type": safeMimeType
+        },
+        body: audioBuffer
+      }
+    );
+
+    const uploaded = await uploadResponse.json();
+
+    if (!uploadResponse.ok || !uploaded.file?.uri) {
+      console.error("Audio upload failed:", uploaded);
+
+      return res.status(502).json({
+        success: false,
+        error: uploaded.error?.message || "Audio upload failed."
+      });
+    }
+
+    const transcriptionResponse = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/interactions",
       {
         method: "POST",
@@ -59,12 +88,8 @@ module.exports = async function handler(req, res) {
           model: "gemini-3.5-transcribe",
           input: [
             {
-              type: "text",
-              text: "Transcribe the spoken audio accurately in its original language. Automatically detect the language. Support Hausa, English, Arabic, French, and other supported languages. Do not translate. Return only the spoken words, without explanations."
-            },
-            {
               type: "audio",
-              data: audio,
+              uri: uploaded.file.uri,
               mime_type: safeMimeType
             }
           ],
@@ -78,24 +103,23 @@ module.exports = async function handler(req, res) {
       }
     );
 
-    const result = await response.json();
+    const result = await transcriptionResponse.json();
 
-    if (!response.ok) {
-      console.error("Transcription API error:", result);
+    if (!transcriptionResponse.ok) {
+      console.error("Transcription failed:", result);
 
-      return res.status(response.status).json({
+      return res.status(502).json({
         success: false,
-        error: result.error?.message ||
-          "Transcription failed. Please try again."
+        error: result.error?.message || "Transcription failed."
       });
     }
 
     const transcript = result.output_text?.trim();
 
     if (!transcript) {
-      return res.status(502).json({
+      return res.status(422).json({
         success: false,
-        error: "No speech was recognized. Please try again."
+        error: "No speech recognized. Please try again."
       });
     }
 
@@ -108,7 +132,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(500).json({
       success: false,
-      error: "Unable to transcribe audio. Check your connection and try again."
+      error: "Unable to transcribe audio. Please try again."
     });
   }
 };
