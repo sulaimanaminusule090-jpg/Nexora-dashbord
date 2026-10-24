@@ -7,7 +7,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { message, attachment } = req.body || {};
+    const { message, attachment, history } = req.body || {};
 
     if (
   (typeof message !== "string" || !message.trim()) &&
