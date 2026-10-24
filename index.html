@@ -2432,8 +2432,88 @@ const attachmentMenu = chatPage.querySelector(
   chatPage.remove();
 };
 
+  chatPage.querySelector("#nexoraChatHistory").onclick = async () => {
+    const historyButton = chatPage.querySelector("#nexoraChatHistory");
+    historyButton.disabled = true;
+    historyButton.textContent = "Loading...";
+
+    try {
+      const user = await getNexoraChatUser();
+
+      const { data: chats, error } = await supabaseClient
+        .from("ai_conversations")
+        .select("id, title, updated_at")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(30);
+
+      if (error) throw error;
+
+      messages.replaceChildren();
+      conversationHistory.length = 0;
+
+      addChatMessage("Your previous chats:", false);
+
+      if (!chats || chats.length === 0) {
+        addChatMessage("No saved chats yet. Start a new chat first.", false);
+        return;
+      }
+
+      chats.forEach((chat) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = chat.title || "Untitled chat";
+        button.style.cssText =
+          "padding:12px;margin:4px 0;border:1px solid #ddd;" +
+          "border-radius:10px;background:white;color:#111827;" +
+          "text-align:left;cursor:pointer;width:100%;";
+
+        button.onclick = async () => {
+          try {
+            const { data: savedMessages, error: messageError } =
+              await supabaseClient
+                .from("ai_messages")
+                .select("role, content")
+                .eq("conversation_id", chat.id)
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: true });
+
+            if (messageError) throw messageError;
+
+            messages.replaceChildren();
+            conversationHistory.length = 0;
+            activeConversationId = chat.id;
+
+            (savedMessages || []).forEach((item) => {
+              const isUser = item.role === "user";
+              addChatMessage(item.content || "", isUser);
+              conversationHistory.push({
+                role: item.role,
+                text: item.content || ""
+              });
+            });
+
+            input.focus();
+          } catch (error) {
+            console.error("Could not load Nexora chat:", error);
+            alert("Could not open this chat. Check Supabase settings.");
+          }
+        };
+
+        messages.appendChild(button);
+      });
+    } catch (error) {
+      console.error("Nexora chat history error:", error);
+      alert("Could not load chat history. Check Supabase settings.");
+    } finally {
+      historyButton.disabled = false;
+      historyButton.textContent = "History";
+    }
+  };
+  
   chatPage.querySelector("#nexoraChatNew").onclick = () => {
     messages.replaceChildren();
+    activeConversationId = null;
     conversationHistory.length = 0;
     addChatMessage(
       "Welcome! Ask a new question in your preferred language.",
@@ -2541,7 +2621,26 @@ try {
 
   const answerText = String(
   data.answer || data.result || "No answer received."
-);
+
+  );
+  
+try {
+  if (!activeConversationId) {
+    await createNexoraConversation(
+      (message || "Attachment chat").slice(0, 80)
+    );
+  }
+
+  await saveNexoraChatMessage(
+    "user",
+    message || "Please analyze my attachment."
+  );
+
+  await saveNexoraChatMessage("model", answerText);
+} catch (saveError) {
+  console.error("Could not save Nexora chat:", saveError);
+}
+  
 conversationHistory.push(
   {
     role: "user",
