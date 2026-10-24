@@ -66,7 +66,9 @@ module.exports = async function handler(req, res) {
             {
               parts: [
                 {
-                  text: "Transcribe the spoken audio exactly into written text. Preserve the language spoken, including Hausa or English. Return only the transcription, without explanations."
+                  
+text: "Transcribe the audio exactly in the original language spoken. Automatically identify the spoken language. Preserve its native writing system and script: use Arabic script for Arabic, Simplified or Traditional Chinese characters for Chinese as spoken, Cyrillic for Russian when spoken, and the appropriate native script for every other language. Do not translate, transliterate into Latin letters, or convert the speech into English. For Hausa, use standard Hausa Latin spelling. Return only the exact transcription, without explanations."
+                  
                 },
                 {
                   inline_data: {
