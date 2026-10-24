@@ -2188,8 +2188,9 @@ if (micButton) {
         resetMic();
 
         if (!blob.size) {
-          micButton.title = "No audio recorded. Try again.";
-          return;
+  micButton.title = "No audio recorded. Try again.";
+  alert("Nexora AI: Ba a samu sauti ba. Ka sake gwadawa.");
+  return;
         }
 
         if (blob.size > 3000000) {
@@ -2253,7 +2254,7 @@ if (micButton) {
         }
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(250);
       isListening = true;
       micButton.textContent = "🔴";
       micButton.title = "Recording... tap to stop";
