@@ -2226,9 +2226,7 @@ micButton.title = "Recording stopped. Processing audio...";
           
 const controller = new AbortController();
 
-const voiceTimeout = setTimeout(() => {
-  controller.abort();
-}, 90000);
+const voiceTimeout = null;
 
 let response;
 
