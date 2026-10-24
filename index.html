@@ -2139,13 +2139,13 @@ if (micButton) {
   };
 
   micButton.onclick = async () => {
-    if (
-      isListening &&
-      mediaRecorder &&
-      mediaRecorder.state === "recording"
-    ) {
-      mediaRecorder.stop();
-      return;
+    if (isListening && mediaRecorder) {
+  if (mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+    micButton.textContent = "⏳";
+    micButton.title = "Stopping recording...";
+  }
+  return;
     }
 
     try {
