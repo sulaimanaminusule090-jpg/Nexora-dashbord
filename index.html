@@ -2284,6 +2284,7 @@ const attachmentMenu = chatPage.querySelector(
 
   chatPage.querySelector("#nexoraChatNew").onclick = () => {
     messages.replaceChildren();
+    conversationHistory.length = 0;
     addChatMessage(
       "Welcome! Ask a new question in your preferred language.",
       false
