@@ -2162,31 +2162,32 @@ recognition.maxAlternatives = 1;
       }
     };
 
- 
-let finalTranscript = "";
+ let finalTranscript = "";
 
 recognition.onresult = (event) => {
   let interimTranscript = "";
 
-  for (
-    let i = event.resultIndex;
-    i < event.results.length;
-    i++
-  ) {
-    const text = event.results[i][0].transcript;
+  for (let i = event.resultIndex; i < event.results.length; i++) {
+    const text = event.results[i][0].transcript.trim();
 
     if (event.results[i].isFinal) {
       finalTranscript += text + " ";
     } else {
-      interimTranscript += text;
+      interimTranscript += text + " ";
     }
   }
 
-  input.value =
-    (finalTranscript + interimTranscript).trim();
+  const combined = (finalTranscript + interimTranscript).trim();
+  const words = combined.split(/\s+/);
+  const cleanedWords = words.filter((word, index) =>
+    index === 0 ||
+    word.toLowerCase() !== words[index - 1].toLowerCase()
+  );
 
+  input.value = cleanedWords.join(" ");
   input.focus();
 };
+
     
 
     
