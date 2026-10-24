@@ -2570,10 +2570,12 @@ speakButton.onclick = async () => {
 
     await audioPlayer.play();
   } catch (error) {
-    console.error("Listen error:", error);
-    alert(
-      "Nexora could not play the audio. Please try again."
-    );
+  console.error("Listen error:", error);
+  alert(
+    "Listen error: " +
+    (error.message || "Unknown error")
+  );
+  }
   } finally {
     speakButton.disabled = false;
     speakButton.textContent = "🔊 Listen";
