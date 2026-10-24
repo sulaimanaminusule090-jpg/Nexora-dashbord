@@ -50,22 +50,57 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const uploadResponse = await fetch(
+   
+    const uploadStartResponse = await fetch(
       "https://generativelanguage.googleapis.com/upload/v1beta/files",
       {
         method: "POST",
         headers: {
           "x-goog-api-key": apiKey,
-          "X-Goog-Upload-Protocol": "raw",
-          "X-Goog-Upload-Command": "upload, finalize",
+          "X-Goog-Upload-Protocol": "resumable",
+          "X-Goog-Upload-Command": "start",
+          "X-Goog-Upload-Header-Content-Length": String(audioBuffer.length),
           "X-Goog-Upload-Header-Content-Type": safeMimeType,
-          "Content-Type": safeMimeType
+          "Content-Type": "application/json"
         },
-        body: audioBuffer
+        body: JSON.stringify({
+          file: {
+            display_name: "nexora-voice-recording"
+          }
+        })
       }
     );
 
+    if (!uploadStartResponse.ok) {
+      const startError = await uploadStartResponse.json();
+      return res.status(502).json({
+        success: false,
+        error: startError.error?.message || "Could not start audio upload."
+      });
+    }
+
+    const uploadUrl =
+      uploadStartResponse.headers.get("x-goog-upload-url");
+
+    if (!uploadUrl) {
+      return res.status(502).json({
+        success: false,
+        error: "Google did not return an audio upload URL."
+      });
+    }
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "POST",
+      headers: {
+        "X-Goog-Upload-Offset": "0",
+        "X-Goog-Upload-Command": "upload, finalize",
+        "Content-Type": safeMimeType
+      },
+      body: audioBuffer
+    });
+
     const uploaded = await uploadResponse.json();
+    
 
     if (!uploadResponse.ok || !uploaded.file?.uri) {
       console.error("Audio upload failed:", uploaded);
