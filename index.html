@@ -2119,6 +2119,7 @@ if (micButton) {
 
   const resetMic = () => {
     isListening = false;
+    micButton.disabled = false;
     micButton.textContent = "🎙️";
     micButton.title = "Tap to speak to Nexora AI";
 
