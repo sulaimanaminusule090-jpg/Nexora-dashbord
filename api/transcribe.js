@@ -112,9 +112,12 @@ module.exports = async function handler(req, res) {
     }
 
     
+    
     let transcriptionResponse;
     let result;
+    let transcript = "";
 
+    // First, try the dedicated transcription model.
     for (let attempt = 1; attempt <= 3; attempt++) {
       transcriptionResponse = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/interactions",
@@ -145,14 +148,15 @@ module.exports = async function handler(req, res) {
 
       result = await transcriptionResponse.json();
 
-      if (transcriptionResponse.ok) break;
+      if (transcriptionResponse.ok) {
+        transcript = result.output_text?.trim() || "";
+        if (transcript) break;
+      }
 
       const temporaryError =
-        transcriptionResponse.status === 429 ||
-        transcriptionResponse.status === 500 ||
-        transcriptionResponse.status === 502 ||
-        transcriptionResponse.status === 503 ||
-        transcriptionResponse.status === 504;
+        [429, 500, 502, 503, 504].includes(
+          transcriptionResponse.status
+        );
 
       if (!temporaryError || attempt === 3) break;
 
@@ -161,23 +165,62 @@ module.exports = async function handler(req, res) {
       );
     }
 
-    if (!transcriptionResponse.ok) {
-      console.error("Transcription failed:", result);
+    // If transcription is unavailable, use Gemini Flash.
+    if (!transcript) {
+      const fallbackResponse = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: "Transcribe the spoken audio exactly into written text. Preserve the language spoken, including Hausa or English. Return only the transcription, without explanations."
+                  },
+                  {
+                    file_data: {
+                      mime_type: safeMimeType,
+                      file_uri: uploaded.file.uri
+                    }
+                  }
+                ]
+              }
+            ]
+          })
+        }
+      );
 
-      const status = transcriptionResponse.status;
-      const message = result.error?.message || "";
+      const fallbackResult = await fallbackResponse.json();
 
-      return res.status(502).json({
-        success: false,
-        error:
-          status === 503 || status === 429
-            ? "Gemini is busy. Please try recording again in a moment."
-            : message || "Transcription failed. Please try again."
-      });
+      if (fallbackResponse.ok) {
+        transcript =
+          fallbackResult.candidates?.[0]?.content?.parts
+            ?.map(part => part.text || "")
+            .join("")
+            .trim() || "";
+      }
+
+      if (!transcript) {
+        console.error("Both transcription methods failed:", {
+          primary: result,
+          fallback: fallbackResult
+        });
+
+        return res.status(502).json({
+          success: false,
+          error:
+            fallbackResult.error?.message ||
+            result?.error?.message ||
+            "Voice transcription is temporarily unavailable. Please try again."
+        });
+      }
     }
     
-
-    const transcript = result.output_text?.trim();
 
     if (!transcript) {
       return res.status(422).json({
