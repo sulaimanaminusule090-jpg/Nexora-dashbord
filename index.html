@@ -2203,7 +2203,19 @@ recognition.onresult = (event) => {
     };
 
     recognition.onend = () => {
-    resetMic();
+    if (isListening) {
+        setTimeout(() => {
+            if (isListening) {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.log("Voice restart:", error);
+                }
+            }
+        }, 300);
+    } else {
+        resetMic();
+    }
 };
   }
 }
