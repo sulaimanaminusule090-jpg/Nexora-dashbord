@@ -2219,16 +2219,31 @@ if (micButton) {
             reader.readAsDataURL(blob);
           });
 
-          const response = await fetch("/api/transcribe", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              audio: base64Audio,
-              mimeType: blob.type.split(";")[0] || "audio/webm"
-            })
-          });
+          
+const controller = new AbortController();
+
+const voiceTimeout = setTimeout(() => {
+  controller.abort();
+}, 20000);
+
+let response;
+
+try {
+  response = await fetch("/api/transcribe", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      audio: base64Audio,
+      mimeType: blob.type.split(";")[0] || "audio/webm"
+    }),
+    signal: controller.signal
+  });
+} finally {
+  clearTimeout(voiceTimeout);
+}
+          
 
           const result = await response.json();
 
