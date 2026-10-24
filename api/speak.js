@@ -26,7 +26,7 @@ module.exports = async function handler(req, res) {
     }
 
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/interactions",
       {
         method: "POST",
         headers: {
@@ -34,36 +34,49 @@ module.exports = async function handler(req, res) {
           "x-goog-api-key": apiKey
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text:
-                "Read this text aloud in its original language. Do not translate it: " +
-                text.trim().slice(0, 4000)
-            }]
-          }],
-          generationConfig: {
-            responseModalities: ["AUDIO"],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: "Kore"
+          model: "gemini-3.8-flash-lite-tts",
+          input: [
+            {
+              type: "user_input",
+              content: [
+                {
+                  type: "text",
+                  text: text.trim().slice(0, 4000),
+                  annotations: [
+                    {
+                      type: "speech_metadata",
+                      style: "Speak naturally and clearly in the original language. Do not translate."
+                    }
+                  ]
                 }
-              }
+              ]
             }
+          ],
+          response_format: {
+            type: "audio"
+          },
+          generation_config: {
+            speech_config: [
+              {
+                voice: "Kore"
+              }
+            ]
           }
         })
       }
     );
 
     const result = await response.json();
-    const parts =
-      result.candidates?.[0]?.content?.parts || [];
-    const audioPart =
-      parts.find(part => part.inlineData?.data);
+
+    const audioPart = (result.steps || [])
+      .filter(step => step.type === "model_output")
+      .flatMap(step => step.content || [])
+      .find(part => part.type === "audio" && part.data);
 
     if (!response.ok || !audioPart) {
       console.error("TTS error:", result);
-      return res.status(502).json({
+
+      return res.status(response.status === 429 ? 429 : 502).json({
         success: false,
         error:
           result.error?.message ||
@@ -71,41 +84,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const pcm = Buffer.from(
-      audioPart.inlineData.data,
-      "base64"
-    );
-
-    // Wrap the 24 kHz, 16-bit mono PCM audio in a WAV header.
-    const sampleRate = 24000;
-    const channels = 1;
-    const bitsPerSample = 16;
-    const wav = Buffer.alloc(44 + pcm.length);
-
-    wav.write("RIFF", 0);
-    wav.writeUInt32LE(36 + pcm.length, 4);
-    wav.write("WAVE", 8);
-    wav.write("fmt ", 12);
-    wav.writeUInt32LE(16, 16);
-    wav.writeUInt16LE(1, 20);
-    wav.writeUInt16LE(channels, 22);
-    wav.writeUInt32LE(sampleRate, 24);
-    wav.writeUInt32LE(
-      sampleRate * channels * bitsPerSample / 8,
-      28
-    );
-    wav.writeUInt16LE(
-      channels * bitsPerSample / 8,
-      32
-    );
-    wav.writeUInt16LE(bitsPerSample, 34);
-    wav.write("data", 36);
-    wav.writeUInt32LE(pcm.length, 40);
-    pcm.copy(wav, 44);
-
     return res.status(200).json({
       success: true,
-      audio: wav.toString("base64"),
+      audio: audioPart.data,
       mimeType: "audio/wav"
     });
   } catch (error) {
