@@ -33,7 +33,7 @@ if (attachment) {
     });
   }
 
-  if (attachment.data.length > 4_000_000) {
+  if (attachment.data.length > 4_200_000) {
     return res.status(413).json({
       success: false,
       error: "File is too large. Please use a smaller file."
