@@ -114,19 +114,35 @@ of the platform.`
   
             }]
           },
-          contents: [{
-            role: "user",
-            
-              parts: [
-  ...(message.trim() ? [{ text: message.trim() }] : []),
-  ...(attachment ? [{
-    inline_data: {
-      mime_type: attachment.mimeType,
-      data: attachment.data
-    }
-  }] : [])
-]
-          }],
+          contents: [
+  ...(Array.isArray(history)
+    ? history.slice(-12)
+        .filter(item =>
+          item &&
+          (item.role === "user" || item.role === "model") &&
+          typeof item.text === "string" &&
+          item.text.trim()
+        )
+        .map(item => ({
+          role: item.role,
+          parts: [{ text: item.text.trim().slice(0, 4000) }]
+        }))
+    : []),
+  {
+    role: "user",
+    parts: [
+      ...(typeof message === "string" && message.trim()
+        ? [{ text: message.trim() }]
+        : []),
+      ...(attachment ? [{
+        inline_data: {
+          mime_type: attachment.mimeType,
+          data: attachment.data
+        }
+      }] : [])
+    ]
+  }
+],
           generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 1024
