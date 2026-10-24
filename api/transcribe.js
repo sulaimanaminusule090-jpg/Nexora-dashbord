@@ -118,7 +118,7 @@ module.exports = async function handler(req, res) {
     let transcript = "";
 
     // First, try the dedicated transcription model.
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 1; attempt++) {
       transcriptionResponse = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/interactions",
         {
