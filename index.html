@@ -2224,27 +2224,19 @@ micButton.title = "Recording stopped. Processing audio...";
           });
 
           
-const controller = new AbortController();
-
-const voiceTimeout = null;
 
 let response;
 
-try {
-  response = await fetch("/api/transcribe", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      audio: base64Audio,
-      mimeType: blob.type.split(";")[0] || "audio/webm"
-    }),
-    signal: controller.signal
-  });
-} finally {
-  clearTimeout(voiceTimeout);
-}
+response = await fetch("/api/transcribe", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    audio: base64Audio,
+    mimeType: blob.type.split(";")[0] || "audio/webm"
+  })
+});
           
 
           const result = await response.json();
