@@ -2105,6 +2105,7 @@ function openNexoraChatPage() {
   const input = chatPage.querySelector("#nexoraChatInput");
   const form = chatPage.querySelector("#nexoraChatForm");
   const send = chatPage.querySelector("#nexoraChatSend");
+  const conversationHistory = [];
 // Nexora AI voice input
 const micButton = chatPage.querySelector("#nexoraChatMic");
 let stopNexoraVoice = () => {};
@@ -2375,9 +2376,10 @@ try {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      message: message || "Please analyze this attachment.",
-      attachment
-    })
+  message: message || "Please analyze this attachment.",
+  attachment,
+  history: conversationHistory
+})
   });
 
   const data = await response.json();
@@ -2389,7 +2391,23 @@ try {
   const answerText = String(
   data.answer || data.result || "No answer received."
 );
+conversationHistory.push(
+  {
+    role: "user",
+    text: message || "Please analyze my attachment."
+  },
+  {
+    role: "model",
+    text: answerText
+  }
+);
 
+if (conversationHistory.length > 12) {
+  conversationHistory.splice(
+    0,
+    conversationHistory.length - 12
+  );
+}
 reply.innerHTML = renderNexoraMarkdown(answerText);
 
 // Add a speak button to the AI response
