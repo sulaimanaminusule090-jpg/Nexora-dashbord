@@ -2184,6 +2184,9 @@ if (micButton) {
 };
 
       mediaRecorder.onstop = async () => {
+        micButton.disabled = false;
+micButton.textContent = "🎙️";
+micButton.title = "Recording stopped. Processing audio...";
         const blob = new Blob(audioChunks, {
           type: mediaRecorder.mimeType || "audio/webm"
         });
