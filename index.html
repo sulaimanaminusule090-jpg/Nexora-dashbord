@@ -2117,6 +2117,74 @@ function openNexoraChatPage() {
   const form = chatPage.querySelector("#nexoraChatForm");
   const send = chatPage.querySelector("#nexoraChatSend");
   const conversationHistory = [];
+  
+let activeConversationId = null;
+
+async function getNexoraChatUser() {
+  const { data: sessionData, error: sessionError } =
+    await supabaseClient.auth.getSession();
+
+  if (sessionError) throw sessionError;
+
+  let user = sessionData.session?.user;
+
+  if (!user) {
+    const { data, error } =
+      await supabaseClient.auth.signInAnonymously();
+
+    if (error) throw error;
+
+    user = data.user || data.session?.user;
+  }
+
+  if (!user?.id) {
+    throw new Error("Nexora AI user session is unavailable.");
+  }
+
+  return user;
+}
+
+async function createNexoraConversation(title) {
+  const user = await getNexoraChatUser();
+
+  const { data, error } = await supabaseClient
+    .from("ai_conversations")
+    .insert({
+      user_id: user.id,
+      title: (title || "New chat").slice(0, 80)
+    })
+    .select("id")
+    .single();
+
+  if (error) throw error;
+
+  activeConversationId = data.id;
+  return { id: data.id, userId: user.id };
+}
+
+async function saveNexoraChatMessage(role, content) {
+  if (!activeConversationId || !content) return;
+
+  const user = await getNexoraChatUser();
+
+  const { error } = await supabaseClient
+    .from("ai_messages")
+    .insert({
+      conversation_id: activeConversationId,
+      user_id: user.id,
+      role,
+      content
+    });
+
+  if (error) throw error;
+
+  await supabaseClient
+    .from("ai_conversations")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", activeConversationId)
+    .eq("user_id", user.id);
+}
+  
 // Nexora AI voice input
 const micButton = chatPage.querySelector("#nexoraChatMic");
 let stopNexoraVoice = () => {};
