@@ -2123,7 +2123,7 @@ if (micButton) {
     const recognition = new SpeechRecognition();
 recognition.continuous = false;
 recognition.interimResults = true;
-recognition.lang = "ha-NG";
+recognition.lang = navigator.language || "en-US";
 recognition.maxAlternatives = 1;
 
     let isListening = false;
