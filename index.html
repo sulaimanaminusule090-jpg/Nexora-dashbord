@@ -2260,9 +2260,10 @@ try {
           input.value = result.transcript;
           input.focus();
         } catch (error) {
-          console.error("Nexora transcription error:", error);
-          micButton.title = error.message ||
-            "Could not transcribe audio. Try again.";
+  console.error("Nexora transcription error:", error);
+  alert("Nexora Voice Error: " + (error.message || "Ba a iya rubuta muryar ba."));
+  micButton.title = error.message ||
+    "Could not transcribe audio. Try again.";
         } finally {
           micButton.disabled = false;
           micButton.textContent = "🎙️";
