@@ -2110,117 +2110,161 @@ function openNexoraChatPage() {
 const micButton = chatPage.querySelector("#nexoraChatMic");
 let stopNexoraVoice = () => {};
 
+
 if (micButton) {
-  const SpeechRecognition =
-    window.SpeechRecognition || window.webkitSpeechRecognition;
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let audioStream = null;
+  let isListening = false;
 
-  if (!SpeechRecognition) {
-    micButton.title = "Voice input is not supported in this browser";
-    micButton.onclick = () => {
-      alert("Voice input is not supported. Please try Chrome.");
-    };
-  } else {
-    const recognition = new SpeechRecognition();
-recognition.continuous = false;
-recognition.interimResults = true;
-recognition.lang = navigator.language || "en-US";
-recognition.maxAlternatives = 1;
+  const resetMic = () => {
+    isListening = false;
+    micButton.textContent = "🎙️";
+    micButton.title = "Tap to speak to Nexora AI";
 
-    let isListening = false;
-
-    const resetMic = () => {
-      isListening = false;
-      micButton.textContent = "🎙️";
-      micButton.title = "Tap to speak to Nexora AI";
-    };
-
-    stopNexoraVoice = () => {
-      if (isListening) {
-        try {
-          recognition.stop();
-        } catch (error) {
-          console.log("Voice stop:", error);
-        }
-      }
-      resetMic();
-    };
-
-    micButton.onclick = () => {
-      if (isListening) {
-        stopNexoraVoice();
-        return;
-      }
-
-      try {
-        finalTranscript = "";
-input.value = "";
-        recognition.start();
-        isListening = true;
-        micButton.textContent = "🔴";
-        micButton.title = "Listening... tap to stop";
-      } catch (error) {
-        console.error("Voice start error:", error);
-        resetMic();
-      }
-    };
-
- let finalTranscript = "";
-
-recognition.onresult = (event) => {
-  let interimTranscript = "";
-
-  for (let i = event.resultIndex; i < event.results.length; i++) {
-    const text = event.results[i][0].transcript.trim();
-
-    if (event.results[i].isFinal) {
-      finalTranscript += text + " ";
-    } else {
-      interimTranscript += text + " ";
+    if (audioStream) {
+      audioStream.getTracks().forEach(track => track.stop());
+      audioStream = null;
     }
-  }
+  };
 
-  const combined = (finalTranscript + interimTranscript).trim();
-  const words = combined.split(/\s+/);
-  const cleanedWords = words.filter((word, index) =>
-    index === 0 ||
-    word.toLowerCase() !== words[index - 1].toLowerCase()
-  );
+  stopNexoraVoice = () => {
+    if (
+      mediaRecorder &&
+      mediaRecorder.state === "recording"
+    ) {
+      mediaRecorder.stop();
+    }
+  };
 
-  input.value = cleanedWords.join(" ");
-  input.focus();
-};
+  micButton.onclick = async () => {
+    if (
+      isListening &&
+      mediaRecorder &&
+      mediaRecorder.state === "recording"
+    ) {
+      mediaRecorder.stop();
+      return;
+    }
 
-    
-
-    
-
-    recognition.onerror = (event) => {
-      console.error("Voice recognition error:", event.error);
-      if (
-  event.error === "not-allowed" ||
-  event.error === "service-not-allowed" ||
-  event.error === "audio-capture"
-) {
-  resetMic();
+    try {
+      if (!navigator.mediaDevices?.getUserMedia ||
+          !window.MediaRecorder) {
+        throw new Error(
+          "Audio recording is not supported in this browser."
+        );
       }
 
-      if (
-        event.error === "not-allowed" ||
-        event.error === "service-not-allowed"
-      ) {
-        micButton.title = "Allow microphone access in Chrome settings";
-      } else if (event.error === "no-speech") {
-        micButton.title = "No speech detected. Tap to try again.";
-      } else {
-        micButton.title = "Voice error: " + event.error;
-      }
-    };
+      audioStream = await navigator.mediaDevices.getUserMedia({
+        audio: true
+      });
 
-    recognition.onend = () => {
-  resetMic();
-};
-  }
+      let mimeType = "audio/webm";
+
+      if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        mimeType = "audio/webm;codecs=opus";
+      } else if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        mimeType = "audio/mp4";
+      }
+
+      mediaRecorder = new MediaRecorder(audioStream, {
+        mimeType
+      });
+
+      audioChunks = [];
+      input.value = "";
+
+      mediaRecorder.ondataavailable = event => {
+        if (event.data && event.data.size > 0) {
+          audioChunks.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunks, {
+          type: mediaRecorder.mimeType || "audio/webm"
+        });
+
+        resetMic();
+
+        if (!blob.size) {
+          micButton.title = "No audio recorded. Try again.";
+          return;
+        }
+
+        if (blob.size > 3000000) {
+          micButton.title = "Recording too long. Please try again.";
+          return;
+        }
+
+        micButton.disabled = true;
+        micButton.title = "Transcribing audio...";
+
+        try {
+          const reader = new FileReader();
+
+          const base64Audio = await new Promise((resolve, reject) => {
+            reader.onload = () => {
+              const dataUrl = reader.result;
+              resolve(dataUrl.split(",")[1]);
+            };
+
+            reader.onerror = () => {
+              reject(new Error("Could not read audio."));
+            };
+
+            reader.readAsDataURL(blob);
+          });
+
+          const response = await fetch("/api/transcribe", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              audio: base64Audio,
+              mimeType: blob.type.split(";")[0] || "audio/webm"
+            })
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.error || "Transcription failed."
+            );
+          }
+
+          input.value = result.transcript;
+          input.focus();
+        } catch (error) {
+          console.error("Nexora transcription error:", error);
+          micButton.title = error.message ||
+            "Could not transcribe audio. Try again.";
+        } finally {
+          micButton.disabled = false;
+          micButton.textContent = "🎙️";
+          if (isListening) isListening = false;
+          if (!micButton.title.includes("Could not") &&
+              !micButton.title.includes("failed") &&
+              !micButton.title.includes("too long")) {
+            micButton.title = "Tap to speak to Nexora AI";
+          }
+        }
+      };
+
+      mediaRecorder.start();
+      isListening = true;
+      micButton.textContent = "🔴";
+      micButton.title = "Recording... tap to stop";
+    } catch (error) {
+      console.error("Nexora microphone error:", error);
+      resetMic();
+      micButton.title = error.message || "Microphone could not start.";
+    }
+  };
 }
+  
 const attachmentFileName = chatPage.querySelector(
   "#nexoraChatFileName"
 );
