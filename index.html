@@ -2121,7 +2121,7 @@ if (micButton) {
     };
   } else {
     const recognition = new SpeechRecognition();
-recognition.continuous = true;
+recognition.continuous = false;
 recognition.interimResults = true;
 recognition.lang = navigator.language || "en-US";
 recognition.maxAlternatives = 1;
@@ -2152,6 +2152,8 @@ recognition.maxAlternatives = 1;
       }
 
       try {
+        finalTranscript = "";
+input.value = "";
         recognition.start();
         isListening = true;
         micButton.textContent = "🔴";
@@ -2215,19 +2217,7 @@ recognition.onresult = (event) => {
     };
 
     recognition.onend = () => {
-    if (isListening) {
-        setTimeout(() => {
-            if (isListening) {
-                try {
-                    recognition.start();
-                } catch (error) {
-                    console.log("Voice restart:", error);
-                }
-            }
-        }, 300);
-    } else {
-        resetMic();
-    }
+  resetMic();
 };
   }
 }
