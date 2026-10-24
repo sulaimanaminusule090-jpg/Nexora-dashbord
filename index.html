@@ -2501,41 +2501,85 @@ speakButton.style.cssText = `
   cursor:pointer;
 `;
 
-speakButton.onclick = () => {
-  if (!("speechSynthesis" in window)) {
-    alert("Voice output is not supported in this browser.");
+
+speakButton.onclick = async () => {
+  // Use native speech when the browser supports it.
+  if ("speechSynthesis" in window &&
+      typeof SpeechSynthesisUtterance !== "undefined") {
+    window.speechSynthesis.cancel();
+
+    const utterance =
+      new SpeechSynthesisUtterance(answerText);
+
+    const isHausa =
+      /\b(sannu|wannan|akwai|amma|domin|saboda|yanzu|idan|kuma|yana|kina|kana|muna|suna|haka|gaskiya|na gode)\b/i
+        .test(answerText);
+
+    utterance.lang = isHausa
+      ? "ha-NG"
+      : (navigator.language || "en-US");
+
+    window.speechSynthesis.speak(utterance);
     return;
   }
 
-  window.speechSynthesis.cancel();
+  // Fall back to server-generated audio in unsupported browsers.
+  speakButton.disabled = true;
+  speakButton.textContent = "⏳ Preparing audio...";
 
-  const utterance = new SpeechSynthesisUtterance(answerText);
+  try {
+    const response = await fetch("/api/speak", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: answerText
+      })
+    });
 
-  // Detect common Hausa words; otherwise use the device language.
-  const isHausa =
-    /\b(sannu|wannan|akwai|amma|domin|saboda|yanzu|idan|kuma|yana|kina|kana|muna|suna|za ka|za a|wato|yaya|haka|bayan|cikin|tare|gaskiya|na gode)\b/i
-      .test(answerText);
+    const result = await response.json();
 
-  utterance.lang = isHausa
-    ? "ha-NG"
-    : (navigator.language || "en-US");
+    if (!response.ok || !result.success || !result.audio) {
+      throw new Error(
+        result.error || "Could not generate speech."
+      );
+    }
 
-  const voices = window.speechSynthesis.getVoices();
+    const binary = atob(result.audio);
+    const bytes = new Uint8Array(binary.length);
 
-  const matchingVoice = voices.find(voice =>
-    voice.lang.toLowerCase() === utterance.lang.toLowerCase()
-  ) || voices.find(voice =>
-    voice.lang.toLowerCase().startsWith(
-      utterance.lang.split("-")[0].toLowerCase()
-    )
-  );
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
 
-  if (matchingVoice) {
-    utterance.voice = matchingVoice;
+    const audioBlob = new Blob([bytes], {
+      type: "audio/wav"
+    });
+
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audioPlayer = new Audio(audioUrl);
+
+    audioPlayer.onended = () => {
+      URL.revokeObjectURL(audioUrl);
+    };
+
+    audioPlayer.onerror = () => {
+      URL.revokeObjectURL(audioUrl);
+    };
+
+    await audioPlayer.play();
+  } catch (error) {
+    console.error("Listen error:", error);
+    alert(
+      "Nexora could not play the audio. Please try again."
+    );
+  } finally {
+    speakButton.disabled = false;
+    speakButton.textContent = "🔊 Listen";
   }
-
-  window.speechSynthesis.speak(utterance);
 };
+  
 
 reply.appendChild(speakButton);
 } catch (error) {
