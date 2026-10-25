@@ -2657,16 +2657,19 @@ generatedImage.addEventListener("click", () => {
   fullImage.style.cssText =
     "max-width:100%;max-height:80vh;object-fit:contain;";
 
-  const downloadButton = document.createElement("a");
-  downloadButton.href = imageData.image;
-  downloadButton.download = "nexora-ai-image.png";
+  
+  const downloadButton = document.createElement("button");
+  downloadButton.type = "button";
   downloadButton.textContent = "⬇️ Save Image";
   downloadButton.style.cssText =
     "display:block;margin:12px;padding:12px 20px;" +
-    "border-radius:12px;background:#6d28d9;color:white;" +
-    "font-size:16px;font-weight:600;text-decoration:none;";
+    "border:0;border-radius:12px;background:#6d28d9;color:white;" +
+    "font-size:16px;font-weight:600;cursor:pointer;";
 
-  imageViewer.appendChild(downloadButton);
+  downloadButton.onclick = () => {
+    window.open(imageData.image, "_blank");
+  };
+  
   
   closeButton.onclick = () => imageViewer.remove();
   imageViewer.onclick = (event) => {
@@ -2681,16 +2684,7 @@ generatedImage.addEventListener("click", () => {
         
         
         
-        const saveImageButton = document.createElement("a");
-        saveImageButton.href = imageData.image;
-        saveImageButton.target = "_blank";
-        saveImageButton.rel = "noopener";
-        saveImageButton.textContent = "⬇️ Open / Save Image";
-        saveImageButton.style.cssText =
-          "display:inline-block;margin-top:12px;padding:10px 16px;" +
-          "border-radius:10px;background:#6d28d9;color:#ffffff;" +
-          "font-weight:600;text-decoration:none;cursor:pointer;";
-        reply.appendChild(saveImageButton);
+        
         
         
 
