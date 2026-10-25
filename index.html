@@ -2666,9 +2666,29 @@ generatedImage.addEventListener("click", () => {
     "border:0;border-radius:12px;background:#6d28d9;color:white;" +
     "font-size:16px;font-weight:600;cursor:pointer;";
 
-  downloadButton.onclick = () => {
+  
+downloadButton.onclick = async () => {
+  try {
+    const response = await fetch(imageData.image);
+    const blob = await response.blob();
+    const imageUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.download = "nexora-ai-image.png";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => {
+      URL.revokeObjectURL(imageUrl);
+    }, 2000);
+  } catch (error) {
     window.open(imageData.image, "_blank");
-  };
+  }
+};
+  
   
   
   closeButton.onclick = () => imageViewer.remove();
