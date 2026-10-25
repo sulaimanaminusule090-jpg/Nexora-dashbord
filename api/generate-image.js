@@ -24,86 +24,90 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+    const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
 
-    if (!apiKey) {
+    if (!apiToken || !accountId) {
       return res.status(500).json({
         success: false,
-        error: "Image generation is not configured."
+        error: "Cloudflare image generation is not configured."
       });
     }
 
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-image:generateContent",
+      `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
+          "Authorization": `Bearer ${apiToken}`,
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: "Generate an image based on this request: " +
-                prompt.trim()
-            }]
-          }],
-          generationConfig: {
-            responseModalities: ["TEXT", "IMAGE"]
-          }
+          prompt: prompt.trim()
         })
       }
     );
 
-    const data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
 
-    
     if (!response.ok) {
+      const errorText = await response.text();
+
       console.error(
-        "Image API error:",
+        "Cloudflare image API error:",
         response.status,
-        data?.error?.message
+        errorText
       );
 
       return res.status(502).json({
         success: false,
-        error:
-          "Gemini API error (" +
-          response.status +
-          "): " +
-          (data?.error?.message || "Unknown error")
+        error: `Cloudflare image API error (${response.status}). Check the Vercel logs.`
       });
     }
-    
 
-    const parts = data.candidates?.[0]?.content?.parts || [];
-    const imagePart = parts.find(
-      part => part.inlineData?.data
-    );
+    let imageBuffer;
+    let mimeType = "image/png";
 
-    if (!imagePart) {
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+
+      const imageData = data?.result?.image;
+
+      if (!data.success || !imageData) {
+        console.error("Cloudflare returned no image.");
+        return res.status(502).json({
+          success: false,
+          error: "No image was returned. Please try again."
+        });
+      }
+
+      imageBuffer = Buffer.from(imageData, "base64");
+    } else {
+      imageBuffer = Buffer.from(await response.arrayBuffer());
+
+      if (contentType.startsWith("image/")) {
+        mimeType = contentType.split(";")[0];
+      }
+    }
+
+    if (!imageBuffer || imageBuffer.length === 0) {
       return res.status(502).json({
         success: false,
-        error: "No image was returned. Please try another prompt."
+        error: "The generated image was empty."
       });
     }
 
     return res.status(200).json({
       success: true,
-      image: "data:" +
-        imagePart.inlineData.mimeType +
-        ";base64," +
-        imagePart.inlineData.data,
-      message: parts
-        .filter(part => part.text)
-        .map(part => part.text)
-        .join("\n")
+      image: `data:${mimeType};base64,${imageBuffer.toString("base64")}`,
+      message: "Image generated successfully."
     });
   } catch (error) {
     console.error("Nexora image generation error:", error);
+
     return res.status(500).json({
       success: false,
-      error: "An unexpected error occurred."
+      error: "An unexpected error occurred while generating the image."
     });
   }
 };
