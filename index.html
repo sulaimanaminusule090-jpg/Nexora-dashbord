@@ -2635,6 +2635,18 @@ try {
           "height:auto;border-radius:14px;margin-top:8px;";
 
         reply.appendChild(generatedImage);
+        
+        const saveImageButton = document.createElement("a");
+        saveImageButton.href = imageData.image;
+        saveImageButton.download = "nexora-ai-image.png";
+        saveImageButton.textContent = "⬇️ Save Image";
+        saveImageButton.setAttribute("aria-label", "Save generated image");
+        saveImageButton.style.cssText =
+          "display:inline-block;margin-top:12px;padding:10px 16px;" +
+          "border-radius:10px;background:#6d28d9;color:#ffffff;" +
+          "font-weight:600;text-decoration:none;cursor:pointer;";
+        reply.appendChild(saveImageButton);
+        
 
         const caption = document.createElement("p");
         caption.textContent =
