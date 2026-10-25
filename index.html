@@ -2604,7 +2604,7 @@ try {
   
       // Detect requests to generate an image.
       const wantsImage =
-  /(?:create|generate|draw|make|design).{0,100}(?:image|picture|photo|hoto|3d|realistic|cinematic|digital art|illustration|logo|poster|wallpaper|portrait|landscape)|(?:ƙirƙira|kirkira|zana|yi).{0,40}hoto|hoto.{0,30}(?:ƙirƙira|kirkira|zana)/i.test(message);
+  /(?:create|generate|draw|make|design|show me|produce|ƙirƙira|kirkira|zana|yi).{0,120}(?:image|picture|photo|hoto|3d|realistic|cinematic|digital art|illustration|logo|poster|wallpaper|portrait|landscape|zaki|lion)|(?:image|picture|photo|hoto|zaki|lion|3d|logo|poster|wallpaper).{0,80}(?:create|generate|draw|make|design|ƙirƙira|kirkira|zana|yi)/i.test(message);
 
       if (wantsImage) {
         const imageResponse = await fetch("/api/generate-image", {
