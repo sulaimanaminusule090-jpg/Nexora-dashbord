@@ -57,13 +57,24 @@ module.exports = async function handler(req, res) {
 
     const data = await response.json();
 
+    
     if (!response.ok) {
-      console.error("Image API error:", data?.error?.message);
+      console.error(
+        "Image API error:",
+        response.status,
+        data?.error?.message
+      );
+
       return res.status(502).json({
         success: false,
-        error: "Could not generate the image. Please try again."
+        error:
+          "Gemini API error (" +
+          response.status +
+          "): " +
+          (data?.error?.message || "Unknown error")
       });
     }
+    
 
     const parts = data.candidates?.[0]?.content?.parts || [];
     const imagePart = parts.find(
