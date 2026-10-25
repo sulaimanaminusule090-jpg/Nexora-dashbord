@@ -2636,6 +2636,50 @@ try {
 
         reply.appendChild(generatedImage);
         
+generatedImage.style.cursor = "zoom-in";
+generatedImage.addEventListener("click", () => {
+  const imageViewer = document.createElement("div");
+  imageViewer.style.cssText =
+    "position:fixed;inset:0;z-index:99999;" +
+    "background:rgba(0,0,0,0.96);display:flex;" +
+    "flex-direction:column;align-items:center;" +
+    "justify-content:center;padding:16px;";
+
+  const closeButton = document.createElement("button");
+  closeButton.textContent = "✕ Close";
+  closeButton.style.cssText =
+    "position:absolute;top:20px;right:20px;" +
+    "padding:12px 18px;border:0;border-radius:24px;" +
+    "background:#333;color:white;font-size:16px;";
+
+  const fullImage = document.createElement("img");
+  fullImage.src = imageData.image;
+  fullImage.style.cssText =
+    "max-width:100%;max-height:80vh;object-fit:contain;";
+
+  const downloadButton = document.createElement("a");
+  downloadButton.href = imageData.image;
+  downloadButton.download = "nexora-ai-image.png";
+  downloadButton.textContent = "⬇️ Save Image";
+  downloadButton.style.cssText =
+    "display:block;margin:12px;padding:12px 20px;" +
+    "border-radius:12px;background:#6d28d9;color:white;" +
+    "font-size:16px;font-weight:600;text-decoration:none;";
+
+  imageViewer.appendChild(downloadButton);
+  
+  closeButton.onclick = () => imageViewer.remove();
+  imageViewer.onclick = (event) => {
+    if (event.target === imageViewer) imageViewer.remove();
+  };
+
+  imageViewer.appendChild(closeButton);
+  imageViewer.appendChild(fullImage);
+  imageViewer.appendChild(downloadButton);
+  document.body.appendChild(imageViewer);
+});
+        
+        
         
         const saveImageButton = document.createElement("a");
         saveImageButton.href = imageData.image;
