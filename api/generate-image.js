@@ -91,6 +91,22 @@ try {
   console.error("Gemini translation timed out or failed:", error.message);
 }
     
+  
+const originalRequest = prompt.trim().toLowerCase();
+
+if (/\b(yaro|yaran|yarinya|yarinya|child|kid|boy|girl)\b/i.test(originalRequest)) {
+  imagePrompt +=
+    ". IMPORTANT: The main subject must be a young child, approximately 6 to 8 years old, " +
+    "with clearly childlike facial features and body proportions. " +
+    "Do not depict an adult, teenager, or elderly person. " +
+    "The child must be the main subject of the image.";
+}
+
+if (/\b(tsoho|dattijo|dattuwa|elderly|old man|old woman)\b/i.test(originalRequest)) {
+  imagePrompt +=
+    ". The main subject must be an elderly person, with visibly aged facial features. " +
+    "Do not depict a child or young adult.";
+}
     
     
     const response = await fetch(
