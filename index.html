@@ -2674,20 +2674,13 @@ downloadButton.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopPropagation();
 
-  const imageTab = window.open();
-  if (imageTab) {
-    imageTab.document.write(
-      '<!DOCTYPE html><html><head><title>Save Nexora Image</title></head>' +
-      '<body style="margin:0;background:#111;display:flex;' +
-      'justify-content:center;align-items:center;min-height:100vh">' +
-      '<img src="' + imageData.image +
-      '" style="max-width:100%;height:auto" />' +
-      '</body></html>'
-    );
-    imageTab.document.close();
-  } else {
+  
+  const imageTab = window.open(imageData.image, "_blank");
+
+  if (!imageTab) {
     alert("Allow pop-ups for this website, then try again.");
   }
+  
 });
   
   
