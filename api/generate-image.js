@@ -34,62 +34,56 @@ const geminiApiKey = process.env.GEMINI_API_KEY;
       });
     }
 
-const translationResponse = await fetch(
-  
-
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiApiKey}`,
-  
-    
-  
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      contents: [{
-        parts: [{
-          text:
-            "Convert the user's request into a clear English prompt for an image generator. " +
-            "Preserve the exact subject, number of people or objects, action, clothing, setting, and style. " +
-            "Do not answer the user. Return only the image prompt in English. " +
-            "User request: " + prompt.trim()
-        }]
-      }],
-      generationConfig: {
-        temperature: 0.2
-      }
-    })
-  }
-);
-
-
 
 let imagePrompt = prompt.trim();
 
-if (translationResponse.ok) {
-  const translationData = await translationResponse.json();
-
-  const translatedPrompt =
-    translationData.candidates?.[0]?.content?.parts
-      ?.map(part => part.text || "")
-      .join("")
-      .trim();
-
-  if (translatedPrompt) {
-    imagePrompt = translatedPrompt;
-  }
-} else {
-  const geminiError = await translationResponse.text();
-
-  console.error(
-    "Gemini prompt translation failed:",
-    translationResponse.status,
-    geminiError
+try {
+  const translationResponse = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiApiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      signal: AbortSignal.timeout(12000),
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text:
+              "Translate the user's image request into a clear English image prompt. " +
+              "Preserve the exact subject, number of people or objects, clothing, action, setting, and style. " +
+              "Return only the image prompt. User request: " + prompt.trim()
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.2
+        }
+      })
+    }
   );
 
-  // Continue with the original prompt if Gemini is unavailable.
+  if (translationResponse.ok) {
+    const translationData = await translationResponse.json();
+
+    const translatedPrompt =
+      translationData.candidates?.[0]?.content?.parts
+        ?.map(part => part.text || "")
+        .join("")
+        .trim();
+
+    if (translatedPrompt) {
+      imagePrompt = translatedPrompt;
+    }
+  } else {
+    console.error(
+      "Gemini translation unavailable:",
+      translationResponse.status
+    );
+  }
+} catch (error) {
+  console.error("Gemini translation timed out or failed:", error.message);
 }
+    
     
     
     const response = await fetch(
