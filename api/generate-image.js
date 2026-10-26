@@ -94,6 +94,22 @@ try {
   
 const originalRequest = prompt.trim().toLowerCase();
 
+if (/\b(akuya|awaki|goat|goats)\b/i.test(originalRequest)) {
+  imagePrompt =
+    "A realistic photograph of a GOAT, the animal, with four legs, " +
+    "two visible horns, goat ears, and a goat face. The goat is the main " +
+    "subject and clearly recognizable as a goat. Do not show any human, " +
+    "person, sheep, or other animal. " +
+    "Additional user request: " + prompt.trim();
+}
+
+if (/kayan hausawa|kayan hausa|hausa traditional clothes|traditional hausa attire/i.test(originalRequest)) {
+  imagePrompt +=
+    ". The child must wear authentic traditional Hausa clothing, " +
+    "including a Hausa babban riga or kaftan and a matching Hausa cap. " +
+    "The clothing must be clearly visible and culturally recognizable.";
+}
+    
 if (/\b(yaro|yaran|yarinya|yarinya|child|kid|boy|girl)\b/i.test(originalRequest)) {
   imagePrompt +=
     ". IMPORTANT: The main subject must be a young child, approximately 6 to 8 years old, " +
