@@ -50,9 +50,16 @@ try {
         contents: [{
           parts: [{
             text:
-              "Translate the user's image request into a clear English image prompt. " +
-              "Preserve the exact subject, number of people or objects, clothing, action, setting, and style. " +
-              "Return only the image prompt. User request: " + prompt.trim()
+              
+
+  "Translate the user's image request into a precise English prompt for an image generator. " +
+  "The exact main subject requested by the user is mandatory. " +
+  "A child means a child, never an adult. An elderly person means an elderly person. " +
+  "A woman means a woman. Never replace the requested subject with a different person or object. " +
+  "Preserve the requested number of people, clothing, action, setting, and style. " +
+  "Do not add unrelated objects or events. Return only the final English image prompt. " +
+  "User request: " + prompt.trim()
+            
           }]
         }],
         generationConfig: {
