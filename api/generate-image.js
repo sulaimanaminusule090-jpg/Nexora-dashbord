@@ -132,6 +132,15 @@ if (/\b(tsohuwa|dattuwa|tsohuwar mace|elderly woman|old woman|old lady)\b/i.test
 }
     
     
+if (/\b(gida|gidaje|house|houses|home|homes)\b/i.test(originalRequest)) {
+    imagePrompt =
+        "A realistic photograph of a house building as the main subject. " +
+        "Show the complete house clearly, including its walls, roof, doors, and windows. " +
+        "Do not show any person as the main subject. " +
+        "Do not replace the house with an unrelated object. " +
+        "User's additional request: " + prompt.trim();
+}
+    
     
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
