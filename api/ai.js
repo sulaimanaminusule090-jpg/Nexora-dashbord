@@ -169,8 +169,7 @@ generationConfig: {
 
       return res.status(502).json({
         success: false,
-        error:
-          "Nexora AI could not generate a response. Please try again later."
+        error: `Gemini API error (${response.status}): ${data?.error?.message || "Unknown error"}`
       });
     }
 
