@@ -92,56 +92,77 @@ try {
 }
     
   
-const originalRequest = prompt.trim().toLowerCase();
+const imageRequest = prompt.trim();
 
-if (/\b(akuya|awaki|goat|goats)\b/i.test(originalRequest)) {
-  imagePrompt =
-    "A realistic photograph of a GOAT, the animal, with four legs, " +
-    "two visible horns, goat ears, and a goat face. The goat is the main " +
-    "subject and clearly recognizable as a goat. Do not show any human, " +
-    "person, sheep, or other animal. " +
-    "Additional user request: " + prompt.trim();
-}
+let imagePrompt = imageRequest;
 
-if (/(kayan hausawa|kayan hausa|hausa traditional clothes|traditional hausa attire|babbar riga|rigar hausa|hular hausa|hula da babbar riga|kaftan|dan kwali)/i.test(originalRequest)) {
-  imagePrompt +=
-    ". The child must wear authentic traditional Hausa clothing, " +
-    "including a Hausa babban riga or kaftan and a matching Hausa cap. " +
-    "The clothing must be clearly visible and culturally recognizable.";
-}
-    
-if (/\b(yaro|yaran|yarinya|yarinya|child|kid|boy|girl)\b/i.test(originalRequest)) {
-  imagePrompt +=
-    ". IMPORTANT: The main subject must be a young child, approximately 6 to 8 years old, " +
-    "with clearly childlike facial features and body proportions. " +
-    "Do not depict an adult, teenager, or elderly person. " +
-    "The child must be the main subject of the image.";
-}
+try {
+  const translationResponse = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiApiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      signal: AbortSignal.timeout(20000),
+      body: JSON.stringify({
+        systemInstruction: {
+          parts: [{
+            text:
+              "You are Nexora AI's professional image-prompt understanding engine. " +
+              "Understand image requests written in Hausa, English, and other languages. " +
+              "Convert the user's request into a detailed, accurate English prompt for an image-generation model. " +
+              "Preserve the exact subject, age, gender, number of people or animals, clothing, colors, " +
+              "facial features, pose, action, objects, environment, background, lighting, camera angle, " +
+              "composition, and artistic style requested by the user. " +
+              "Never substitute the requested subject with a different person, animal, building, or object. " +
+              "Do not invent unrelated subjects or ignore specific instructions. " +
+              "Respect requested quantities, including unusual numbers of visible features. " +
+              "For traditional Hausa clothing, accurately describe the requested babban riga, kaftan, cap, " +
+              "and other specified garments. " +
+              "For a child, depict a child; for an elderly man or woman, preserve the requested age and gender. " +
+              "If the user requests a photograph, use photographic realism. If the user requests a drawing, " +
+              "illustration, cartoon, or another style, follow that style instead. " +
+              "Return only the final image prompt in English, without explanations."
+          }]
+        },
+        contents: [{
+          role: "user",
+          parts: [{
+            text: imageRequest
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.1
+        }
+      })
+    }
+  );
 
+  if (!translationResponse.ok) {
+    console.error(
+      "Gemini prompt processing failed:",
+      translationResponse.status
+    );
+  } else {
+    const translationData = await translationResponse.json();
 
-if (/\b(tsohuwa|dattuwa|tsohuwar mace|elderly woman|old woman|old lady)\b/i.test(originalRequest)) {
-    imagePrompt +=
-        ". The main subject MUST be an elderly WOMAN, clearly female, " +
-        "with visibly aged facial features, realistic wrinkles, and an elderly woman's appearance. " +
-        "Do NOT depict a man, elderly man, child, or young adult.";
-} else if (/\b(tsoho|dattijo|dattijon|tsohon mutum|tsohon namiji|elderly man|old man|old male)\b/i.test(originalRequest)) {
-    imagePrompt +=
-        ". The main subject MUST be an elderly MAN, clearly male, " +
-        "with visibly aged facial features and an elderly man's appearance. " +
-        "Do NOT depict a woman, elderly woman, child, or young adult.";
+    const translatedPrompt =
+      translationData.candidates?.[0]?.content?.parts
+        ?.map(part => part.text || "")
+        .join("")
+        .trim();
+
+    if (translatedPrompt) {
+      imagePrompt = translatedPrompt;
+    }
+  }
+} catch (error) {
+  console.error(
+    "Nexora image prompt processing failed:",
+    error.message
+  );
 }
-    
-    
-if (/\b(gida|gidaje|house|houses|home|homes)\b/i.test(originalRequest)) {
-    imagePrompt =
-        "A realistic photograph of a house building as the main subject. " +
-        "Show the complete house clearly, including its walls, roof, doors, and windows. " +
-        "Do not show any person as the main subject. " +
-        "Do not replace the house with an unrelated object. " +
-        "User's additional request: " + prompt.trim();
-}
-    
-    
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
       {
