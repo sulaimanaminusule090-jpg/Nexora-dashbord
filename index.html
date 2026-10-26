@@ -2674,17 +2674,34 @@ generatedImage.addEventListener("click", () => {
 
 
 
-downloadButton.addEventListener("click", (event) => {
+
+downloadButton.addEventListener("click", async (event) => {
   event.preventDefault();
   event.stopPropagation();
 
-  const link = document.createElement("a");
-  link.href = imageData.image;
-  link.download = "nexora-ai-image.png";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  try {
+    const response = await fetch(imageData.image);
+    const blob = await response.blob();
+    const imageUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.download = "nexora-ai-image.png";
+    link.style.display = "none";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => {
+      URL.revokeObjectURL(imageUrl);
+    }, 30000);
+  } catch (error) {
+    console.error("Save image error:", error);
+    alert("Could not save the image. Please try opening it and saving from your browser.");
+  }
 });
+  
   
   
   
