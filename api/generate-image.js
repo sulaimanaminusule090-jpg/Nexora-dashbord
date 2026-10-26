@@ -43,13 +43,15 @@ module.exports = async function handler(req, res) {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-  prompt:
-    "Follow the user's image request exactly. " +
-    "The main subject must match the requested subject. " +
-    "Do not replace the requested subject with a person or another object. " +
-    "Create only what the user describes. " +
-    "Image request: " + prompt.trim(),
-  steps: 8
+  
+prompt:
+  "Create an image that matches this user request as closely as possible. " +
+  "Identify the exact main subject, action, setting, and requested style. " +
+  "Do not substitute a different subject. " +
+  "If the request is in Hausa, interpret it as a Hausa image request. " +
+  "User's exact image request: " + prompt.trim(),
+steps: 8
+          
 })
       }
     );
