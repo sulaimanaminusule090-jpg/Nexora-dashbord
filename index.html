@@ -2673,18 +2673,19 @@ generatedImage.addEventListener("click", () => {
 
 
 
+
 downloadButton.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopPropagation();
 
-  
-  const imageTab = window.open(imageData.image, "_blank");
-
-  if (!imageTab) {
-    alert("Allow pop-ups for this website, then try again.");
-  }
-  
+  const link = document.createElement("a");
+  link.href = imageData.image;
+  link.download = "nexora-ai-image.png";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 });
+  
   
   
   
