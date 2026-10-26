@@ -103,7 +103,7 @@ if (/\b(akuya|awaki|goat|goats)\b/i.test(originalRequest)) {
     "Additional user request: " + prompt.trim();
 }
 
-if (/kayan hausawa|kayan hausa|hausa traditional clothes|traditional hausa attire/i.test(originalRequest)) {
+if (/(kayan hausawa|kayan hausa|hausa traditional clothes|traditional hausa attire|babbar riga|rigar hausa|hular hausa|hula da babbar riga|kaftan|dan kwali)/i.test(originalRequest)) {
   imagePrompt +=
     ". The child must wear authentic traditional Hausa clothing, " +
     "including a Hausa babban riga or kaftan and a matching Hausa cap. " +
