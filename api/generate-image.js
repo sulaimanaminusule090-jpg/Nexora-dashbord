@@ -64,7 +64,22 @@ const translationResponse = await fetch(
 );
 
 
-if (!translationResponse.ok) {
+
+let imagePrompt = prompt.trim();
+
+if (translationResponse.ok) {
+  const translationData = await translationResponse.json();
+
+  const translatedPrompt =
+    translationData.candidates?.[0]?.content?.parts
+      ?.map(part => part.text || "")
+      .join("")
+      .trim();
+
+  if (translatedPrompt) {
+    imagePrompt = translatedPrompt;
+  }
+} else {
   const geminiError = await translationResponse.text();
 
   console.error(
@@ -73,26 +88,9 @@ if (!translationResponse.ok) {
     geminiError
   );
 
-  return res.status(502).json({
-    success: false,
-    error: `Gemini request failed (${translationResponse.status}). Check Vercel logs.`
-  });
+  // Continue with the original prompt if Gemini is unavailable.
 }
     
-
-const translationData = await translationResponse.json();
-const imagePrompt =
-  translationData.candidates?.[0]?.content?.parts
-    ?.map(part => part.text || "")
-    .join("")
-    .trim();
-
-if (!imagePrompt) {
-  return res.status(502).json({
-    success: false,
-    error: "Could not prepare the image prompt. Please try again."
-  });
-}
     
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
