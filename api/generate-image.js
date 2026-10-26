@@ -58,16 +58,22 @@ const translationResponse = await fetch(
   }
 );
 
+
 if (!translationResponse.ok) {
+  const geminiError = await translationResponse.text();
+
   console.error(
     "Gemini prompt translation failed:",
-    translationResponse.status
+    translationResponse.status,
+    geminiError
   );
+
   return res.status(502).json({
     success: false,
-    error: "Could not understand the image request. Please try again."
+    error: `Gemini request failed (${translationResponse.status}). Check Vercel logs.`
   });
 }
+    
 
 const translationData = await translationResponse.json();
 const imagePrompt =
