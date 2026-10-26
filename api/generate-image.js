@@ -26,14 +26,63 @@ module.exports = async function handler(req, res) {
 
     const apiToken = process.env.CLOUDFLARE_API_TOKEN;
     const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-
-    if (!apiToken || !accountId) {
+const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!apiToken || !accountId || !geminiApiKey) {
       return res.status(500).json({
         success: false,
         error: "Cloudflare image generation is not configured."
       });
     }
 
+const translationResponse = await fetch(
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text:
+            "Convert the user's request into a clear English prompt for an image generator. " +
+            "Preserve the exact subject, number of people or objects, action, clothing, setting, and style. " +
+            "Do not answer the user. Return only the image prompt in English. " +
+            "User request: " + prompt.trim()
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.2
+      }
+    })
+  }
+);
+
+if (!translationResponse.ok) {
+  console.error(
+    "Gemini prompt translation failed:",
+    translationResponse.status
+  );
+  return res.status(502).json({
+    success: false,
+    error: "Could not understand the image request. Please try again."
+  });
+}
+
+const translationData = await translationResponse.json();
+const imagePrompt =
+  translationData.candidates?.[0]?.content?.parts
+    ?.map(part => part.text || "")
+    .join("")
+    .trim();
+
+if (!imagePrompt) {
+  return res.status(502).json({
+    success: false,
+    error: "Could not prepare the image prompt. Please try again."
+  });
+}
+    
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
       {
@@ -44,12 +93,7 @@ module.exports = async function handler(req, res) {
         },
         body: JSON.stringify({
   
-prompt:
-  "Create an image that matches this user request as closely as possible. " +
-  "Identify the exact main subject, action, setting, and requested style. " +
-  "Do not substitute a different subject. " +
-  "If the request is in Hausa, interpret it as a Hausa image request. " +
-  "User's exact image request: " + prompt.trim(),
+prompt: imagePrompt,
 steps: 8
           
 })
