@@ -118,11 +118,19 @@ if (/\b(yaro|yaran|yarinya|yarinya|child|kid|boy|girl)\b/i.test(originalRequest)
     "The child must be the main subject of the image.";
 }
 
-if (/\b(tsoho|dattijo|dattuwa|elderly|old man|old woman)\b/i.test(originalRequest)) {
-  imagePrompt +=
-    ". The main subject must be an elderly person, with visibly aged facial features. " +
-    "Do not depict a child or young adult.";
+
+if (/\b(tsohuwa|dattuwa|tsohuwar mace|elderly woman|old woman|old lady)\b/i.test(originalRequest)) {
+    imagePrompt +=
+        ". The main subject MUST be an elderly WOMAN, clearly female, " +
+        "with visibly aged facial features, realistic wrinkles, and an elderly woman's appearance. " +
+        "Do NOT depict a man, elderly man, child, or young adult.";
+} else if (/\b(tsoho|dattijo|dattijon|tsohon mutum|tsohon namiji|elderly man|old man|old male)\b/i.test(originalRequest)) {
+    imagePrompt +=
+        ". The main subject MUST be an elderly MAN, clearly male, " +
+        "with visibly aged facial features and an elderly man's appearance. " +
+        "Do NOT depict a woman, elderly woman, child, or young adult.";
 }
+    
     
     
     const response = await fetch(
