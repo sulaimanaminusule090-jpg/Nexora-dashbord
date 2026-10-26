@@ -146,10 +146,15 @@ Your goal is to be a capable, helpful, honest, and safe general-purpose AI assis
     ]
   }
 ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1024
-          }
+          tools: [
+  {
+    google_search: {}
+  }
+],
+generationConfig: {
+  temperature: 0.7,
+  maxOutputTokens: 2048
+}
         })
       }
     );
