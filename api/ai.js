@@ -186,10 +186,19 @@ generationConfig: {
         message: data?.error?.message
       });
 
-      return res.status(502).json({
+      
+      const status = response.status === 429 ? 429 : 502;
+
+      const errorMessage =
+        response.status === 429
+          ? "Nexora AI is temporarily unavailable because the AI usage limit has been reached. Please try again later."
+          : `Gemini API error (${response.status}): ${data?.error?.message || "Unknown error"}`;
+
+      return res.status(status).json({
         success: false,
-        error: `Gemini API error (${response.status}): ${data?.error?.message || "Unknown error"}`
+        error: errorMessage
       });
+      
     }
 
     const answer = data.candidates?.[0]?.content?.parts
