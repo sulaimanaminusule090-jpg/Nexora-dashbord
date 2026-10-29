@@ -40,7 +40,109 @@ if (attachment) {
     });
   }
 }
-      
+    
+    // Use Cloudflare Workers AI for text-only chat.
+    // Keep Gemini for image and PDF attachments.
+    if (!attachment) {
+      const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+      const cloudflareToken = process.env.CLOUDFLARE_API_TOKEN;
+      const model = "@cf/meta/llama-3.1-8b-instruct";
+
+      if (!accountId || !cloudflareToken) {
+        return res.status(500).json({
+          success: false,
+          error: "Cloudflare AI is not configured."
+        });
+      }
+
+      const messages = [
+        {
+          role: "system",
+          content:
+            "You are Nexora AI, a helpful multilingual assistant. " +
+            "Reply in the user's language, including Hausa and English. " +
+            "Give accurate, clear, practical answers. " +
+            "Never ask users to share passwords or API keys."
+        },
+        ...(Array.isArray(history)
+          ? history.slice(-12)
+              .filter(item =>
+                item &&
+                ["user", "model", "assistant"].includes(item.role) &&
+                typeof item.text === "string" &&
+                item.text.trim()
+              )
+              .map(item => ({
+                role: item.role === "model"
+                  ? "assistant"
+                  : item.role,
+                content: item.text.trim().slice(0, 4000)
+              }))
+          : []),
+        {
+          role: "user",
+          content: message.trim()
+        }
+      ];
+
+      try {
+        const cfResponse = await fetch(
+          `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/${model}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${cloudflareToken}`
+            },
+            body: JSON.stringify({
+              messages,
+              max_tokens: 2048,
+              temperature: 0.7
+            })
+          }
+        );
+
+        const cfData = await cfResponse.json();
+
+        if (!cfResponse.ok || cfData.success === false) {
+          console.error("Cloudflare AI error:", {
+            status: cfResponse.status,
+            errors: cfData.errors
+          });
+
+          return res.status(
+            cfResponse.status === 429 ? 429 : 502
+          ).json({
+            success: false,
+            error: cfResponse.status === 429
+              ? "Cloudflare AI usage limit reached."
+              : "Cloudflare AI request failed."
+          });
+        }
+
+        const answer = cfData.result?.response?.trim();
+
+        if (!answer) {
+          return res.status(502).json({
+            success: false,
+            error: "Cloudflare returned an empty response."
+          });
+        }
+
+        return res.status(200).json({
+          success: true,
+          answer
+        });
+      } catch (error) {
+        console.error("Cloudflare request failed:", error);
+
+        return res.status(502).json({
+          success: false,
+          error: "Could not connect to Cloudflare AI."
+        });
+      }
+    }
+  
 
     const apiKey = process.env.GEMINI_API_KEY;
 
