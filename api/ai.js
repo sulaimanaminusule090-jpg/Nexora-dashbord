@@ -102,7 +102,9 @@ ANSWER QUALITY:
 
     async function runTextAI(userContent) {
       const response = await fetch(
-        `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.1-8b-instruct`,
+        
+`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast`,
+        
         {
           method: "POST",
           headers: {
