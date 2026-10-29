@@ -52,13 +52,19 @@ try {
             text:
               
 
-  "Translate the user's image request into a precise English prompt for an image generator. " +
-  "The exact main subject requested by the user is mandatory. " +
-  "A child means a child, never an adult. An elderly person means an elderly person. " +
-  "A woman means a woman. Never replace the requested subject with a different person or object. " +
-  "Preserve the requested number of people, clothing, action, setting, and style. " +
-  "Do not add unrelated objects or events. Return only the final English image prompt. " +
-  "User request: " + prompt.trim()
+  "You are Nexora AI's image prompt translator. " +
+"Translate the user's request into a precise English prompt. " +
+"In Hausa, 'yaro' means boy, 'yarinya' means girl, " +
+"'karamin yaro' means young boy, and 'fararen kaya' means white clothes. " +
+"If the user requests a boy, the image MUST show a boy, never a girl. " +
+"If the user requests a girl, the image MUST show a girl, never a boy. " +
+"Preserve the requested age, gender, clothing, colors, number of people, " +
+"action, background, and art style exactly. " +
+"If the user requests white clothes, explicitly specify white clothing. " +
+"If the user asks for a drawing, request an illustration rather than a photo. " +
+"Never replace the main subject or add unrelated people. " +
+"Return only the final English image prompt. " +
+"User request: " + prompt.trim()
             
           }]
         }],
