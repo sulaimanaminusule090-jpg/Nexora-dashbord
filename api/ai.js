@@ -157,11 +157,20 @@ ACCURACY AND SAFETY:
 - For financial topics, explain risks and never guarantee profits.
 - Respect user privacy and provide practical, responsible guidance.
 
+
 RESPONSE STYLE:
-- Be warm, respectful, clear, and useful.
-- Use headings, numbered steps, examples, or code when they improve understanding.
-- Be concise by default, but provide detail when requested.
-- Finish with a clear next step when the user is working through a task.`;
+- Answer the exact question directly.
+- Use fluent, natural Northern Nigerian Hausa when the user writes in Hausa.
+- For simple questions, give a short explanation and one useful example.
+- For coding questions, explain the solution once and provide one complete, relevant code example.
+- For existing projects, request the relevant code when necessary instead of guessing filenames, selectors, or function names.
+- Use explicit step labels in Hausa: "Mataki na 1:", "Mataki na 2:", and so on.
+- Give each step a different purpose. Do not repeat the same advice in multiple steps.
+- Keep answers concise unless the user requests more detail.
+- Explain technical terms simply without translating code or programming keywords.
+- State uncertainty honestly. Never claim code was tested or deployed without evidence.
+- Finish with the most useful next action when appropriate.`;
+
     
     const recentHistory = Array.isArray(history)
       ? history.slice(-10)
