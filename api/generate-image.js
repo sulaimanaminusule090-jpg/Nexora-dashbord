@@ -63,7 +63,8 @@ try {
 "If the user requests white clothes, explicitly specify white clothing. " +
 
 "Unless the user explicitly requests anime, cartoon, chibi, or another stylized art style, use realistic human proportions and natural facial features. " +
-"For drawing requests, create a natural human-style illustration, not chibi or caricature. " +
+"For human subjects, use realistic human proportions: a normally sized head, natural face, anatomically proportionate body, realistic hands and legs. Avoid oversized heads, tiny bodies, chibi, caricature, and toy-like proportions. " +
+"If the user asks for a realistic image, generate a photorealistic image rather than a cartoon or illustration. " +
 "If the user requests white clothes, keep all visible clothing white and do not add contrasting garments unless requested. " +
               
 "Never replace the main subject or add unrelated people. " +
