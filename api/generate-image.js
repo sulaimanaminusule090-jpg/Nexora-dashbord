@@ -97,7 +97,38 @@ try {
   console.error("Gemini translation timed out or failed:", error.message);
 }
     
-  
+ // Preserve the requested subject and clothing.
+const originalPrompt = prompt.trim();
+const imageConstraints = [];
+
+if (/\byaro\b|\byaran\b|\bboy\b|\byoung boy\b/i.test(originalPrompt)) {
+  imageConstraints.push(
+    "The main subject MUST be a young boy, not a girl or woman."
+  );
+}
+
+if (/\byarinya\b|\bgirl\b|\byoung girl\b/i.test(originalPrompt)) {
+  imageConstraints.push(
+    "The main subject MUST be a young girl, not a boy or man."
+  );
+}
+
+if (/fararen kaya|fararen|white clothes|white clothing|wearing white/i.test(originalPrompt)) {
+  imageConstraints.push(
+    "The subject MUST wear white clothes, not colorful clothes."
+  );
+}
+
+if (/zan[aein]|zane|drawing|draw|cartoon|illustration/i.test(originalPrompt)) {
+  imageConstraints.push(
+    "Create a drawn illustration, not a photorealistic portrait."
+  );
+}
+
+if (imageConstraints.length > 0) {
+  imagePrompt += "\n\nSTRICT REQUIREMENTS: " +
+    imageConstraints.join(" ");
+} 
 
     const response = await fetch(
       `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
