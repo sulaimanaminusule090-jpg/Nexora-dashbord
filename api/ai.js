@@ -258,10 +258,11 @@ Do not invent details that cannot be seen.`,
       const visionData = await visionResponse.json();
 
       if (!visionResponse.ok || visionData.success === false) {
-        console.error("Cloudflare Vision error:", {
-  status: visionResponse.status,
-  response: visionData
-});
+        console.error(
+  "Cloudflare Vision error:",
+  visionResponse.status,
+  JSON.stringify(visionData.errors)
+);
 
         return res.status(
           visionResponse.status === 429 ? 429 : 502
