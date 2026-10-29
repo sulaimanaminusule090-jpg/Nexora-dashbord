@@ -58,8 +58,10 @@ try {
 "'karamin yaro' means young boy, and 'fararen kaya' means white clothes. " +
 "If the user requests a boy, the image MUST show a boy, never a girl. " +
 "If the user requests a girl, the image MUST show a girl, never a boy. " +
-"Preserve the requested age, gender, clothing, colors, number of people, " +
-"action, background, and art style exactly. " +
+"Preserve the requested age, gender, clothing, colors, number of people, action, and background. " +
+"Do not infer anime, cartoon, chibi, or illustration from the Hausa verb 'zana' alone. " +
+"If the user says 'ba anime ba', 'kamannin mutum na yau da kullum', 'hoton gaske', 'realistic', or 'photorealistic', request a photorealistic image of a real-looking human, not an illustration. " +
+"Only use anime, cartoon, chibi, or illustration when the user explicitly requests that style. " +
 "If the user requests white clothes, explicitly specify white clothing. " +
 
 "Unless the user explicitly requests anime, cartoon, chibi, or another stylized art style, use realistic human proportions and natural facial features. " +
