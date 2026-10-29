@@ -187,7 +187,9 @@ ACCURACY:
       }
 
       const converted = pdfData.result?.[0];
-      const documentText = converted?.data?.trim();
+      const documentText = String(
+  converted?.data ?? ""
+).trim();
 
       if (!documentText || converted?.format === "error") {
         return res.status(502).json({
@@ -257,9 +259,9 @@ Do not invent details that cannot be seen.`,
 
       if (!visionResponse.ok || visionData.success === false) {
         console.error("Cloudflare Vision error:", {
-          status: visionResponse.status,
-          errors: visionData.errors
-        });
+  status: visionResponse.status,
+  response: visionData
+});
 
         return res.status(
           visionResponse.status === 429 ? 429 : 502
