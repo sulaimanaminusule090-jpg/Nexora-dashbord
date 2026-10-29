@@ -125,11 +125,7 @@ if (/fararen kaya|fararen|white clothes|white clothing|wearing white/i.test(orig
   );
 }
 
-if (/zan[aein]|zane|drawing|draw|cartoon|illustration/i.test(originalPrompt)) {
-  imageConstraints.push(
-    "Use a drawn illustration style."
-  );
-}
+
 
 if (imageConstraints.length > 0) {
   imagePrompt += "\n\nAdditional visual details: " +
