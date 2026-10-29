@@ -61,7 +61,11 @@ try {
 "Preserve the requested age, gender, clothing, colors, number of people, " +
 "action, background, and art style exactly. " +
 "If the user requests white clothes, explicitly specify white clothing. " +
-"If the user asks for a drawing, request an illustration rather than a photo. " +
+
+"Unless the user explicitly requests anime, cartoon, chibi, or another stylized art style, use realistic human proportions and natural facial features. " +
+"For drawing requests, create a natural human-style illustration, not chibi or caricature. " +
+"If the user requests white clothes, keep all visible clothing white and do not add contrasting garments unless requested. " +
+              
 "Never replace the main subject or add unrelated people. " +
 "Return only the final English image prompt. " +
 "User request: " + prompt.trim()
