@@ -1898,77 +1898,97 @@ function openNexoraChatPage() {
   background:white;
   border-top:1px solid #e5e7eb;
 ">
+<div style="
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:10px 12px;
+  background:#ffffff;
+  border:1px solid #d1d5db;
+  border-radius:26px;
+  box-sizing:border-box;
+">
+
+  <textarea
+    id="nexoraChatInput"
+    rows="1"
+    placeholder="Message Nexora AI..."
+    style="
+      width:100%;
+      min-height:44px;
+      max-height:160px;
+      resize:none;
+      border:0;
+      outline:none;
+      background:transparent;
+      padding:8px 4px;
+      box-sizing:border-box;
+      font-size:17px;
+      line-height:1.5;
+      overflow-y:hidden;
+    "
+  ></textarea>
+
   <div style="
     display:flex;
-    align-items:flex-end;
-    gap:8px;
+    align-items:center;
+    justify-content:space-between;
     width:100%;
+    gap:10px;
   ">
-    <textarea
-      id="nexoraChatInput"
-      rows="1"
-      placeholder="Message Nexora AI..."
-      style="
-        flex:1;
-        min-width:0;
-        width:0;
-        resize:none;
-        max-height:120px;
-        padding:13px;
-        border:1px solid #d1d5db;
-        border-radius:12px;
-        font-size:16px;
-        outline:none;
-      "
-    ></textarea>
-<button
-  id="nexoraChatMic"
-  type="button"
-  title="Speak to Nexora AI"
-  style="
-    flex-shrink:0;
-    width:44px;
-    height:44px;
-    border:1px solid #ddd;
-    border-radius:12px;
-    background:white;
-    font-size:22px;
-    cursor:pointer;
-  "
->🎙️</button>
+
     <button
       id="nexoraChatPlus"
       type="button"
       onclick="const menu=document.getElementById('nexoraChatAttachmentMenu');menu.style.display=menu.style.display==='flex'?'none':'flex';"
       style="
-        flex-shrink:0;
         width:44px;
         height:44px;
-        border:1px solid #ddd;
-        border-radius:12px;
-        background:white;
+        border:0;
+        border-radius:50%;
+        background:#f3f4f6;
         font-size:28px;
         cursor:pointer;
       "
     >+</button>
 
-    <button
-      id="nexoraChatSend"
-      type="submit"
-      style="
-        flex-shrink:0;
-        border:0;
-        border-radius:12px;
-        padding:0 17px;
-        height:44px;
-        background:#7c3aed;
-        color:white;
-        font-size:16px;
-        font-weight:bold;
-        cursor:pointer;
-      "
-    >Send</button>
+    <div style="display:flex;align-items:center;gap:10px;">
+
+      <button
+        id="nexoraChatMic"
+        type="button"
+        title="Speak to Nexora AI"
+        style="
+          width:44px;
+          height:44px;
+          border:0;
+          border-radius:50%;
+          background:#f3f4f6;
+          font-size:22px;
+          cursor:pointer;
+        "
+      >🎙️</button>
+
+      <button
+        id="nexoraChatSend"
+        type="submit"
+        style="
+          width:48px;
+          height:44px;
+          border:0;
+          border-radius:50%;
+          background:#7c3aed;
+          color:white;
+          font-size:22px;
+          font-weight:bold;
+          cursor:pointer;
+        "
+      >↑</button>
+
+    </div>
   </div>
+</div>
 
   <input
     type="file"
@@ -2054,10 +2074,9 @@ function openNexoraChatPage() {
   // Automatically expand the Nexora chat input
 const resizeNexoraChatInput = () => {
   input.style.height = "44px";
-  input.style.height =
-    Math.min(input.scrollHeight, 120) + "px";
+  input.style.height = Math.min(input.scrollHeight, 160) + "px";
   input.style.overflowY =
-    input.scrollHeight > 120 ? "auto" : "hidden";
+    input.scrollHeight > 160 ? "auto" : "hidden";
 };
 
 input.addEventListener("input", resizeNexoraChatInput);
