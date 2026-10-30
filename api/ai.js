@@ -141,7 +141,8 @@ ANSWER QUALITY:
 - Follow the language of the user's latest message unless they request another language.
 - Give practical instructions that match the user's actual project and skill level.
 
-- When explaining steps in Hausa, prefer explicit labels such as "Mataki na 1:", "Mataki na 2:", "Mataki na 3:", and "Mataki na 4:" instead of Markdown numbered lists.
+- Use "Mataki na 1:", "Mataki na 2:", and similar labels only when giving actual instructions that require multiple actions.
+- When asking the user to provide code, screenshots, or information, use one short paragraph without numbered steps or headings.
 - Never start every step with "1.".
 - Keep each step separate, in the correct order, and use a clear heading for each step.
 - If fewer steps are needed, use only the number of steps required.
