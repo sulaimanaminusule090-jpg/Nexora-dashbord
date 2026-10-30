@@ -1642,11 +1642,17 @@ function renderNexoraMarkdown(markdown) {
 
   source = source.replace(fencePattern, function (_, language, code) {
     const token = "NEXORA_CODE_BLOCK_" + codeBlocks.length + "_TOKEN";
+    
     codeBlocks.push(
-      '<pre style="overflow-x:auto;padding:12px;border-radius:10px;background:#111827;color:#f9fafb;font-size:14px;line-height:1.5;white-space:pre;"><code>' +
+      '<div class="nexora-code-wrap" style="margin:12px 0;">' +
+      '<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">' +
+      '<button type="button" class="nexora-copy-code" style="padding:7px 11px;border:1px solid #d1d5db;border-radius:8px;background:#ffffff;color:#111827;font-size:13px;cursor:pointer;">📋 Copy Code</button>' +
+      '</div>' +
+      '<pre style="width:100%;max-width:100%;box-sizing:border-box;overflow-x:auto;padding:12px;border-radius:10px;background:#111827;color:#f9fafb;font-size:14px;line-height:1.5;white-space:pre;"><code>' +
       escapeHtml(code.replace(/\n+$/, "")) +
-      "</code></pre>"
+      "</code></pre></div>"
     );
+    
     return "\n" + token + "\n";
   });
 
