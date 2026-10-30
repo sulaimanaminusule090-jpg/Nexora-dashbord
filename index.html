@@ -2051,6 +2051,16 @@ function openNexoraChatPage() {
   const input = chatPage.querySelector("#nexoraChatInput");
   const form = chatPage.querySelector("#nexoraChatForm");
   const send = chatPage.querySelector("#nexoraChatSend");
+  // Automatically expand the Nexora chat input
+const resizeNexoraChatInput = () => {
+  input.style.height = "44px";
+  input.style.height =
+    Math.min(input.scrollHeight, 120) + "px";
+  input.style.overflowY =
+    input.scrollHeight > 120 ? "auto" : "hidden";
+};
+
+input.addEventListener("input", resizeNexoraChatInput);
   const conversationHistory = [];
   
 let activeConversationId = null;
