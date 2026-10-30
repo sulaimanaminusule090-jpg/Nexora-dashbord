@@ -1763,6 +1763,37 @@ function renderNexoraMarkdown(markdown) {
     }
   );
 }
+ 
+function addNexoraCopyButtons(container) {
+  if (!container) return;
+
+  container.querySelectorAll(".nexora-copy-code:not([data-copy-ready])")
+    .forEach(button => {
+      button.dataset.copyReady = "true";
+
+      button.addEventListener("click", async function () {
+        const codeElement = button
+          .closest(".nexora-code-wrap")
+          ?.querySelector("pre code");
+
+        if (!codeElement) return;
+
+        const codeText = codeElement.textContent || "";
+
+        try {
+          await navigator.clipboard.writeText(codeText);
+          button.textContent = "✓ Copied!";
+        } catch (error) {
+          button.textContent = "Copy failed";
+          console.error("Copy failed:", error);
+        }
+
+        setTimeout(() => {
+          button.textContent = "📋 Copy Code";
+        }, 2000);
+      });
+    });
+}
     
 function openNexoraChatPage() {
   let chatPage = document.getElementById("nexoraChatPage");
