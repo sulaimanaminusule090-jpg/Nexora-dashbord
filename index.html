@@ -2725,7 +2725,7 @@ if (conversationHistory.length > 12) {
   );
 }
 reply.innerHTML = renderNexoraMarkdown(answerText);
-
+addNexoraCopyButtons(reply);
 // Add a speak button to the AI response
 const speakButton = document.createElement("button");
 
@@ -2962,7 +2962,7 @@ async function askNexoraAI() {
 
     
 answerBox.innerHTML = renderNexoraMarkdown(data.answer || "");
-    
+ addNexoraCopyButtons(answerBox);   
     input.value = "";
 
     if (fileInput) fileInput.value = "";
