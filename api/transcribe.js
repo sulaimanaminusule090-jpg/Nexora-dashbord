@@ -67,7 +67,7 @@ module.exports = async function handler(req, res) {
               parts: [
                 {
                   
-text: "Transcribe the audio exactly in the original language spoken. Automatically identify the spoken language. Preserve its native writing system and script: use Arabic script for Arabic, Simplified or Traditional Chinese characters for Chinese as spoken, Cyrillic for Russian when spoken, and the appropriate native script for every other language. Do not translate, transliterate into Latin letters, or convert the speech into English. For Hausa, use standard Hausa Latin spelling. Return only the exact transcription, without explanations."
+text: "You are an expert multilingual speech transcription system. Listen carefully to the entire audio from beginning to end. Accurately transcribe every spoken word without skipping, shortening, summarizing, or translating anything. Give special attention to Hausa spoken in Northern Nigeria. Recognize natural Hausa pronunciation, Hausa greetings, common Hausa expressions, and Hausa-English code-switching. When the speaker talks in Hausa, write the complete transcription in standard Hausa Latin spelling. Do not mistake Hausa for English or another language. Preserve the original language of every sentence. Return only the complete transcription, with no explanations."
                   
                 },
                 {
