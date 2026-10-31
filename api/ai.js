@@ -257,7 +257,7 @@ RESPONSE STYLE:
     async function runTextAI(userContent, includeHistory = true) {
       const response = await fetch(
         
-`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/google/gemma-4-26b-a4b-it`,
+`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast`,
         
         {
           method: "POST",
