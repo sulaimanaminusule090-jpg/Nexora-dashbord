@@ -262,7 +262,7 @@ RESPONSE STYLE:
     async function runTextAI(userContent, includeHistory = true) {
       const response = await fetch(
         
-`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/meta/llama-3.3-70b-instruct-fp8-fast`,
+`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/qwen/qwen3-30b-a3b-fp8`,
         
         {
           method: "POST",
