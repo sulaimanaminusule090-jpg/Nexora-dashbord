@@ -262,7 +262,7 @@ RESPONSE STYLE:
     async function runTextAI(userContent, includeHistory = true) {
       const response = await fetch(
         
-`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/zai-org/glm-4.7-flash`,
+`https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/run/@cf/google/gemma-3-12b-it`,
         
         {
           method: "POST",
