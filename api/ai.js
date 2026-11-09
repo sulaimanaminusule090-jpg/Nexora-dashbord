@@ -306,6 +306,95 @@ RESPONSE STYLE:
       Authorization: `Bearer ${apiToken}`
     };
 
+async function getQuranEvidence(query) {
+  const input = String(query || "").trim();
+  if (!input) return "";
+
+  const knownWords = {
+    "fatabassama": "فَتَبَسَّمَ",
+    "fatabassam": "فَتَبَسَّمَ"
+  };
+
+  const normalized = input.toLowerCase().trim();
+  const searchTerm = knownWords[normalized] || input;
+
+  const isArabic = /[\u0600-\u06FF]/.test(input);
+  const hasQuranIntent =
+    /quran|qur'an|ayah|verse|surah|tafsir|alƙur|aya|ayat/i.test(input);
+
+  if (!isArabic && !hasQuranIntent &&
+      !knownWords[normalized]) {
+    return "";
+  }
+
+  try {
+    const searchUrl = new URL(
+      "https://quranbench.com/api/v1/search"
+    );
+
+    searchUrl.searchParams.set("q", searchTerm);
+    searchUrl.searchParams.set("per_page", "10");
+
+    const searchResponse = await fetch(searchUrl);
+    if (!searchResponse.ok) return "";
+
+    const searchData = await searchResponse.json();
+    const matches = Array.isArray(searchData.matches)
+      ? searchData.matches
+      : [];
+
+    const references = [
+      ...new Set(
+        matches
+          .map(item => item.verse_ref)
+          .filter(ref => /^\d{1,3}:\d{1,3}$/.test(ref || ""))
+      )
+    ].slice(0, 5);
+
+    if (!references.length) return "";
+
+    const verses = await Promise.all(
+      references.map(async ref => {
+        const [surah, ayah] = ref.split(":");
+
+        const response = await fetch(
+          `https://quranbench.com/api/v1/verse/${surah}/${ayah}`
+        );
+
+        if (!response.ok) return null;
+
+        return await response.json();
+      })
+    );
+
+    const validVerses = verses.filter(Boolean);
+
+    return `
+VERIFIED QURAN DATABASE RESULTS:
+
+Search term: ${searchTerm}
+
+Search matches:
+${JSON.stringify(matches)}
+
+Full verse records:
+${JSON.stringify(validVerses)}
+
+Instructions:
+- Identify the Surah and verse from verified records.
+- Show the full Arabic verse when available.
+- Explain its meaning in the user's language.
+- Separate translation from Tafsir.
+- Never invent missing Quranic text or references.
+- If evidence is incomplete, clearly say so.
+`;
+
+  } catch (error) {
+    console.error("Quran search error:", error.message);
+    return "";
+  }
+}
+    
     async function runTextAI(userContent, includeHistory = true) {
       const response = await fetch(
         
