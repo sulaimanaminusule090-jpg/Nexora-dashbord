@@ -306,59 +306,93 @@ RESPONSE STYLE:
       Authorization: `Bearer ${apiToken}`
     };
 
+
 async function getQuranEvidence(query) {
   const input = String(query || "").trim();
   if (!input) return "";
 
+  const normalized = input.toLowerCase().trim();
+
   const knownWords = {
     "fatabassama": "فَتَبَسَّمَ",
-    "fatabassam": "فَتَبَسَّمَ"
+    "fatabassam": "فَتَبَسَّمَ",
+    "ayatul kursiyyu":
+      "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ",
+    "ayat al kursi":
+      "اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ"
   };
 
-  const normalized = input.toLowerCase().trim();
   const searchTerm = knownWords[normalized] || input;
 
   const isArabic = /[\u0600-\u06FF]/.test(input);
+
   const hasQuranIntent =
-    /quran|qur'an|ayah|verse|surah|tafsir|alƙur|aya|ayat/i.test(input);
+    /quran|qur'an|ayah|verse|surah|tafsir|alƙur|al.?qur|aya|ayat|sura|fassara|fassarar|ma'anar|kur'ani/i.test(input);
+
+  const refMatch = input.match(
+    /(?:^|\b)(\d{1,3})\s*[:/]\s*(\d{1,3})(?:\b|$)/
+  );
 
   if (!isArabic && !hasQuranIntent &&
-      !knownWords[normalized]) {
+      !knownWords[normalized] && !refMatch) {
     return "";
   }
 
   try {
-    const searchUrl = new URL(
-      "https://quranbench.com/api/v1/search"
-    );
+    let references = [];
+    let searchData = null;
 
-    searchUrl.searchParams.set("q", searchTerm);
-    searchUrl.searchParams.set("per_page", "10");
+    if (refMatch) {
+      const surah = Number(refMatch[1]);
+      const ayah = Number(refMatch[2]);
 
-    const searchResponse = await fetch(searchUrl);
-    if (!searchResponse.ok) return "";
+      if (surah >= 1 && surah <= 114 &&
+          ayah >= 1 && ayah <= 286) {
+        references.push(`${surah}:${ayah}`);
+      }
+    } else {
+      const searchUrl = new URL(
+        "https://quranbench.com/api/v1/search"
+      );
 
-    const searchData = await searchResponse.json();
-    const matches = Array.isArray(searchData.matches)
-      ? searchData.matches
-      : [];
+      searchUrl.searchParams.set("q", searchTerm);
+      searchUrl.searchParams.set("per_page", "10");
 
-    const references = [
-      ...new Set(
-        matches
-          .map(item => item.verse_ref)
-          .filter(ref => /^\d{1,3}:\d{1,3}$/.test(ref || ""))
-      )
-    ].slice(0, 5);
+      const searchResponse = await fetch(searchUrl, {
+        headers: { Accept: "application/json" }
+      });
 
-    if (!references.length) return "";
+      if (!searchResponse.ok) {
+        throw new Error("Quran search unavailable");
+      }
+
+      searchData = await searchResponse.json();
+
+      references = [
+        ...new Set(
+          (searchData.matches || [])
+            .map(item => item.verse_ref)
+            .filter(ref => /^\d{1,3}:\d{1,3}$/.test(ref || ""))
+        )
+      ].slice(0, 5);
+    }
+
+    if (!references.length) {
+      return `
+QURAN SEARCH RESULT:
+No verified Quran verse was found for this search.
+Do not invent a verse, Surah, or reference.
+Ask the user for the Arabic wording or a more specific reference.
+`;
+    }
 
     const verses = await Promise.all(
       references.map(async ref => {
         const [surah, ayah] = ref.split(":");
 
         const response = await fetch(
-          `https://quranbench.com/api/v1/verse/${surah}/${ayah}`
+          `https://quranbench.com/api/v1/verse/${surah}/${ayah}`,
+          { headers: { Accept: "application/json" } }
         );
 
         if (!response.ok) return null;
@@ -369,31 +403,74 @@ async function getQuranEvidence(query) {
 
     const validVerses = verses.filter(Boolean);
 
+    if (!validVerses.length) {
+      return `
+QURAN SEARCH:
+The reference could not be verified.
+Do not guess its Arabic text or meaning.
+`;
+    }
+
     return `
-VERIFIED QURAN DATABASE RESULTS:
+VERIFIED QURAN DATABASE EVIDENCE
+Source: QuranBench
+Text edition: Tanzil Uthmani
 
-Search term: ${searchTerm}
+User query: ${input}
 
-Search matches:
-${JSON.stringify(matches)}
+Search results:
+${JSON.stringify(searchData?.matches || [])}
 
-Full verse records:
+Verified full verse records:
 ${JSON.stringify(validVerses)}
 
-Instructions:
-- Identify the Surah and verse from verified records.
-- Show the full Arabic verse when available.
-- Explain its meaning in the user's language.
-- Separate translation from Tafsir.
-- Never invent missing Quranic text or references.
-- If evidence is incomplete, clearly say so.
-`;
+RESPONSE INSTRUCTIONS:
 
+1. Always identify the Surah name, Surah number,
+   and exact Ayah number using verified records.
+
+2. Display the complete original Arabic verse
+   from the verified Quran database.
+
+3. Translate the verse into the user's language.
+   Clearly label AI-generated translations.
+
+4. Explain the verse in simple language.
+
+5. Distinguish between translation, explanation,
+   and authentic Tafsir.
+
+6. Never invent Quranic text, Hadith, Tafsir,
+   Surah names, or references.
+
+7. For Tafsir, use reliable verified sources.
+   If unavailable, clearly say so.
+
+8. If multiple verses match, show the relevant
+   references and explain their differences.
+
+9. Answer in Hausa when the user asks in Hausa,
+   and English when the user asks in English.
+
+10. Answer questions about Quranic topics,
+    stories, prophets, guidance, and teachings
+    using relevant verified Quranic evidence.
+
+11. Do not claim that a keyword search covers
+    every relevant verse.
+
+12. If evidence is insufficient, ask the user
+    for clarification instead of guessing.
+`;
   } catch (error) {
-    console.error("Quran search error:", error.message);
-    return "";
+    console.error("Quran database error:", error.message);
+    return `
+Quran database is temporarily unavailable.
+Do not invent Quranic references or claim that a verse was verified.
+`;
   }
 }
+    
     
     async function runTextAI(userContent, includeHistory = true) {
       const response = await fetch(
