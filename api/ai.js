@@ -569,10 +569,19 @@ Do not invent details that cannot be seen.`,
 
       answer = visionData.result?.response?.trim() || "";
 
-    } else {
-      // Normal text conversation.
-      answer = await runTextAI(userMessage);
+    
+} else {
+  // Normal text conversation with Quran search.
+  const quranEvidence =
+    await getQuranEvidence(userMessage);
+
+  const enrichedMessage = quranEvidence
+    ? `${userMessage}\n\n${quranEvidence}`
+    : userMessage;
+
+  answer = await runTextAI(enrichedMessage);
     }
+    
 
     if (!answer) {
       return res.status(502).json({
